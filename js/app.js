@@ -95,6 +95,69 @@
   ];
 
   /* ---------- Test History helpers ---------- */
+
+  /* Compute team averages, min, max for a set of athlete values */
+  function computeTestAverages(athleteDetails) {
+    var stats = {};
+    for (var mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
+      var key = TEST_METRIC_KEYS[mk].jsonKey;
+      var sum = 0, count = 0, min = Infinity, max = -Infinity;
+      for (var ai = 0; ai < athleteDetails.length; ai++) {
+        var v = athleteDetails[ai].values[key];
+        if (v !== null && v !== undefined && !isNaN(v)) {
+          sum += v; count++;
+          if (v < min) min = v;
+          if (v > max) max = v;
+        }
+      }
+      stats[key] = {
+        avg: count > 0 ? +(sum / count).toFixed(1) : null,
+        min: count > 0 ? min : null,
+        max: count > 0 ? max : null,
+        count: count
+      };
+    }
+    return stats;
+  }
+
+  /* Build HTML for a team averages summary bar */
+  function buildAvgSummaryHTML(stats) {
+    var html = '<div class="ta-summary">';
+    html += '<span class="ta-title">Team Averages</span>';
+    for (var mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
+      var key = TEST_METRIC_KEYS[mk].jsonKey;
+      var s = stats[key];
+      if (s.avg !== null) {
+        html += '<span class="ta-chip"><span class="ta-chip-label">' + TEST_METRIC_KEYS[mk].label + '</span><strong>' + s.avg + '</strong><small>' + TEST_METRIC_KEYS[mk].unit + '</small></span>';
+      }
+    }
+    html += '</div>';
+    return html;
+  }
+
+  /* Build avg/best/worst footer rows for a detail table */
+  function buildAvgTableRows(stats, showBestWorst, extraCol) {
+    var extra = extraCol ? '<td></td>' : '';
+    var avgRow = '<tr class="ta-row ta-avg-row"><td><strong>Team Avg</strong></td>';
+    for (var mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
+      var s = stats[TEST_METRIC_KEYS[mk].jsonKey];
+      avgRow += '<td class="num">' + (s.avg !== null ? s.avg : '—') + '</td>';
+    }
+    avgRow += extra + '</tr>';
+    if (!showBestWorst) return avgRow;
+    var bestRow = '<tr class="ta-row ta-best-row"><td><strong>Best</strong></td>';
+    var worstRow = '<tr class="ta-row ta-worst-row"><td><strong>Worst</strong></td>';
+    for (var mk2 = 0; mk2 < TEST_METRIC_KEYS.length; mk2++) {
+      var s2 = stats[TEST_METRIC_KEYS[mk2].jsonKey];
+      var lower = TEST_METRIC_KEYS[mk2].lower;
+      bestRow += '<td class="num">' + (s2.avg !== null ? (lower ? s2.min : s2.max) : '—') + '</td>';
+      worstRow += '<td class="num">' + (s2.avg !== null ? (lower ? s2.max : s2.min) : '—') + '</td>';
+    }
+    bestRow += extra + '</tr>';
+    worstRow += extra + '</tr>';
+    return avgRow + bestRow + worstRow;
+  }
+
   function getTestHistory() {
     return JSON.parse(localStorage.getItem("lc_test_history") || "{}");
   }
@@ -1943,7 +2006,10 @@
         }
         cards += '</tr>';
       }
-      cards += '</tbody></table></div>';
+      cards += '</tbody><tfoot>' + buildAvgTableRows(computeTestAverages(test.athleteDetails), true) + '</tfoot></table>';
+      // Team averages summary chips
+      cards += buildAvgSummaryHTML(computeTestAverages(test.athleteDetails));
+      cards += '</div>';
       cards += '</div>';
     }
 
@@ -2476,7 +2542,23 @@
       bodyHTML += '<th>' + TEST_METRIC_KEYS[hk].label + ' <small class="te-unit">(' + TEST_METRIC_KEYS[hk].unit + ')</small></th>';
     }
     bodyHTML += '<th>Done</th></tr></thead>';
-    bodyHTML += '<tbody>' + rows + '</tbody></table></div>';
+    bodyHTML += '<tbody>' + rows + '</tbody>';
+    // Compute and append team averages footer
+    var wsStats = computeTestAverages(
+      athletes.map(function (a) {
+        var entry = null;
+        if (h[a.id]) {
+          for (var ei2 = 0; ei2 < h[a.id].length; ei2++) {
+            if (h[a.id][ei2].date === dateStr && h[a.id][ei2].label === label) { entry = h[a.id][ei2]; break; }
+          }
+        }
+        return { values: entry ? entry.values : {} };
+      })
+    );
+    bodyHTML += '<tfoot>' + buildAvgTableRows(wsStats, true, true) + '</tfoot>';
+    bodyHTML += '</table></div>';
+    // Team averages summary bar
+    bodyHTML += buildAvgSummaryHTML(wsStats);
     bodyHTML += '<div class="te-footer">';
     bodyHTML += '<span class="te-footer-stat">' + filledCount + '/' + athletes.length + ' athletes have data</span>';
     bodyHTML += '<div class="te-footer-actions">';

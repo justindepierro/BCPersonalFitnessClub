@@ -2843,6 +2843,77 @@ select:focus,
   gap: 0.5rem;
 }
 
+/* ---------- Team Averages ---------- */
+.ta-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  padding: 0.65rem 0.75rem;
+  margin-top: 0.5rem;
+  background: rgba(108, 99, 255, 0.06);
+  border: 1px solid rgba(108, 99, 255, 0.15);
+  border-radius: var(--radius-sm);
+}
+.ta-title {
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  margin-right: 0.25rem;
+  width: 100%;
+  margin-bottom: 0.15rem;
+}
+.ta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.ta-chip strong {
+  color: var(--text);
+  margin: 0 0.1rem;
+}
+.ta-chip small {
+  color: var(--text-muted);
+  font-size: 0.6rem;
+}
+.ta-chip-label {
+  margin-right: 0.1rem;
+}
+.ta-row {
+  border-top: 2px solid var(--border) !important;
+}
+.ta-row td {
+  font-weight: 600 !important;
+  font-size: 0.72rem !important;
+}
+.ta-avg-row {
+  background: rgba(108, 99, 255, 0.08) !important;
+}
+.ta-avg-row td {
+  color: var(--accent) !important;
+}
+.ta-best-row {
+  background: rgba(74, 222, 128, 0.06) !important;
+}
+.ta-best-row td {
+  color: #4ade80 !important;
+}
+.ta-worst-row {
+  background: rgba(248, 113, 113, 0.06) !important;
+}
+.ta-worst-row td {
+  color: #f87171 !important;
+}
+
 /* ---------- Inline Cell Editing ---------- */
 .ie-cell {
   cursor: pointer;
