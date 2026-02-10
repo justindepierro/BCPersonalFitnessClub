@@ -2076,3 +2076,96 @@ select:focus,
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- Untested athlete badge ---------- */
+.untested-row { opacity: 0.55; }
+.untested-badge {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--yellow);
+  background: var(--yellow-bg);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* ---------- Scroll-to-top button ---------- */
+.scroll-top-btn {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 200;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 1.2rem;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+  box-shadow: var(--shadow);
+}
+.scroll-top-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.scroll-top-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+/* ---------- Toast dismiss button ---------- */
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.toast-dismiss {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0 0.2rem;
+  opacity: 0.7;
+  line-height: 1;
+}
+.toast-dismiss:hover { opacity: 1; }
+
+/* ---------- Keyboard hint ---------- */
+.kbd-hint {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-family: var(--mono);
+  padding: 0.15rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--surface);
+  color: var(--text-muted);
+  vertical-align: middle;
+  margin-right: 0.3rem;
+}
+
+/* ---------- Print improvements ---------- */
+@media print {
+  .scroll-top-btn,
+  .toast-container,
+  .edit-panel,
+  .edit-panel-backdrop,
+  .data-mgmt { display: none !important; }
+  table {
+    font-size: 8pt !important;
+    page-break-inside: auto;
+  }
+  tr { page-break-inside: avoid; }
+  canvas { max-width: 100% !important; height: auto !important; }
+  .tab-panel { overflow: visible !important; }
+}

@@ -654,7 +654,7 @@
     }
 
     return {
-      exportDate: raw.meta?.export_date || "N/A",
+      exportDate: raw.meta?.export_date || raw.exportDate || "N/A",
       notes: raw.meta?.notes || [],
       constants: C,
       athletes,

@@ -18,6 +18,39 @@
     return String(s).replace(/[&<>"']/g, function (c) { return ESC_MAP[c]; });
   }
 
+  /* ---------- Debounce helper ---------- */
+  function debounce(fn, ms) {
+    let t;
+    return function () {
+      clearTimeout(t);
+      t = setTimeout(fn, ms);
+    };
+  }
+
+  /* ---------- Sorted athletes cache ---------- */
+  function sortedAthletes() {
+    return window.CLUB.athletes.slice().sort(function (a, b) {
+      return a.name.localeCompare(b.name);
+    });
+  }
+
+  /* ---------- Format height (inches to ft'in") ---------- */
+  function fmtHeight(h) {
+    if (h === null || h === undefined) return "N/A";
+    const ft = Math.floor(h / 12);
+    const ins = h % 12;
+    return ft + "'" + (Number.isInteger(ins) ? ins : ins.toFixed(1)) + '"';
+  }
+
+  /* ---------- Tier label from average score ---------- */
+  function tierLabelFromAvg(avg) {
+    if (avg >= 4.5) return "Elite";
+    if (avg >= 3.5) return "Excellent";
+    if (avg >= 2.5) return "Good";
+    if (avg >= 1.5) return "Average";
+    return "Below Avg";
+  }
+
   /* ---------- Safe localStorage (quota-aware) ---------- */
   function safeLSSet(key, value) {
     try {
@@ -374,11 +407,16 @@
 
     // Populate position filter
     const posSel = document.getElementById("overviewPosFilter");
+    const lbPosSel = document.getElementById("lbPosFilter");
     D.positions.forEach((p) => {
       const o = document.createElement("option");
       o.value = p;
       o.textContent = p;
       posSel.appendChild(o);
+      const o2 = document.createElement("option");
+      o2.value = p;
+      o2.textContent = p;
+      lbPosSel.appendChild(o2);
     });
 
     // Populate athlete selector + scorecard filter + comparison selects
@@ -458,10 +496,29 @@
         tabs[next].click();
       }
     });
+
+    // Scroll-to-top button
+    const scrollBtn = document.getElementById("scrollTopBtn");
+    if (scrollBtn) {
+      window.addEventListener("scroll", function () {
+        scrollBtn.classList.toggle("visible", window.scrollY > 400);
+      });
+      scrollBtn.addEventListener("click", function () {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
   });
 
   /* ========== TAB SWITCHING ========== */
   window.showTab = function (tabId) {
+    /* Destroy chart instances when leaving their tabs to free GPU memory */
+    const prevTab = document.querySelector(".tab.active");
+    if (prevTab) {
+      const prevId = prevTab.dataset.tab;
+      if (prevId === "profiles" && profileChartInstance) { profileChartInstance.destroy(); profileChartInstance = null; }
+      if (prevId === "leaderboards" && lbChartInstance) { lbChartInstance.destroy(); lbChartInstance = null; }
+      if (prevId === "compare" && cmpChartInstance) { cmpChartInstance.destroy(); cmpChartInstance = null; }
+    }
     document.querySelectorAll(".tab").forEach((t) => {
       const isActive = t.dataset.tab === tabId;
       t.classList.toggle("active", isActive);
@@ -550,13 +607,17 @@
 
   function overallGradeCell(og) {
     if (!og) return '<td class="na">—</td>';
-    return `<td class="grade-overall" title="${og.label} — based on ${og.count} metrics, avg ${og.score}/5">
+    return `<td class="grade-overall" data-sort-value="${og.score}" title="${og.label} — based on ${og.count} metrics, avg ${og.score}/5">
       <span class="grade-badge grade-bg-${og.tier}">${og.label}</span>
       <span class="grade-score">${og.score}</span>
     </td>`;
   }
 
   /* ========== OVERVIEW ========== */
+  window.debouncedOverview = debounce(function () {
+    renderOverview();
+  }, 250);
+
   window.renderOverview = function () {
     const D = window.CLUB;
     const posFilter = document.getElementById("overviewPosFilter").value;
@@ -648,9 +709,12 @@
     const tbody = document.querySelector("#rosterTable tbody");
     tbody.innerHTML = list
       .map(
-        (a) => `
-      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${a.id}')" onkeydown="if(event.key==='Enter')selectAthlete('${a.id}')">
-        <td><strong>${esc(a.name)}</strong></td>
+        (a) => {
+          const isTested = coreFields.some((k) => a[k] !== null);
+          const rowCls = isTested ? "clickable" : "clickable untested-row";
+          return `
+      <tr class="${rowCls}" tabindex="0" role="button" onclick="selectAthlete('${a.id}')" onkeydown="if(event.key==='Enter')selectAthlete('${a.id}')">
+        <td><strong>${esc(a.name)}</strong>${!isTested ? ' <span class="untested-badge">Untested</span>' : ""}</td>
         <td>${esc(a.position) || "—"}</td>
         <td><span class="group-tag group-${a.group.replace(/\s/g, "")}">${esc(a.group)}</span></td>
         ${tdNum(a.height, 1)}
@@ -664,15 +728,23 @@
         <td class="num">${fmtZ(a.zMB)}</td>
         ${overallGradeCell(a.overallGrade)}
       </tr>
-    `,
+    `;
+        },
       )
       .join("");
   };
 
   window.selectAthlete = function (id) {
+    const a = window.CLUB.athletes.find(function (x) { return x.id === id; });
+    if (!a) {
+      showToast("Athlete not found — data may have changed.", "warn");
+      renderOverview();
+      return;
+    }
     document.getElementById("athleteSelect").value = id;
     showTab("profiles");
     renderProfile();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   /* ========== ATHLETE PROFILE ========== */
@@ -702,7 +774,7 @@
           <div class="profile-meta">
             <span class="meta-item"><strong>Position:</strong> ${esc(a.position) || "N/A"}</span>
             <span class="meta-item"><strong>Group:</strong> <span class="group-tag group-${a.group.replace(/\s/g, "")}">${a.group}</span></span>
-            <span class="meta-item"><strong>Height:</strong> ${a.height ? Math.floor(a.height / 12) + "'" + (a.height % 12 === Math.round(a.height % 12) ? Math.round(a.height % 12) : (a.height % 12).toFixed(1)) + '"' + " (" + a.height + " in)" : "N/A"}</span>
+            <span class="meta-item"><strong>Height:</strong> ${a.height ? fmtHeight(a.height) + " (" + a.height + " in)" : "N/A"}</span>
             <span class="meta-item"><strong>Weight:</strong> ${a.weight ? a.weight + " lb (" + a.massKg + " kg)" : "N/A"}</span>
             <span class="meta-item"><strong>ID:</strong> ${a.id}</span>
           </div>
@@ -721,7 +793,7 @@
 
       <div class="profile-section-title">Explosiveness</div>
       <div class="metric-grid">
-        ${metricCard("Med Ball Throw", a.medball, "in", a.medball ? Math.floor(a.medball / 12) + "' " + (a.medball % 12) + '"' : null, a.grades.medball)}
+        ${metricCard("Med Ball Throw", a.medball, "in", a.medball ? fmtHeight(a.medball) : null, a.grades.medball)}
         ${metricCard("MB Relative", a.mbRel, "in/lb", null, a.grades.mbRel)}
         ${metricCard("Vertical Jump", a.vert, "in", a.vertCm ? a.vertCm + " cm" : null, a.grades.vert)}
         ${metricCard("Broad Jump", a.broad, "in", a.broadCm ? a.broadCm + " cm" : null, a.grades.broad)}
@@ -837,6 +909,10 @@
     const D = window.CLUB;
     const canvas = document.getElementById("profileRadar");
     if (!canvas) return;
+    if (typeof Chart === "undefined") {
+      canvas.parentElement.innerHTML = '<p class="placeholder-text">Charts unavailable (Chart.js failed to load)</p>';
+      return;
+    }
     if (profileChartInstance) {
       profileChartInstance.destroy();
       profileChartInstance = null;
@@ -930,9 +1006,13 @@
   window.renderLeaderboards = function () {
     const D = window.CLUB;
     const metric = document.getElementById("lbMetric").value;
+    const posFilter = document.getElementById("lbPosFilter").value;
+    const grpFilter = document.getElementById("lbGroupFilter").value;
 
     const entries = [];
     for (const a of D.athletes) {
+      if (posFilter !== "all" && a.position !== posFilter) continue;
+      if (grpFilter !== "all" && a.group !== grpFilter) continue;
       const val = a[metric];
       if (val !== null && val !== undefined) {
         entries.push({
@@ -967,6 +1047,10 @@
       lbChartInstance = null;
     }
     const canvas = document.getElementById("lbChart");
+    if (typeof Chart === "undefined") {
+      canvas.parentElement.innerHTML = '<p class="placeholder-text">Charts unavailable (Chart.js failed to load)</p>';
+      return;
+    }
     const colors = top.map((_, i) =>
       i === 0
         ? "#a78bfa"
@@ -1052,7 +1136,7 @@
     tbody.innerHTML = sprinters
       .map(
         (a) => `
-      <tr>
+      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${a.id}')" onkeydown="if(event.key==='Enter')selectAthlete('${a.id}')">
         <td><strong>${esc(a.name)}</strong></td>
         <td>${esc(a.position) || "—"}</td>
         ${tdNum(a.massKg, 1)}
@@ -1387,7 +1471,7 @@
         } else if (e.test === "Med Ball") {
           result =
             e.medball != null
-              ? `MB: ${e.medball} in (${Math.floor(e.medball / 12)}' ${e.medball % 12}")`
+              ? `MB: ${e.medball} in (${fmtHeight(e.medball)})`
               : "—";
         }
 
@@ -1396,7 +1480,7 @@
         <td><strong>${esc(e.name)}</strong></td>
         <td><span class="test-type-badge test-${(e.test || "Unknown").replace(/\s/g, "")}">${esc(e.test) || "Unknown"}</span></td>
         <td>${result}</td>
-        <td>${e.location || ""}</td>
+        <td>${esc(e.location) || ""}</td>
       </tr>`;
       })
       .join("");
@@ -1419,22 +1503,22 @@
       <div class="plan-day-card">
         <div class="plan-day-header">
           <span class="plan-day-num">Day ${day.day}</span>
-          <span class="plan-day-label">${day.label}</span>
-          <span class="plan-day-focus">${day.focus}</span>
+          <span class="plan-day-label">${esc(day.label)}</span>
+          <span class="plan-day-focus">${esc(day.focus)}</span>
         </div>
         <div class="plan-day-body">
           <div class="plan-section">
             <strong>Tests:</strong>
-            <ul>${day.tests.map((t) => `<li>${t}</li>`).join("")}</ul>
+            <ul>${(day.tests || []).map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
           </div>
           <div class="plan-section">
-            <strong>Equipment:</strong> ${day.equipment}
+            <strong>Equipment:</strong> ${esc(day.equipment)}
           </div>
           <div class="plan-section">
-            <strong>Warm-Up Protocol:</strong> ${day.warm_up}
+            <strong>Warm-Up Protocol:</strong> ${esc(day.warm_up)}
           </div>
           <div class="plan-section plan-notes">
-            <strong>Notes:</strong> ${day.notes}
+            <strong>Notes:</strong> ${esc(day.notes)}
           </div>
         </div>
       </div>
@@ -1532,14 +1616,16 @@
         ? aVal.localeCompare(bVal)
         : bVal.localeCompare(aVal);
     });
-    rows.forEach((r) => tbody.appendChild(r));
+    const frag = document.createDocumentFragment();
+    rows.forEach((r) => frag.appendChild(r));
+    tbody.appendChild(frag);
   }
 
   /* ========== PRINT ========== */
   window.printProfile = function () {
     const id = document.getElementById("athleteSelect").value;
     if (!id) {
-      alert("Select an athlete first.");
+      showToast("Select an athlete first.", "warn");
       return;
     }
     document
@@ -1675,6 +1761,11 @@
     if (cmpChartInstance) {
       cmpChartInstance.destroy();
       cmpChartInstance = null;
+    }
+    if (typeof Chart === "undefined") {
+      document.getElementById("cmpRadar").parentElement.innerHTML = '<p class="placeholder-text">Charts unavailable (Chart.js failed to load)</p>';
+      container.innerHTML = html;
+      return;
     }
     const radarKeys = [
       "bench",
@@ -1872,32 +1963,14 @@
         html +=
           '<div><strong style="font-size:.75rem;color:var(--text-muted);text-transform:uppercase">⚠️ Weakest Areas</strong>';
         for (const m of weakest) {
-          const tierLabel =
-            m.avg >= 4.5
-              ? "Elite"
-              : m.avg >= 3.5
-                ? "Excellent"
-                : m.avg >= 2.5
-                  ? "Good"
-                  : m.avg >= 1.5
-                    ? "Average"
-                    : "Below Avg";
+          const tierLabel = tierLabelFromAvg(m.avg);
           html += `<div class="grp-top-athlete"><strong>${m.label}</strong><span style="margin-left:auto;font-family:var(--mono);font-size:.78rem">${m.avg.toFixed(1)}/5 (${tierLabel})</span></div>`;
         }
         html += "</div>";
         html +=
           '<div><strong style="font-size:.75rem;color:var(--text-muted);text-transform:uppercase">💪 Strongest Areas</strong>';
         for (const m of strongest) {
-          const tierLabel =
-            m.avg >= 4.5
-              ? "Elite"
-              : m.avg >= 3.5
-                ? "Excellent"
-                : m.avg >= 2.5
-                  ? "Good"
-                  : m.avg >= 1.5
-                    ? "Average"
-                    : "Below Avg";
+          const tierLabel = tierLabelFromAvg(m.avg);
           html += `<div class="grp-top-athlete"><strong>${m.label}</strong><span style="margin-left:auto;font-family:var(--mono);font-size:.78rem">${m.avg.toFixed(1)}/5 (${tierLabel})</span></div>`;
         }
         html += "</div></div>";
@@ -1978,7 +2051,7 @@
     link.href = URL.createObjectURL(blob);
     link.download = "bc_fitness_club_data.csv";
     link.click();
-    URL.revokeObjectURL(link.href);
+    setTimeout(function () { URL.revokeObjectURL(link.href); }, 10000);
   };
 
   /* ========== SNAPSHOT MANAGEMENT ========== */
@@ -2061,20 +2134,20 @@
     safeLSSet("lc_snapshots", JSON.stringify(snapshots));
     refreshSnapshotList();
     updateDataStatus();
-    alert('Snapshot "' + name + '" saved!');
+    showToast('Snapshot "' + name + '" saved!', "success");
   };
 
   window.loadSnapshot = function () {
     const sel = document.getElementById("snapshotSelect");
     const name = sel.value;
     if (!name) {
-      alert("Select a snapshot to load.");
+      showToast("Select a snapshot to load.", "warn");
       return;
     }
     const snapshots = JSON.parse(localStorage.getItem("lc_snapshots") || "[]");
     const snap = snapshots.find((s) => s.name === name);
     if (!snap) {
-      alert("Snapshot not found.");
+      showToast("Snapshot not found.", "error");
       return;
     }
     if (
@@ -2088,14 +2161,14 @@
     window.CLUB = window._processData(JSON.parse(JSON.stringify(snap.data)));
     reRenderAll();
     updateDataStatus();
-    alert('Snapshot "' + name + '" loaded!');
+    showToast('Snapshot "' + name + '" loaded!', "success");
   };
 
   window.deleteSnapshot = function () {
     const sel = document.getElementById("snapshotSelect");
     const name = sel.value;
     if (!name) {
-      alert("Select a snapshot to delete.");
+      showToast("Select a snapshot to delete.", "warn");
       return;
     }
     if (!confirm('Delete snapshot "' + name + '"?')) return;
@@ -2148,8 +2221,10 @@
     // Repopulate
     D.athletes
       .slice()
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .forEach((a) => {
+      .sort(function (a, b) {
+        return a.name.localeCompare(b.name);
+      })
+      .forEach(function (a) {
         const label = `${a.name}${a.position ? " (" + a.position + ")" : ""}`;
         athSel.add(new Option(label, a.id));
         scFilt.add(new Option(label, a.id));
@@ -2162,9 +2237,32 @@
     cmpSelects.forEach((sel, i) => (sel.value = prevCmp[i]));
   }
 
+  function refreshPositionFilter() {
+    const D = window.CLUB;
+    const selectors = [
+      document.getElementById("overviewPosFilter"),
+      document.getElementById("lbPosFilter"),
+    ];
+    for (const posSel of selectors) {
+      if (!posSel) continue;
+      const prev = posSel.value;
+      while (posSel.options.length > 1) posSel.remove(1);
+      D.positions.forEach(function (p) {
+        const o = document.createElement("option");
+        o.value = p;
+        o.textContent = p;
+        posSel.appendChild(o);
+      });
+      posSel.value = prev;
+    }
+  }
+
   function reRenderAll() {
     // Refresh athlete dropdowns (names/positions may have changed)
     refreshAthleteDropdowns();
+
+    // Refresh position filter dropdown
+    refreshPositionFilter();
 
     // Mark all tabs dirty; only render the currently active one
     markTabsDirty();
@@ -2478,11 +2576,13 @@
     if (!container) return;
     const t = document.createElement("div");
     t.className = "toast toast-" + type;
-    t.textContent = msg;
+    t.innerHTML = '<span>' + esc(msg) + '</span><button class="toast-dismiss" aria-label="Dismiss">&times;</button>';
+    t.querySelector(".toast-dismiss").addEventListener("click", function () { t.remove(); });
     container.appendChild(t);
+    const dur = type === "error" ? 6000 : 3200;
     setTimeout(function () {
       t.remove();
-    }, 3200);
+    }, dur);
   }
 
   /* ---------- Edit Panel helpers ---------- */
@@ -2491,11 +2591,7 @@
     const sel = document.getElementById("editAthleteSelect");
     if (!sel) return;
     sel.innerHTML = "";
-    D.athletes
-      .slice()
-      .sort(function (a, b) {
-        return a.name.localeCompare(b.name);
-      })
+    sortedAthletes()
       .forEach(function (a) {
         const o = document.createElement("option");
         o.value = a.id;
@@ -2735,9 +2831,7 @@
 
   window.editPanelPrev = function () {
     const D = window.CLUB;
-    const sorted = D.athletes.slice().sort(function (a, b) {
-      return a.name.localeCompare(b.name);
-    });
+    const sorted = sortedAthletes();
     if (sorted.length === 0) return;
     let idx = sorted.findIndex(function (a) {
       return a.id === editingAthleteId;
@@ -2748,9 +2842,7 @@
 
   window.editPanelNext = function () {
     const D = window.CLUB;
-    const sorted = D.athletes.slice().sort(function (a, b) {
-      return a.name.localeCompare(b.name);
-    });
+    const sorted = sortedAthletes();
     if (sorted.length === 0) return;
     let idx = sorted.findIndex(function (a) {
       return a.id === editingAthleteId;
@@ -2872,6 +2964,23 @@
       }),
     };
 
+    /* Include non-athlete data for full round-trip */
+    if (D.testingLog && D.testingLog.length > 0) {
+      exportData.testing_log = D.testingLog.map(function (e) {
+        return { date: e.date, athlete_id: e.athleteId, name: e.name, test: e.test,
+          split_020: e.sprint020, split_2030: e.sprint2030, split_3040: e.sprint3040,
+          location: e.location, vert: e.vert, broad: e.broad,
+          bench: e.bench, squat: e.squat, medball: e.medball };
+      });
+    }
+    if (D.testingWeekPlan && D.testingWeekPlan.length > 0) {
+      exportData.testing_week_plan = D.testingWeekPlan;
+    }
+    if (window._rawDataCache) {
+      if (window._rawDataCache.meta) exportData.meta = window._rawDataCache.meta;
+      if (window._rawDataCache.constants) exportData.constants = window._rawDataCache.constants;
+    }
+
     const json = JSON.stringify(exportData, null, 2);
     const blob = new Blob([json], { type: "application/json" });
     const link = document.createElement("a");
@@ -2879,7 +2988,7 @@
     link.download =
       "bc_fitness_club_data_" + new Date().toISOString().slice(0, 10) + ".json";
     link.click();
-    URL.revokeObjectURL(link.href);
+    setTimeout(function () { URL.revokeObjectURL(link.href); }, 10000);
     showToast("JSON exported — " + D.athletes.length + " athletes", "success");
   };
 
@@ -2901,6 +3010,21 @@
         }
         if (athletes.length === 0) {
           throw new Error("File contains 0 athletes.");
+        }
+
+        /* --- Validate athletes --- */
+        const importWarnings = [];
+        const seenIds = new Set();
+        for (let i = 0; i < athletes.length; i++) {
+          const a = athletes[i];
+          if (!a.id) importWarnings.push("Athlete #" + (i + 1) + " missing id.");
+          if (!a.name) importWarnings.push("Athlete #" + (i + 1) + " missing name.");
+          if (a.id && seenIds.has(a.id)) importWarnings.push("Duplicate id: " + a.id);
+          if (a.id) seenIds.add(a.id);
+        }
+        if (importWarnings.length > 0) {
+          const proceed = confirm("Import warnings:\n• " + importWarnings.join("\n• ") + "\n\nContinue anyway?");
+          if (!proceed) { inputEl.value = ""; return; }
         }
 
         /* --- Check if this is an exported JSON (has source field) or raw format --- */
