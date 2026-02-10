@@ -2801,6 +2801,7 @@
           sprint_020: a.sprint020,
           sprint_2030: a.sprint2030,
           sprint_3040: a.sprint3040,
+          sprint_notes: a.sprintNotes || null,
           forty: a.forty,
           relBench: a.relBench,
           relSquat: a.relSquat,
