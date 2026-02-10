@@ -4604,6 +4604,26 @@
     added.push(newAthlete);
     safeLSSet("lc_added", JSON.stringify(added));
 
+    // Create blank test history entries for all existing test dates
+    var h = getTestHistory();
+    var existingDates = {}; // "date|label" -> true
+    var allIds = Object.keys(h);
+    for (var hi = 0; hi < allIds.length; hi++) {
+      for (var hj = 0; hj < h[allIds[hi]].length; hj++) {
+        var ent = h[allIds[hi]][hj];
+        existingDates[ent.date + '|' + ent.label] = true;
+      }
+    }
+    var dateKeys = Object.keys(existingDates);
+    if (dateKeys.length > 0) {
+      if (!h[id]) h[id] = [];
+      for (var dk = 0; dk < dateKeys.length; dk++) {
+        var parts = dateKeys[dk].split('|');
+        h[id].push({ date: parts[0], label: parts.slice(1).join('|'), values: {} });
+      }
+      setTestHistory(h);
+    }
+
     // Rebuild & re-render
     rebuildFromStorage();
     reRenderAll();
@@ -4615,7 +4635,8 @@
     renderProfile();
     openEditPanel(id);
 
-    showToast("Added " + name.trim() + " (" + id + ")", "success");
+    var testMsg = dateKeys.length > 0 ? " — " + dateKeys.length + " test date(s) pre-populated" : "";
+    showToast("Added " + name.trim() + " (" + id + ")" + testMsg, "success");
   };
 
   /* ========== DELETE ATHLETE ========== */
