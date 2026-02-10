@@ -10,6 +10,10 @@
 
   let lbChartInstance = null;
   let profileChartInstance = null;
+  let profilePctChartInstance = null;
+  let profileSprintChartInstance = null;
+  let profileDonutInstance = null;
+  let profileQuadrantInstance = null;
 
   /* ---------- HTML Escaping (XSS protection) ---------- */
   const ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
@@ -569,6 +573,10 @@
     if (prevTab) {
       const prevId = prevTab.dataset.tab;
       if (prevId === "profiles" && profileChartInstance) { profileChartInstance.destroy(); profileChartInstance = null; }
+      if (prevId === "profiles" && profilePctChartInstance) { profilePctChartInstance.destroy(); profilePctChartInstance = null; }
+      if (prevId === "profiles" && profileSprintChartInstance) { profileSprintChartInstance.destroy(); profileSprintChartInstance = null; }
+      if (prevId === "profiles" && profileDonutInstance) { profileDonutInstance.destroy(); profileDonutInstance = null; }
+      if (prevId === "profiles" && profileQuadrantInstance) { profileQuadrantInstance.destroy(); profileQuadrantInstance = null; }
       if (prevId === "leaderboards" && lbChartInstance) { lbChartInstance.destroy(); lbChartInstance = null; }
       if (prevId === "compare" && cmpChartInstance) { cmpChartInstance.destroy(); cmpChartInstance = null; }
     }
@@ -913,10 +921,28 @@
 
       <div class="profile-section-title">Radar</div>
       <div class="profile-chart-wrap"><canvas id="profileRadar"></canvas></div>
+
+      <div class="profile-section-title">Scorecard Percentiles</div>
+      <div class="profile-chart-wrap profile-chart-wide"><canvas id="profilePercentileChart"></canvas></div>
+
+      <div class="profile-section-title">Sprint Velocity Profile</div>
+      <div class="profile-chart-wrap"><canvas id="profileSprintChart"></canvas></div>
+
+      <div class="profile-section-title">Grade Distribution</div>
+      <div class="profile-chart-wrap profile-chart-sm"><canvas id="profileGradeDonut"></canvas></div>
+
+      <div class="profile-section-title">Strength vs Speed</div>
+      <div class="profile-chart-wrap"><canvas id="profileQuadrant"></canvas></div>
+
+      ${buildTeamRankingSection(a)}
     </div>`;
 
     container.innerHTML = html;
     buildProfileRadar(a);
+    buildPercentileChart(a);
+    buildSprintVelocityChart(a);
+    buildGradeDonut(a);
+    buildStrengthSpeedChart(a);
   };
 
   function metricCard(label, val, unit, sub, grade) {
@@ -1055,6 +1081,312 @@
         },
       },
     });
+  }
+
+  /* ========== PERCENTILE HORIZONTAL BAR CHART ========== */
+  function buildPercentileChart(a) {
+    const D = window.CLUB;
+    const canvas = document.getElementById("profilePercentileChart");
+    if (!canvas || typeof Chart === "undefined") return;
+    if (profilePctChartInstance) { profilePctChartInstance.destroy(); profilePctChartInstance = null; }
+
+    const entries = Object.entries(a.scorecard);
+    if (entries.length === 0) { canvas.parentElement.innerHTML = '<p class="placeholder-text">No scorecard data available.</p>'; return; }
+
+    const labels = entries.map(([k]) => { const m = D.scorecardMetrics.find(m => m.key === k); return m ? m.label : k; });
+    const values = entries.map(([, sc]) => sc.percentile);
+    const colors = values.map(v => v >= 80 ? '#a78bfa' : v >= 60 ? '#4ade80' : v >= 40 ? '#60a5fa' : v >= 20 ? '#facc15' : '#f87171');
+
+    profilePctChartInstance = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          backgroundColor: colors.map(c => c + '33'),
+          borderColor: colors,
+          borderWidth: 1.5,
+          borderRadius: 4,
+          barPercentage: 0.7,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,.06)' }, ticks: { color: '#8b90a0', callback: v => v + '%' } },
+          y: { grid: { display: false }, ticks: { color: '#e4e6ed', font: { size: 11 } } }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const key = entries[ctx.dataIndex][0];
+                const sc = a.scorecard[key];
+                const val = sc ? (typeof sc.value === 'number' ? (Number.isInteger(sc.value) ? sc.value : sc.value.toFixed(2)) : sc.value) : '';
+                return ctx.raw + 'th percentile — Value: ' + val;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  /* ========== SPRINT VELOCITY LINE CHART ========== */
+  function buildSprintVelocityChart(a) {
+    const D = window.CLUB;
+    const canvas = document.getElementById("profileSprintChart");
+    if (!canvas || typeof Chart === "undefined") return;
+    if (profileSprintChartInstance) { profileSprintChartInstance.destroy(); profileSprintChartInstance = null; }
+
+    if (!a.v1 && !a.v2 && !a.v3) { canvas.parentElement.innerHTML = '<p class="placeholder-text">No sprint data available.</p>'; return; }
+
+    const phases = ['0–20 yd', '20–30 yd', '30–40 yd'];
+    const athleteVels = [a.v1, a.v2, a.v3];
+
+    // Compute team averages
+    const teamAvgs = [null, null, null];
+    let count = [0, 0, 0];
+    for (const t of D.athletes) {
+      if (t.v1 !== null) { teamAvgs[0] = (teamAvgs[0] || 0) + t.v1; count[0]++; }
+      if (t.v2 !== null) { teamAvgs[1] = (teamAvgs[1] || 0) + t.v2; count[1]++; }
+      if (t.v3 !== null) { teamAvgs[2] = (teamAvgs[2] || 0) + t.v3; count[2]++; }
+    }
+    for (let i = 0; i < 3; i++) { if (count[i] > 0) teamAvgs[i] = +(teamAvgs[i] / count[i]).toFixed(2); }
+
+    profileSprintChartInstance = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: phases,
+        datasets: [
+          {
+            label: a.name,
+            data: athleteVels,
+            borderColor: '#a78bfa',
+            backgroundColor: 'rgba(167,139,250,.15)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 6,
+            pointBackgroundColor: '#a78bfa',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+          },
+          {
+            label: 'Team Avg',
+            data: teamAvgs,
+            borderColor: '#60a5fa',
+            backgroundColor: 'rgba(96,165,250,.08)',
+            fill: false,
+            borderDash: [6, 3],
+            tension: 0.3,
+            pointRadius: 4,
+            pointBackgroundColor: '#60a5fa',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+          y: {
+            title: { display: true, text: 'Velocity (m/s)', color: '#8b90a0' },
+            grid: { color: 'rgba(255,255,255,.06)' },
+            ticks: { color: '#8b90a0' }
+          },
+          x: { grid: { color: 'rgba(255,255,255,.06)' }, ticks: { color: '#8b90a0' } }
+        },
+        plugins: {
+          legend: { labels: { color: '#e4e6ed', usePointStyle: true, pointStyle: 'circle' } },
+          tooltip: {
+            callbacks: {
+              label: ctx => ctx.dataset.label + ': ' + (ctx.raw !== null ? ctx.raw + ' m/s' : 'N/A')
+            }
+          }
+        }
+      }
+    });
+  }
+
+  /* ========== GRADE DISTRIBUTION DONUT ========== */
+  function buildGradeDonut(a) {
+    const canvas = document.getElementById("profileGradeDonut");
+    if (!canvas || typeof Chart === "undefined") return;
+    if (profileDonutInstance) { profileDonutInstance.destroy(); profileDonutInstance = null; }
+
+    if (!a.grades || Object.keys(a.grades).length === 0) {
+      canvas.parentElement.innerHTML = '<p class="placeholder-text">No graded metrics available.</p>';
+      return;
+    }
+
+    const tierCounts = { elite: 0, excellent: 0, good: 0, average: 0, below: 0 };
+    const tierLabels = { elite: 'Elite', excellent: 'Excellent', good: 'Good', average: 'Average', below: 'Below Avg' };
+    const tierColors = { elite: '#a78bfa', excellent: '#4ade80', good: '#60a5fa', average: '#facc15', below: '#f87171' };
+
+    for (const g of Object.values(a.grades)) {
+      if (g && g.tier && tierCounts.hasOwnProperty(g.tier)) tierCounts[g.tier]++;
+    }
+
+    const activeTiers = Object.keys(tierCounts).filter(t => tierCounts[t] > 0);
+    if (activeTiers.length === 0) { canvas.parentElement.innerHTML = '<p class="placeholder-text">No graded metrics available.</p>'; return; }
+
+    const totalGraded = activeTiers.reduce((s, t) => s + tierCounts[t], 0);
+
+    profileDonutInstance = new Chart(canvas, {
+      type: 'doughnut',
+      data: {
+        labels: activeTiers.map(t => tierLabels[t]),
+        datasets: [{
+          data: activeTiers.map(t => tierCounts[t]),
+          backgroundColor: activeTiers.map(t => tierColors[t] + '44'),
+          borderColor: activeTiers.map(t => tierColors[t]),
+          borderWidth: 2,
+          hoverOffset: 8,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        cutout: '55%',
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#e4e6ed', padding: 16, usePointStyle: true, pointStyle: 'rectRounded' } },
+          tooltip: {
+            callbacks: {
+              label: ctx => ctx.label + ': ' + ctx.raw + ' metric' + (ctx.raw !== 1 ? 's' : '') + ' (' + Math.round(ctx.raw / totalGraded * 100) + '%)'
+            }
+          }
+        }
+      }
+    });
+  }
+
+  /* ========== STRENGTH vs SPEED SCATTER CHART ========== */
+  function buildStrengthSpeedChart(a) {
+    const D = window.CLUB;
+    const canvas = document.getElementById("profileQuadrant");
+    if (!canvas || typeof Chart === "undefined") return;
+    if (profileQuadrantInstance) { profileQuadrantInstance.destroy(); profileQuadrantInstance = null; }
+
+    // Use relative squat as "strength" and 40 time (inverted for speed) as "speed"
+    if (a.relSquat === null || a.forty === null) {
+      canvas.parentElement.innerHTML = '<p class="placeholder-text">Needs squat and 40-yd data.</p>';
+      return;
+    }
+
+    const teamPoints = [];
+    let sumStr = 0, sumSpd = 0, n = 0;
+    for (const t of D.athletes) {
+      if (t.relSquat !== null && t.forty !== null) {
+        teamPoints.push({ x: t.relSquat, y: t.forty, name: t.name, id: t.id });
+        sumStr += t.relSquat; sumSpd += t.forty; n++;
+      }
+    }
+    if (n === 0) return;
+    const avgStr = sumStr / n;
+    const avgSpd = sumSpd / n;
+
+    const others = teamPoints.filter(p => p.id !== a.id);
+
+    profileQuadrantInstance = new Chart(canvas, {
+      type: 'scatter',
+      data: {
+        datasets: [
+          {
+            label: 'Teammates',
+            data: others.map(p => ({ x: p.x, y: p.y })),
+            backgroundColor: 'rgba(96,165,250,.35)',
+            borderColor: '#60a5fa',
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            _names: others.map(p => p.name),
+          },
+          {
+            label: a.name,
+            data: [{ x: a.relSquat, y: a.forty }],
+            backgroundColor: '#a78bfa',
+            borderColor: '#fff',
+            pointRadius: 9,
+            pointBorderWidth: 2,
+            pointHoverRadius: 11,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+          x: {
+            title: { display: true, text: 'Relative Squat (xBW) →  Stronger', color: '#8b90a0' },
+            grid: { color: 'rgba(255,255,255,.06)' },
+            ticks: { color: '#8b90a0' }
+          },
+          y: {
+            reverse: true,
+            title: { display: true, text: '40-yd Dash (s) ↑  Faster', color: '#8b90a0' },
+            grid: { color: 'rgba(255,255,255,.06)' },
+            ticks: { color: '#8b90a0' }
+          }
+        },
+        plugins: {
+          legend: { labels: { color: '#e4e6ed', usePointStyle: true, pointStyle: 'circle' } },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const ds = ctx.dataset;
+                const name = ds._names ? ds._names[ctx.dataIndex] : a.name;
+                return name + ': Squat ' + ctx.raw.x + 'xBW, 40yd ' + ctx.raw.y + 's';
+              }
+            }
+          },
+          annotation: typeof Chart.registry?.plugins?.get('annotation') !== 'undefined' ? {
+            annotations: {
+              avgStr: { type: 'line', xMin: avgStr, xMax: avgStr, borderColor: 'rgba(255,255,255,.15)', borderDash: [4,4] },
+              avgSpd: { type: 'line', yMin: avgSpd, yMax: avgSpd, borderColor: 'rgba(255,255,255,.15)', borderDash: [4,4] },
+            }
+          } : undefined
+        }
+      }
+    });
+  }
+
+  /* ========== TEAM RANKING BARS ========== */
+  function buildTeamRankingSection(a) {
+    const D = window.CLUB;
+    const metrics = [
+      { key: 'bench', label: 'Bench 1RM', unit: 'lb', inv: false },
+      { key: 'squat', label: 'Squat 1RM', unit: 'lb', inv: false },
+      { key: 'medball', label: 'Med Ball', unit: 'in', inv: false },
+      { key: 'vert', label: 'Vertical', unit: 'in', inv: false },
+      { key: 'broad', label: 'Broad Jump', unit: 'in', inv: false },
+      { key: 'forty', label: '40-yd Dash', unit: 's', inv: true },
+      { key: 'vMax', label: 'Max Velocity', unit: 'm/s', inv: false },
+      { key: 'peakPower', label: 'Peak Power', unit: 'W', inv: false },
+    ];
+
+    let rows = '';
+    for (const m of metrics) {
+      if (a[m.key] === null || a[m.key] === undefined) continue;
+      const vals = D.athletes.filter(t => t[m.key] !== null).map(t => t[m.key]);
+      if (vals.length === 0) continue;
+      const sorted = m.inv ? [...vals].sort((a, b) => a - b) : [...vals].sort((a, b) => b - a);
+      const rank = sorted.indexOf(a[m.key]) + 1;
+      const total = sorted.length;
+      const pct = Math.round(((total - rank) / (total - 1 || 1)) * 100);
+      const col = pct >= 75 ? 'var(--purple)' : pct >= 50 ? 'var(--green)' : pct >= 25 ? 'var(--blue)' : 'var(--yellow)';
+      rows += `<div class="rank-row">
+        <span class="rank-label">${m.label}</span>
+        <span class="rank-value">${a[m.key]} ${m.unit}</span>
+        <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${pct}%;background:${col}"></div></div>
+        <span class="rank-pos">#${rank}<small>/${total}</small></span>
+      </div>`;
+    }
+
+    if (!rows) return '';
+    return `<div class="profile-section-title">Team Rankings</div><div class="team-ranking-grid">${rows}</div>`;
   }
 
   /* ========== TEST HISTORY — PROFILE PROGRESS SECTION ========== */
