@@ -1,0 +1,2832 @@
+/* ===================================================
+   app.js — Lifting Club Dashboard
+   Renders all tabs: Overview, Profiles, Leaderboards,
+   Sprint Analysis, Strength & Power, Scorecard,
+   Benchmarks, Testing Log, Testing Week Plan.
+   =================================================== */
+
+(function () {
+  "use strict";
+
+  let lbChartInstance = null;
+  let profileChartInstance = null;
+
+  /* ---------- Metric Descriptions (for tooltips) ---------- */
+  const METRIC_INFO = {
+    bench: {
+      name: "Bench Press 1RM",
+      unit: "lb",
+      measures: "Maximum upper-body pressing strength",
+      tellsYou:
+        "How much force an athlete can produce horizontally through the chest, shoulders, and triceps. Key for blocking and stiff-arms.",
+    },
+    squat: {
+      name: "Back Squat 1RM",
+      unit: "lb",
+      measures: "Maximum lower-body strength",
+      tellsYou:
+        "Overall leg drive capacity — foundational for sprinting, jumping, and changing direction.",
+    },
+    relBench: {
+      name: "Relative Bench",
+      unit: "xBW",
+      measures: "Bench press normalized to body weight",
+      tellsYou:
+        "Upper-body strength pound-for-pound. A 1.0+ xBW bench is a solid HS benchmark.",
+    },
+    relSquat: {
+      name: "Relative Squat",
+      unit: "xBW",
+      measures: "Squat normalized to body weight",
+      tellsYou:
+        "Lower-body strength pound-for-pound. Higher values correlate with faster sprint acceleration.",
+    },
+    medball: {
+      name: "Seated Med Ball Throw",
+      unit: "in",
+      measures: "Upper-body explosive power (10 lb ball)",
+      tellsYou:
+        "How quickly an athlete can generate and release upper-body force. Great predictor of hitting/throwing power.",
+    },
+    mbRel: {
+      name: "Med Ball Relative",
+      unit: "in/lb",
+      measures: "Med ball throw normalized to body weight",
+      tellsYou:
+        "Explosive power efficiency — lighter athletes with big throws score high here.",
+    },
+    vert: {
+      name: "Vertical Jump",
+      unit: "in",
+      measures: "Lower-body explosive power (counter-movement)",
+      tellsYou:
+        "Ability to generate force vertically in a short time. Correlates with acceleration and change of direction.",
+    },
+    broad: {
+      name: "Broad Jump",
+      unit: "in",
+      measures: "Horizontal explosive power",
+      tellsYou:
+        "Combines leg strength and coordination for horizontal displacement. Good general athleticism indicator.",
+    },
+    forty: {
+      name: "40-Yard Dash",
+      unit: "s",
+      measures: "Linear sprint speed over 40 yards",
+      tellsYou:
+        "Overall speed. Lower is better. Combines acceleration (0-20) and top-end speed (20-40).",
+    },
+    vMax: {
+      name: "Max Velocity",
+      unit: "m/s",
+      measures: "Highest velocity achieved across all splits",
+      tellsYou:
+        "The athlete's top speed. Important for breakaway plays and closing speed on defense.",
+    },
+    v10Max: {
+      name: "Best 10-yd Velocity",
+      unit: "m/s",
+      measures: "Highest velocity from a 10-yard segment (20-30 or 30-40)",
+      tellsYou:
+        "Top-end speed over a pure 10-yard window, without the acceleration bias of the first 20 yards.",
+    },
+    v1: {
+      name: "Velocity 0–20 yd",
+      unit: "m/s",
+      measures: "Average velocity over first 20 yards",
+      tellsYou:
+        "Acceleration-phase speed. Includes reaction time and first-step quickness.",
+    },
+    v2: {
+      name: "Velocity 20–30 yd",
+      unit: "m/s",
+      measures: "Average velocity during transition phase",
+      tellsYou:
+        "Speed as the athlete transitions from acceleration to top speed.",
+    },
+    v3: {
+      name: "Velocity 30–40 yd",
+      unit: "m/s",
+      measures: "Average velocity during top-speed phase",
+      tellsYou:
+        "Ability to maintain or increase speed — flags speed endurance issues if slower than 20-30 split.",
+    },
+    a1: {
+      name: "Acceleration (0–20)",
+      unit: "m/s\u00B2",
+      measures: "Rate of velocity change from standstill",
+      tellsYou:
+        "How quickly the athlete gets up to speed. Critical first-step quickness metric.",
+    },
+    a2: {
+      name: "Acceleration (20–30)",
+      unit: "m/s\u00B2",
+      measures: "Rate of velocity change in transition",
+      tellsYou: "Continued acceleration ability. Positive = still speeding up.",
+    },
+    a3: {
+      name: "Acceleration (30–40)",
+      unit: "m/s\u00B2",
+      measures: "Rate of velocity change at top speed",
+      tellsYou:
+        "Often near zero or negative. Negative means decelerating — flags speed endurance issues.",
+    },
+    F1: {
+      name: "Sprint Force (0–20)",
+      unit: "N",
+      measures:
+        "Average horizontal force during acceleration (mass \u00D7 acceleration)",
+      tellsYou:
+        "How much force the athlete applies to the ground during the drive phase. Bigger + faster athletes produce more.",
+    },
+    F2: {
+      name: "Sprint Force (20–30)",
+      unit: "N",
+      measures: "Average horizontal force in transition",
+      tellsYou:
+        "Force production during the transition phase. Should be lower than F1 as acceleration decreases.",
+    },
+    F3: {
+      name: "Sprint Force (30–40)",
+      unit: "N",
+      measures: "Average horizontal force at top speed",
+      tellsYou:
+        "May be negative if decelerating. Low or negative values flag mechanics or endurance issues.",
+    },
+    imp1: {
+      name: "Impulse (0–20)",
+      unit: "N\u00B7s",
+      measures: "Force \u00D7 time during acceleration phase",
+      tellsYou:
+        "Total force applied over time. Higher impulse = more momentum built up during acceleration.",
+    },
+    mom1: {
+      name: "Momentum (0–20)",
+      unit: "kg\u00B7m/s",
+      measures: "Mass \u00D7 velocity at end of 0-20 yd",
+      tellsYou:
+        "How hard the athlete is to stop at various points. Heavier + faster = more momentum.",
+    },
+    mom3: {
+      name: "Momentum (30–40)",
+      unit: "kg\u00B7m/s",
+      measures: "Mass \u00D7 velocity at end of sprint",
+      tellsYou:
+        'Peak momentum at the end of the sprint — the "freight train" factor.',
+    },
+    momMax: {
+      name: "Peak Momentum (best 10yd)",
+      unit: "kg\u00B7m/s",
+      measures: "Mass \u00D7 best 10-yard split velocity",
+      tellsYou:
+        'How much momentum the athlete carries at their top 10-yd speed. The "how hard are you to tackle" number. Higher = more force needed to stop them.',
+    },
+    pow1: {
+      name: "Sprint Power (0–20)",
+      unit: "W",
+      measures: "Force \u00D7 velocity during acceleration",
+      tellsYou:
+        "Mechanical power output during the drive phase. Combines strength and speed.",
+    },
+    pow2: {
+      name: "Sprint Power (20–30)",
+      unit: "W",
+      measures: "Force \u00D7 velocity in transition",
+      tellsYou: "Power output during transition phase.",
+    },
+    pow3: {
+      name: "Sprint Power (30–40)",
+      unit: "W",
+      measures: "Force \u00D7 velocity at top speed",
+      tellsYou: "Power output at top speed. May drop if decelerating.",
+    },
+    peakPower: {
+      name: "Sayers Peak Power",
+      unit: "W",
+      measures: "Estimated peak power from vertical jump and body mass",
+      tellsYou:
+        "Total lower-body power output. Validated formula (Sayers et al.) used in NFL Combine and college S&C.",
+    },
+    relPeakPower: {
+      name: "Relative Peak Power",
+      unit: "W/kg",
+      measures: "Peak power divided by body mass",
+      tellsYou:
+        "Power-to-weight ratio. Higher values mean more explosive per pound — important for speed positions.",
+    },
+    strengthUtil: {
+      name: "Strength Utilisation",
+      unit: "",
+      measures:
+        "Sprint force \u00F7 (squat force), i.e. F1 / (squat_kg \u00D7 g)",
+      tellsYou:
+        "What percentage of max strength is used during sprinting. Low values mean the athlete is strong but isn't applying it to running.",
+    },
+    zMB: {
+      name: "MB Z-Score",
+      unit: "",
+      measures: "Standard deviations from team mean",
+      tellsYou:
+        "How far above or below the team average. Positive = above average, negative = below.",
+    },
+    zBench: {
+      name: "Bench Z-Score",
+      unit: "",
+      measures: "Standard deviations from team mean",
+      tellsYou:
+        "Bench press ranking relative to the team. +1.0 = one standard deviation above average.",
+    },
+    zSquat: {
+      name: "Squat Z-Score",
+      unit: "",
+      measures: "Standard deviations from team mean",
+      tellsYou: "Squat ranking relative to the team.",
+    },
+    zVert: {
+      name: "Vert Z-Score",
+      unit: "",
+      measures: "Standard deviations from team mean",
+      tellsYou: "Vertical jump ranking relative to the team.",
+    },
+    zForty: {
+      name: "40-yd Z-Score",
+      unit: "",
+      measures:
+        "Standard deviations from team mean (inverted — higher = faster)",
+      tellsYou:
+        "Speed ranking relative to the team. Positive = faster than average.",
+    },
+    zF1: {
+      name: "Sprint Force Z-Score",
+      unit: "",
+      measures: "Standard deviations from team mean",
+      tellsYou: "Sprint force ranking relative to the team.",
+    },
+    zPeakPower: {
+      name: "Peak Power Z-Score",
+      unit: "",
+      measures: "Standard deviations from team mean",
+      tellsYou: "Peak power ranking relative to the team.",
+    },
+    explosiveUpper: {
+      name: "Explosive Upper Index",
+      unit: "",
+      measures: "0.6 \u00D7 z(MB_rel) + 0.4 \u00D7 z(Rel Bench)",
+      tellsYou:
+        "Composite score combining upper-body explosive power and strength. Higher = more explosive upper body.",
+    },
+    totalExplosive: {
+      name: "Total Explosive Index",
+      unit: "",
+      measures:
+        "0.45 \u00D7 ExpUpper + 0.30 \u00D7 z(PP) + 0.25 \u00D7 z(vMax)",
+      tellsYou:
+        "Overall explosiveness score combining upper-body power, lower-body power, and speed.",
+    },
+    height: {
+      name: "Height",
+      unit: "in",
+      measures: "Standing height",
+      tellsYou: "Affects leverage, reach, and position suitability.",
+    },
+    weight: {
+      name: "Body Weight",
+      unit: "lb",
+      measures: "Body mass",
+      tellsYou: "Affects force production, momentum, and position suitability.",
+    },
+    massKg: {
+      name: "Mass",
+      unit: "kg",
+      measures: "Body mass in metric",
+      tellsYou: "Used in physics calculations (force, momentum, power).",
+    },
+    sprint020: {
+      name: "0–20 yd Split",
+      unit: "s",
+      measures: "Time for first 20 yards from standstill",
+      tellsYou:
+        "Acceleration ability. Includes reaction/start. Lower is better.",
+    },
+    sprint2030: {
+      name: "20–30 yd Split",
+      unit: "s",
+      measures: "Time for 10 yards during transition",
+      tellsYou: "Transition from acceleration to top speed. Lower is better.",
+    },
+    sprint3040: {
+      name: "30–40 yd Split",
+      unit: "s",
+      measures: "Time for final 10 yards",
+      tellsYou:
+        "Top-end speed maintenance. If slower than 20-30 split, athlete is decelerating.",
+    },
+  };
+
+  function getTooltip(key) {
+    const m = METRIC_INFO[key];
+    if (!m) return key;
+    return m.name + (m.unit ? " (" + m.unit + ")" : "");
+  }
+  function getTooltipFull(key) {
+    const m = METRIC_INFO[key];
+    if (!m) return "";
+    return m.measures + ". " + m.tellsYou;
+  }
+
+  /* ---------- Boot ---------- */
+  document.addEventListener("club-data-ready", function () {
+    // Hide loading indicator
+    const loadingEl = document.getElementById("loadingIndicator");
+    if (loadingEl) loadingEl.style.display = "none";
+
+    const D = window.CLUB;
+    document.getElementById("exportDate").textContent = D.exportDate;
+
+    // Populate position filter
+    const posSel = document.getElementById("overviewPosFilter");
+    D.positions.forEach((p) => {
+      const o = document.createElement("option");
+      o.value = p;
+      o.textContent = p;
+      posSel.appendChild(o);
+    });
+
+    // Populate athlete selector + scorecard filter + comparison selects
+    const athSel = document.getElementById("athleteSelect");
+    const scFilt = document.getElementById("scorecardFilter");
+    const cmpSelects = [
+      document.getElementById("cmpA"),
+      document.getElementById("cmpB"),
+      document.getElementById("cmpC"),
+    ];
+    D.athletes
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach((a) => {
+        const o1 = document.createElement("option");
+        o1.value = a.id;
+        o1.textContent = `${a.name}${a.position ? " (" + a.position + ")" : ""}`;
+        athSel.appendChild(o1);
+
+        const o2 = document.createElement("option");
+        o2.value = a.id;
+        o2.textContent = `${a.name}${a.position ? " (" + a.position + ")" : ""}`;
+        scFilt.appendChild(o2);
+
+        for (const sel of cmpSelects) {
+          const o3 = document.createElement("option");
+          o3.value = a.id;
+          o3.textContent = `${a.name}${a.position ? " (" + a.position + ")" : ""}`;
+          sel.appendChild(o3);
+        }
+      });
+
+    // Populate snapshot selector
+    refreshSnapshotList();
+
+    // Render all tabs
+    renderOverview();
+    renderLeaderboards();
+    renderSprintAnalysis();
+    renderStrengthPower();
+    renderScorecard();
+    renderBenchmarks();
+    renderTestingLog();
+    renderTestingWeekPlan();
+    renderConstants();
+    renderGroupDashboard();
+    updateDataStatus();
+
+    // Sortable bindings
+    document.querySelectorAll(".data-table.sortable thead th").forEach((th) => {
+      th.addEventListener("click", function () {
+        const table = this.closest("table");
+        const col = this.dataset.sort;
+        if (!col) return;
+        handleSort(table, col, this);
+      });
+    });
+
+    // Keyboard arrow navigation for tabs
+    document.querySelector(".tabs").addEventListener("keydown", function (ev) {
+      const tabs = Array.from(this.querySelectorAll(".tab"));
+      const idx = tabs.indexOf(document.activeElement);
+      if (idx < 0) return;
+      let next = -1;
+      if (ev.key === "ArrowRight" || ev.key === "ArrowDown") {
+        next = (idx + 1) % tabs.length;
+      } else if (ev.key === "ArrowLeft" || ev.key === "ArrowUp") {
+        next = (idx - 1 + tabs.length) % tabs.length;
+      } else if (ev.key === "Home") {
+        next = 0;
+      } else if (ev.key === "End") {
+        next = tabs.length - 1;
+      }
+      if (next >= 0) {
+        ev.preventDefault();
+        tabs[next].focus();
+        tabs[next].click();
+      }
+    });
+  });
+
+  /* ========== TAB SWITCHING ========== */
+  window.showTab = function (tabId) {
+    document.querySelectorAll(".tab").forEach((t) => {
+      t.classList.toggle("active", t.dataset.tab === tabId);
+      t.setAttribute("aria-selected", t.dataset.tab === tabId);
+    });
+    document.querySelectorAll(".tab-panel").forEach((p) => {
+      p.classList.toggle("active", p.id === "tab-" + tabId);
+    });
+  };
+
+  /* ========== HELPERS ========== */
+  function fmt(v, decimals) {
+    if (v === null || v === undefined) return "—";
+    if (typeof decimals === "number") return v.toFixed(decimals);
+    return String(v);
+  }
+
+  function fmtZ(z) {
+    if (z === null || z === undefined) return '<span class="na">—</span>';
+    const cls = z > 0.5 ? "z-pos" : z < -0.5 ? "z-neg" : "z-avg";
+    return `<span class="${cls}">${z >= 0 ? "+" : ""}${z.toFixed(2)}</span>`;
+  }
+
+  function formatLogDate(dateStr) {
+    if (!dateStr) return "—";
+    const d = new Date(dateStr + "T00:00:00");
+    if (isNaN(d)) return dateStr;
+    return d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+
+  function tierBadge(tier) {
+    if (!tier) return "";
+    const labels = {
+      elite: "Elite",
+      strong: "Strong",
+      solid: "Solid",
+      competitive: "Competitive",
+      developing: "Developing",
+    };
+    return `<span class="tier-badge tier-${tier}">${labels[tier] || tier}</span>`;
+  }
+
+  function pctBarHTML(pct, colorVar) {
+    if (pct === null || pct === undefined) return "";
+    const col =
+      colorVar ||
+      (pct >= 75
+        ? "var(--green)"
+        : pct >= 50
+          ? "var(--blue)"
+          : pct >= 25
+            ? "var(--yellow)"
+            : "var(--red)");
+    return `<div class="pct-bar-wrap"><div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${pct}%;background:${col}"></div></div></div>`;
+  }
+
+  function tdNum(val, decimals) {
+    if (val === null || val === undefined) return '<td class="num na">—</td>';
+    return `<td class="num">${fmt(val, decimals)}</td>`;
+  }
+
+  function tdGraded(val, decimals, grade) {
+    if (val === null || val === undefined) return '<td class="num na">—</td>';
+    const v = typeof decimals === "number" ? val.toFixed(decimals) : val;
+    if (!grade) return `<td class="num">${v}</td>`;
+    return `<td class="num grade-text-${grade.tier}" title="${grade.label}">${v}</td>`;
+  }
+
+  function tdNumColored(val, decimals) {
+    if (val === null || val === undefined) return '<td class="num na">—</td>';
+    const v = typeof decimals === "number" ? val.toFixed(decimals) : val;
+    const cls = val < 0 ? "z-neg" : val > 0 ? "z-pos" : "";
+    return `<td class="num ${cls}">${v}</td>`;
+  }
+
+  function gradeBadge(grade) {
+    if (!grade) return "";
+    return `<span class="grade-badge grade-bg-${grade.tier}" title="${grade.label}">${grade.label}</span>`;
+  }
+
+  function overallGradeCell(og) {
+    if (!og) return '<td class="na">—</td>';
+    return `<td class="grade-overall" title="${og.label} — based on ${og.count} metrics, avg ${og.score}/5">
+      <span class="grade-badge grade-bg-${og.tier}">${og.label}</span>
+      <span class="grade-score">${og.score}</span>
+    </td>`;
+  }
+
+  /* ========== OVERVIEW ========== */
+  window.renderOverview = function () {
+    const D = window.CLUB;
+    const posFilter = document.getElementById("overviewPosFilter").value;
+    const grpFilter = document.getElementById("overviewGroupFilter").value;
+    const gradeFilter = document.getElementById("overviewGradeFilter").value;
+    const searchTerm = (document.getElementById("rosterSearch").value || "")
+      .trim()
+      .toLowerCase();
+
+    let list = D.athletes;
+    if (posFilter !== "all")
+      list = list.filter((a) => a.position === posFilter);
+    if (grpFilter !== "all") list = list.filter((a) => a.group === grpFilter);
+    if (searchTerm)
+      list = list.filter((a) => a.name.toLowerCase().includes(searchTerm));
+    if (gradeFilter !== "all") {
+      const gradeOrder = {
+        elite: 5,
+        excellent: 4,
+        good: 3,
+        average: 2,
+        below: 1,
+      };
+      const minScore = gradeOrder[gradeFilter] || 0;
+      if (gradeFilter === "below") {
+        list = list.filter(
+          (a) => a.overallGrade && a.overallGrade.tier === "below",
+        );
+      } else {
+        list = list.filter(
+          (a) => a.overallGrade && gradeOrder[a.overallGrade.tier] >= minScore,
+        );
+      }
+    }
+
+    const total = list.length;
+    const avg = (key) => {
+      const v = list.filter((a) => a[key] !== null);
+      return v.length ? v.reduce((s, a) => s + a[key], 0) / v.length : null;
+    };
+    const avgBench = avg("bench");
+    const avgSquat = avg("squat");
+    const avgMB = avg("medball");
+    const avg40 = avg("forty");
+    const avgVert = avg("vert");
+    const avgPP = avg("peakPower");
+
+    // Data completeness
+    const coreFields = ["bench", "squat", "medball", "vert", "broad", "forty"];
+    const fullyTested = list.filter((a) =>
+      coreFields.every((k) => a[k] !== null),
+    ).length;
+    const completePct = total > 0 ? Math.round((fullyTested / total) * 100) : 0;
+
+    document.getElementById("summaryCards").innerHTML = `
+      <div class="summary-card"><div class="label">Athletes</div><div class="value">${total}</div><div class="sub">${D.positions.length} positions</div></div>
+      <div class="summary-card"><div class="label">Avg Bench</div><div class="value">${avgBench ? avgBench.toFixed(0) : "—"}<small> lb</small></div><div class="sub">${list.filter((a) => a.bench !== null).length} tested</div></div>
+      <div class="summary-card"><div class="label">Avg Squat</div><div class="value">${avgSquat ? avgSquat.toFixed(0) : "—"}<small> lb</small></div><div class="sub">${list.filter((a) => a.squat !== null).length} tested</div></div>
+      <div class="summary-card"><div class="label">Avg MB Throw</div><div class="value">${avgMB ? avgMB.toFixed(0) : "—"}<small> in</small></div><div class="sub">${list.filter((a) => a.medball !== null).length} tested</div></div>
+      <div class="summary-card"><div class="label">Avg Vert</div><div class="value">${avgVert ? avgVert.toFixed(1) : "—"}<small> in</small></div><div class="sub">${list.filter((a) => a.vert !== null).length} tested</div></div>
+      <div class="summary-card"><div class="label">Avg 40 yd</div><div class="value">${avg40 ? avg40.toFixed(2) : "—"}<small> s</small></div><div class="sub">${list.filter((a) => a.forty !== null).length} tested</div></div>
+      <div class="summary-card"><div class="label">Avg Peak Power</div><div class="value">${avgPP ? avgPP.toFixed(0) : "—"}<small> W</small></div><div class="sub">${list.filter((a) => a.peakPower !== null).length} tested</div></div>
+      <div class="summary-card"><div class="label">Data Completeness</div><div class="value">${completePct}<small>%</small></div><div class="sub">${fullyTested}/${total} fully tested</div></div>
+    `;
+
+    // Data quality warnings & flags
+    const warnContainer = document.getElementById("dataWarnings");
+    if (warnContainer) {
+      let warnHtml = "";
+      if (D.warnings && D.warnings.length) {
+        warnHtml += D.warnings
+          .map(
+            (w) =>
+              `<div class="info-banner warn"><strong>Low Sample:</strong> ${w.metric} (n=${w.n}) — ${w.msg}</div>`,
+          )
+          .join("");
+      }
+      if (D.flags && D.flags.length) {
+        warnHtml += D.flags
+          .map(
+            (f) =>
+              `<div class="info-banner flag"><strong>Data Flag:</strong> ${f.athlete} — ${f.msg}</div>`,
+          )
+          .join("");
+      }
+      warnContainer.innerHTML = warnHtml;
+    }
+
+    const tbody = document.querySelector("#rosterTable tbody");
+    tbody.innerHTML = list
+      .map(
+        (a) => `
+      <tr class="clickable" onclick="selectAthlete('${a.id}')">
+        <td><strong>${a.name}</strong></td>
+        <td>${a.position || "—"}</td>
+        <td><span class="group-tag group-${a.group.replace(/\s/g, "")}">${a.group}</span></td>
+        ${tdNum(a.height, 1)}
+        ${tdNum(a.weight)}
+        ${tdGraded(a.bench, 0, a.grades.bench)}
+        ${tdGraded(a.squat, 0, a.grades.squat)}
+        ${tdGraded(a.medball, 0, a.grades.medball)}
+        ${tdGraded(a.vert, 1, a.grades.vert)}
+        ${tdGraded(a.broad, 0, a.grades.broad)}
+        ${tdGraded(a.forty, 2, a.grades.forty)}
+        <td class="num">${fmtZ(a.zMB)}</td>
+        ${overallGradeCell(a.overallGrade)}
+      </tr>
+    `,
+      )
+      .join("");
+  };
+
+  window.selectAthlete = function (id) {
+    document.getElementById("athleteSelect").value = id;
+    showTab("profiles");
+    renderProfile();
+  };
+
+  /* ========== ATHLETE PROFILE ========== */
+  window.renderProfile = function () {
+    const D = window.CLUB;
+    const id = document.getElementById("athleteSelect").value;
+    const container = document.getElementById("profileContent");
+
+    if (!id) {
+      container.innerHTML =
+        '<p class="placeholder-text">Select an athlete to view their profile.</p>';
+      return;
+    }
+    const a = D.athletes.find((x) => x.id === id);
+    if (!a) {
+      container.innerHTML =
+        '<p class="placeholder-text">Athlete not found.</p>';
+      return;
+    }
+
+    let html = `
+    <div class="profile-card" id="printProfileCard">
+      <div class="profile-header">
+        <div class="profile-avatar">${a.initials}</div>
+        <div>
+          <div class="profile-name">${a.name} ${a.overallGrade ? `<span class="grade-badge grade-bg-${a.overallGrade.tier}" style="font-size:.7rem;vertical-align:middle;margin-left:.5rem">${a.overallGrade.label} (${a.overallGrade.score})</span>` : ""}</div>
+          <div class="profile-meta">
+            <span class="meta-item"><strong>Position:</strong> ${a.position || "N/A"}</span>
+            <span class="meta-item"><strong>Group:</strong> <span class="group-tag group-${a.group.replace(/\s/g, "")}">${a.group}</span></span>
+            <span class="meta-item"><strong>Height:</strong> ${a.height ? Math.floor(a.height / 12) + "'" + (a.height % 12 === Math.round(a.height % 12) ? Math.round(a.height % 12) : (a.height % 12).toFixed(1)) + '"' + " (" + a.height + " in)" : "N/A"}</span>
+            <span class="meta-item"><strong>Weight:</strong> ${a.weight ? a.weight + " lb (" + a.massKg + " kg)" : "N/A"}</span>
+            <span class="meta-item"><strong>ID:</strong> ${a.id}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section-title">Strength</div>
+      <div class="metric-grid">
+        ${metricCard("Bench 1RM", a.bench, "lb", a.relBench !== null ? "Rel: " + a.relBench + "x BW (" + a.benchKg + " kg)" : null, a.grades.bench)}
+        ${metricCard("Squat 1RM", a.squat, "lb", a.relSquat !== null ? "Rel: " + a.relSquat + "x BW (" + a.squatKg + " kg)" : null, a.grades.squat)}
+        ${metricCard("Rel Bench", a.relBench, "xBW", null, a.grades.relBench)}
+        ${metricCard("Rel Squat", a.relSquat, "xBW", null, a.grades.relSquat)}
+        ${metricCardZ("Bench Z-Score", a.zBench)}
+        ${metricCardZ("Squat Z-Score", a.zSquat)}
+      </div>
+
+      <div class="profile-section-title">Explosiveness</div>
+      <div class="metric-grid">
+        ${metricCard("Med Ball Throw", a.medball, "in", a.medball ? Math.floor(a.medball / 12) + "' " + (a.medball % 12) + '"' : null, a.grades.medball)}
+        ${metricCard("MB Relative", a.mbRel, "in/lb", null, a.grades.mbRel)}
+        ${metricCard("Vertical Jump", a.vert, "in", a.vertCm ? a.vertCm + " cm" : null, a.grades.vert)}
+        ${metricCard("Broad Jump", a.broad, "in", a.broadCm ? a.broadCm + " cm" : null, a.grades.broad)}
+        ${metricCard("Peak Power (Sayers)", a.peakPower, "W", a.relPeakPower ? "Rel: " + a.relPeakPower + " W/kg" : null, a.grades.peakPower)}
+        ${metricCard("Rel Peak Power", a.relPeakPower, "W/kg", null, a.grades.relPeakPower)}
+      </div>
+
+      <div class="profile-section-title">Speed</div>
+      <div class="metric-grid">
+        ${metricCard("0–20 yd", a.sprint020, "s", a.v1 ? "v=" + a.v1 + " m/s" : null)}
+        ${metricCard("20–30 yd", a.sprint2030, "s", a.v2 ? "v=" + a.v2 + " m/s" : null)}
+        ${metricCard("30–40 yd", a.sprint3040, "s", a.v3 ? "v=" + a.v3 + " m/s" : null)}
+        ${metricCard("40 yd Total", a.forty, "s", a.vMax ? "vMax=" + a.vMax + " m/s" : null, a.grades.forty)}
+        ${metricCard("Max Velocity", a.vMax, "m/s", null, a.grades.vMax)}
+        ${metricCard("Best 10yd Vel", a.v10Max, "m/s", null, a.grades.v10Max)}
+      </div>
+
+      <div class="profile-section-title">Sprint Force &amp; Power</div>
+      <div class="metric-grid">
+        ${metricCard("Force (0–20)", a.F1, "N", a.imp1 ? "Impulse: " + a.imp1 + " N·s" : null, a.grades.F1)}
+        ${metricCard("Force (20–30)", a.F2, "N", a.imp2 ? "Impulse: " + a.imp2 + " N·s" : null)}
+        ${metricCard("Force (30–40)", a.F3, "N", a.imp3 ? "Impulse: " + a.imp3 + " N·s" : null)}
+        ${metricCard("Peak Momentum", a.momMax, "kg·m/s", a.v10Max ? "mass × best 10yd v (" + a.v10Max + " m/s)" : null, a.grades.momMax)}
+        ${metricCard("Momentum (final)", a.mom3, "kg·m/s")}
+        ${metricCard("Power (0–20)", a.pow1, "W")}
+        ${metricCard("Strength Util", a.strengthUtil, "", a.strengthUtil ? "F1 / (Squat×g)" : null)}
+      </div>
+
+      <div class="profile-section-title">Analytics &amp; Rankings</div>
+      <div class="metric-grid">
+        ${metricCardZ("MB Z-Score", a.zMB)}
+        ${metricCardPct("MB Pctl (Team)", a.mbPctTeam, a.mbTier)}
+        ${metricCardPct("MB Pctl (Group)", a.mbPctGroup, a.mbTier)}
+        ${metricCardZ("Explosive Upper Idx", a.explosiveUpper)}
+        ${metricCardZ("Total Explosive Idx", a.totalExplosive)}
+        ${metricCardZ("Speed Z-Score (40)", a.zForty)}
+        ${metricCardZ("Sprint Force Z", a.zF1)}
+        ${metricCardZ("Peak Power Z", a.zPeakPower)}
+      </div>
+
+      ${
+        Object.keys(a.scorecard).length > 0
+          ? `
+      <div class="profile-section-title">Scorecard</div>
+      <div class="scorecard-mini">
+        ${Object.entries(a.scorecard)
+          .map(([k, sc]) => {
+            const label =
+              D.scorecardMetrics.find((m) => m.key === k)?.label || k;
+            return `<div class="sc-item">
+            <span class="sc-label">${label}</span>
+            <span class="sc-val">${typeof sc.value === "number" ? (Number.isInteger(sc.value) ? sc.value : sc.value.toFixed(2)) : sc.value}</span>
+            ${tierBadge(sc.tier)}
+            <span class="sc-pct">${sc.percentile}th</span>
+            ${pctBarHTML(sc.percentile)}
+          </div>`;
+          })
+          .join("")}
+      </div>`
+          : ""
+      }
+
+      <div class="profile-section-title">Radar</div>
+      <div class="profile-chart-wrap"><canvas id="profileRadar"></canvas></div>
+    </div>`;
+
+    container.innerHTML = html;
+    buildProfileRadar(a);
+  };
+
+  function metricCard(label, val, unit, sub, grade) {
+    const gradeHTML = grade ? ` ${gradeBadge(grade)}` : "";
+    return `<div class="metric-card ${grade ? "mc-graded mc-" + grade.tier : ""}">
+      <div class="metric-label">${label}${gradeHTML}</div>
+      <div class="metric-value">${val !== null && val !== undefined ? val : "—"} <small>${val !== null ? unit || "" : ""}</small></div>
+      ${sub ? '<div class="metric-sub">' + sub + "</div>" : ""}
+    </div>`;
+  }
+
+  function metricCardZ(label, z) {
+    return `<div class="metric-card"><div class="metric-label">${label}</div><div class="metric-value">${fmtZ(z)}</div></div>`;
+  }
+
+  function metricCardPct(label, pct, tier) {
+    return `<div class="metric-card">
+      <div class="metric-label">${label}</div>
+      <div class="metric-value">${pct !== null ? pct + "<small>th</small>" : "—"}</div>
+      ${tierBadge(tier)}${pctBarHTML(pct)}
+    </div>`;
+  }
+
+  function buildProfileRadar(a) {
+    const D = window.CLUB;
+    const canvas = document.getElementById("profileRadar");
+    if (!canvas) return;
+    if (profileChartInstance) {
+      profileChartInstance.destroy();
+      profileChartInstance = null;
+    }
+
+    function norm(val, key) {
+      if (val === null) return 0;
+      const vals = D.athletes.map((x) => x[key]).filter((v) => v !== null);
+      if (vals.length === 0) return 0;
+      const max = Math.max(...vals);
+      return max > 0 ? Math.round((val / max) * 100) : 0;
+    }
+    function normInv(val, key) {
+      if (val === null) return 0;
+      const vals = D.athletes.map((x) => x[key]).filter((v) => v !== null);
+      if (vals.length === 0) return 0;
+      const min = Math.min(...vals);
+      const max = Math.max(...vals);
+      if (max === min) return 100;
+      return Math.round(((max - val) / (max - min)) * 100);
+    }
+
+    const radarKeys = [
+      "bench",
+      "squat",
+      "medball",
+      "vert",
+      "broad",
+      "forty",
+      "F1",
+      "peakPower",
+      "momMax",
+    ];
+    const labels = radarKeys.map((k) => METRIC_INFO[k]?.name || k);
+    const values = [
+      norm(a.bench, "bench"),
+      norm(a.squat, "squat"),
+      norm(a.medball, "medball"),
+      norm(a.vert, "vert"),
+      norm(a.broad, "broad"),
+      normInv(a.forty, "forty"),
+      norm(a.F1, "F1"),
+      norm(a.peakPower, "peakPower"),
+      norm(a.momMax, "momMax"),
+    ];
+
+    profileChartInstance = new Chart(canvas, {
+      type: "radar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: a.name,
+            data: values,
+            fill: true,
+            backgroundColor: "rgba(167,139,250,.2)",
+            borderColor: "#a78bfa",
+            pointBackgroundColor: "#a78bfa",
+            pointBorderColor: "#fff",
+            pointHoverRadius: 6,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+          r: {
+            beginAtZero: true,
+            max: 100,
+            ticks: { display: false },
+            grid: { color: "rgba(255,255,255,.08)" },
+            angleLines: { color: "rgba(255,255,255,.08)" },
+            pointLabels: {
+              color: "#8b90a0",
+              font: { size: 11, weight: "600" },
+            },
+          },
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const key = radarKeys[ctx.dataIndex];
+                const mi = METRIC_INFO[key];
+                return `${ctx.label}: ${ctx.raw}% of team max`;
+              },
+              afterLabel: (ctx) => {
+                const key = radarKeys[ctx.dataIndex];
+                const mi = METRIC_INFO[key];
+                if (!mi) return "";
+                const raw = a[key];
+                const valStr =
+                  raw !== null && raw !== undefined
+                    ? raw + " " + mi.unit
+                    : "N/A";
+                return ["Value: " + valStr, mi.tellsYou];
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  /* ========== LEADERBOARDS ========== */
+  window.renderLeaderboards = function () {
+    const D = window.CLUB;
+    const metric = document.getElementById("lbMetric").value;
+
+    const entries = [];
+    for (const a of D.athletes) {
+      const val = a[metric];
+      if (val !== null && val !== undefined) {
+        entries.push({
+          name: a.name,
+          position: a.position || "—",
+          val,
+          id: a.id,
+        });
+      }
+    }
+
+    if (metric === "forty") entries.sort((a, b) => a.val - b.val);
+    else entries.sort((a, b) => b.val - a.val);
+    const top = entries.slice(0, 15);
+
+    const tbody = document.querySelector("#lbTable tbody");
+    tbody.innerHTML = top
+      .map(
+        (e, i) => `
+      <tr class="clickable" onclick="selectAthlete('${e.id}')">
+        <td class="num">${i + 1}</td>
+        <td><strong>${e.name}</strong></td>
+        <td>${e.position}</td>
+        <td class="num">${typeof e.val === "number" ? (Number.isInteger(e.val) ? e.val : e.val.toFixed(2)) : e.val}</td>
+      </tr>
+    `,
+      )
+      .join("");
+
+    if (lbChartInstance) {
+      lbChartInstance.destroy();
+      lbChartInstance = null;
+    }
+    const canvas = document.getElementById("lbChart");
+    const colors = top.map((_, i) =>
+      i === 0
+        ? "#a78bfa"
+        : i === 1
+          ? "#b8a4fb"
+          : i === 2
+            ? "#c9bdfc"
+            : "rgba(167,139,250,.45)",
+    );
+
+    const mi = METRIC_INFO[metric];
+    const chartLabel = mi ? mi.name + " (" + mi.unit + ")" : metric;
+
+    lbChartInstance = new Chart(canvas, {
+      type: "bar",
+      data: {
+        labels: top.map((e) => e.name),
+        datasets: [
+          {
+            label: chartLabel,
+            data: top.map((e) => e.val),
+            backgroundColor: colors,
+            borderRadius: 4,
+            borderSkipped: false,
+          },
+        ],
+      },
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            grid: { color: "rgba(255,255,255,.06)" },
+            ticks: { color: "#8b90a0", font: { size: 10 } },
+          },
+          y: {
+            grid: { display: false },
+            ticks: { color: "#e4e6ed", font: { size: 11, weight: "600" } },
+          },
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: "#1a1d27",
+            titleColor: "#e4e6ed",
+            bodyColor: "#e4e6ed",
+            borderColor: "#2e3345",
+            borderWidth: 1,
+            callbacks: {
+              title: (items) => items[0].label,
+              label: (ctx) => {
+                const val =
+                  typeof ctx.raw === "number"
+                    ? Number.isInteger(ctx.raw)
+                      ? ctx.raw
+                      : ctx.raw.toFixed(2)
+                    : ctx.raw;
+                return (
+                  (mi ? mi.name : metric) +
+                  ": " +
+                  val +
+                  (mi ? " " + mi.unit : "")
+                );
+              },
+              afterLabel: () => {
+                if (!mi) return "";
+                return mi.tellsYou;
+              },
+            },
+          },
+        },
+      },
+    });
+  };
+
+  /* ========== SPRINT ANALYSIS ========== */
+  function renderSprintAnalysis() {
+    const D = window.CLUB;
+    const tbody = document.querySelector("#sprintTable tbody");
+    const sprinters = D.athletes.filter((a) => a.sprint020 !== null);
+
+    tbody.innerHTML = sprinters
+      .map(
+        (a) => `
+      <tr>
+        <td><strong>${a.name}</strong></td>
+        <td>${a.position || "—"}</td>
+        ${tdNum(a.massKg, 1)}
+        ${tdNum(a.sprint020, 2)}
+        ${tdNum(a.sprint2030, 2)}
+        ${tdNum(a.sprint3040, 2)}
+        ${tdGraded(a.forty, 2, a.grades.forty)}
+        ${tdNum(a.v1, 2)}
+        ${tdNum(a.v2, 2)}
+        ${tdNum(a.v3, 2)}
+        ${tdGraded(a.vMax, 2, a.grades.vMax)}
+        ${tdGraded(a.v10Max, 2, a.grades.v10Max)}
+        ${tdNum(a.topMph, 1)}
+        ${tdNum(a.a1, 2)}
+        ${tdNumColored(a.a2, 2)}
+        ${tdNumColored(a.a3, 2)}
+        ${tdGraded(a.F1, 1, a.grades.F1)}
+        ${tdNumColored(a.F2, 1)}
+        ${tdNumColored(a.F3, 1)}
+        ${tdGraded(a.momMax, 1, a.grades.momMax)}
+        ${tdNum(a.mom1, 1)}
+        ${tdNum(a.pow1, 0)}
+        ${tdNumColored(a.pow2, 0)}
+        ${tdNumColored(a.pow3, 0)}
+      </tr>
+    `,
+      )
+      .join("");
+
+    if (sprinters.length === 0) {
+      tbody.innerHTML =
+        '<tr><td colspan="24" class="placeholder-text">No sprint data available.</td></tr>';
+    }
+  }
+
+  /* ========== STRENGTH & POWER ========== */
+  function renderStrengthPower() {
+    const D = window.CLUB;
+    const tbody = document.querySelector("#strengthTable tbody");
+    const list = D.athletes.filter(
+      (a) =>
+        a.bench !== null ||
+        a.squat !== null ||
+        a.peakPower !== null ||
+        a.medball !== null,
+    );
+
+    tbody.innerHTML = list
+      .map(
+        (a) => `
+      <tr class="clickable" onclick="selectAthlete('${a.id}')">
+        <td><strong>${a.name}</strong></td>
+        <td>${a.position || "—"}</td>
+        ${tdNum(a.weight)}
+        ${tdNum(a.massKg, 1)}
+        ${tdGraded(a.bench, 0, a.grades.bench)}
+        ${tdGraded(a.squat, 0, a.grades.squat)}
+        ${tdGraded(a.relBench, 2, a.grades.relBench)}
+        ${tdGraded(a.relSquat, 2, a.grades.relSquat)}
+        ${tdGraded(a.vert, 1, a.grades.vert)}
+        ${tdGraded(a.peakPower, 0, a.grades.peakPower)}
+        ${tdGraded(a.relPeakPower, 1, a.grades.relPeakPower)}
+        ${tdGraded(a.medball, 0, a.grades.medball)}
+        ${tdGraded(a.mbRel, 2, a.grades.mbRel)}
+        ${tdNum(a.strengthUtil, 3)}
+      </tr>
+    `,
+      )
+      .join("");
+  }
+
+  /* ========== SCORECARD ========== */
+  window.renderScorecard = function () {
+    const D = window.CLUB;
+    const filter = document.getElementById("scorecardFilter").value;
+    let list = D.athletes;
+    if (filter !== "all") list = list.filter((a) => a.id === filter);
+
+    // Only show athletes with at least one scorecard entry
+    list = list.filter((a) => Object.keys(a.scorecard).length > 0);
+
+    const metrics = D.scorecardMetrics;
+    const header = document.getElementById("scorecardHeader");
+    header.innerHTML =
+      "<th>Athlete</th><th>Pos</th><th>Group</th>" +
+      metrics
+        .map((m) => {
+          const mi = METRIC_INFO[m.key];
+          const tip = mi
+            ? mi.measures + ". " + mi.tellsYou
+            : m.label + " (" + m.unit + ")";
+          return `<th title="${tip}">${m.label}</th>`;
+        })
+        .join("");
+
+    const tbody = document.querySelector("#scorecardTable tbody");
+    tbody.innerHTML = list
+      .map((a) => {
+        const cells = metrics
+          .map((m) => {
+            const sc = a.scorecard[m.key];
+            if (!sc) return '<td class="na">—</td>';
+            const mi = METRIC_INFO[m.key];
+            const absGrade = a.grades[m.key];
+            const absTip = absGrade ? " | HS Standard: " + absGrade.label : "";
+            const tip = mi
+              ? `${mi.name}: ${sc.value} ${m.unit} — ${sc.percentile}th percentile (${sc.tier})${absTip}. ${mi.tellsYou}`
+              : `${sc.value} ${m.unit} — ${sc.percentile}th percentile`;
+            return `<td class="sc-cell tier-bg-${sc.tier}" title="${tip}">
+          <div class="sc-cell-val">${typeof sc.value === "number" ? (Number.isInteger(sc.value) ? sc.value : sc.value.toFixed(2)) : sc.value}</div>
+          <div class="sc-cell-pct">${sc.percentile}<small>th</small>${absGrade ? ' <span class="grade-badge grade-bg-' + absGrade.tier + '" style="font-size:.5rem;padding:.08rem .3rem">' + absGrade.label + "</span>" : ""}</div>
+        </td>`;
+          })
+          .join("");
+        return `<tr>
+        <td><strong>${a.name}</strong></td>
+        <td>${a.position || "—"}</td>
+        <td><span class="group-tag group-${a.group.replace(/\s/g, "")}">${a.group}</span></td>
+        ${cells}
+      </tr>`;
+      })
+      .join("");
+  };
+
+  /* ========== PERFORMANCE STANDARDS ========== */
+  window.renderBenchmarks = function () {
+    const D = window.CLUB;
+    const gFilter = document.getElementById("bmGroup").value;
+    const mFilter = document.getElementById("bmMetric").value;
+    const container = document.getElementById("benchmarksContent");
+    const STD = D.hsStandards;
+
+    const groups =
+      gFilter === "all" ? ["Skill", "Big Skill", "Linemen"] : [gFilter];
+    const metricMeta = STD._meta;
+    const shownMetrics =
+      mFilter === "all"
+        ? metricMeta
+        : metricMeta.filter((m) => m.key === mFilter);
+
+    let html = "";
+
+    // Grade legend
+    html += `<div class="grade-legend">
+      <span class="grade-badge grade-bg-elite">Elite</span>
+      <span class="grade-badge grade-bg-excellent">Excellent</span>
+      <span class="grade-badge grade-bg-good">Good</span>
+      <span class="grade-badge grade-bg-average">Average</span>
+      <span class="grade-badge grade-bg-below">Below Avg</span>
+    </div>`;
+
+    for (const g of groups) {
+      const gs = STD[g];
+      if (!gs) continue;
+      const groupAthletes = D.athletes.filter((a) => a.group === g);
+      const groupLabel =
+        g === "Skill"
+          ? "Skill (RB/WR/DB)"
+          : g === "Big Skill"
+            ? "Big Skill (QB/TE/LB)"
+            : "Linemen (OL/DL)";
+
+      html += `<div class="standards-group"><h3>${groupLabel} <small>(n=${groupAthletes.length})</small></h3>`;
+
+      // Standards reference table
+      html += `<div class="benchmark-table-wrap"><table class="data-table standards-ref-table"><thead><tr>
+        <th>Metric</th>
+        <th class="std-tier-header" style="color:var(--green)">Elite</th>
+        <th class="std-tier-header" style="color:var(--blue)">Excellent</th>
+        <th class="std-tier-header" style="color:var(--yellow)">Good</th>
+        <th class="std-tier-header" style="color:var(--orange)">Average</th>
+        <th class="std-tier-header" style="color:var(--red)">Below Avg</th>
+        <th>Team Avg</th>
+        <th>Grade Distribution</th>
+      </tr></thead><tbody>`;
+
+      for (const mm of shownMetrics) {
+        const thresholds = gs[mm.key];
+        if (!thresholds) continue;
+        const athKey = mm.key;
+        const vals = groupAthletes
+          .map((a) => a[athKey])
+          .filter((v) => v !== null);
+        const avg = vals.length
+          ? vals.reduce((s, v) => s + v, 0) / vals.length
+          : null;
+        const avgStr =
+          avg !== null
+            ? mm.unit === "xBW" || mm.unit === "in/lb"
+              ? avg.toFixed(2)
+              : mm.unit === "s" || mm.unit === "m/s" || mm.unit === "W/kg"
+                ? avg.toFixed(1)
+                : Math.round(avg)
+            : "—";
+
+        // Count athletes per tier
+        const tierCounts = {
+          elite: 0,
+          excellent: 0,
+          good: 0,
+          average: 0,
+          below: 0,
+        };
+        for (const a of groupAthletes) {
+          const g2 = a.grades[athKey];
+          if (g2) tierCounts[g2.tier]++;
+        }
+        const tested = Object.values(tierCounts).reduce((s, v) => s + v, 0);
+
+        // Grade distribution bar
+        const distBar =
+          tested > 0
+            ? `<div class="dist-bar">
+          ${tierCounts.elite ? `<div class="dist-seg dist-elite" style="flex:${tierCounts.elite}" title="Elite: ${tierCounts.elite}">${tierCounts.elite}</div>` : ""}
+          ${tierCounts.excellent ? `<div class="dist-seg dist-excellent" style="flex:${tierCounts.excellent}" title="Excellent: ${tierCounts.excellent}">${tierCounts.excellent}</div>` : ""}
+          ${tierCounts.good ? `<div class="dist-seg dist-good" style="flex:${tierCounts.good}" title="Good: ${tierCounts.good}">${tierCounts.good}</div>` : ""}
+          ${tierCounts.average ? `<div class="dist-seg dist-average" style="flex:${tierCounts.average}" title="Average: ${tierCounts.average}">${tierCounts.average}</div>` : ""}
+          ${tierCounts.below ? `<div class="dist-seg dist-below" style="flex:${tierCounts.below}" title="Below Avg: ${tierCounts.below}">${tierCounts.below}</div>` : ""}
+        </div>`
+            : '<span class="na">—</span>';
+
+        const op = mm.invert ? "≤" : "≥";
+        const belowOp = mm.invert ? ">" : "<";
+
+        html += `<tr>
+          <td><strong>${mm.label}</strong> <small>(${mm.unit})</small></td>
+          <td class="num std-value grade-text-elite">${op}${thresholds[0]}</td>
+          <td class="num std-value grade-text-excellent">${op}${thresholds[1]}</td>
+          <td class="num std-value grade-text-good">${op}${thresholds[2]}</td>
+          <td class="num std-value grade-text-average">${op}${thresholds[3]}</td>
+          <td class="num std-value grade-text-below">${belowOp}${thresholds[3]}</td>
+          <td class="num">${avgStr}</td>
+          <td>${distBar}</td>
+        </tr>`;
+      }
+      html += "</tbody></table></div>";
+
+      // Athlete grade cards (when filtering to single metric)
+      if (mFilter !== "all") {
+        const athKey = mFilter;
+        const mm = metricMeta.find((m) => m.key === mFilter);
+        const sorted = groupAthletes
+          .filter((a) => a[athKey] !== null)
+          .sort((a, b) =>
+            mm?.invert ? a[athKey] - b[athKey] : b[athKey] - a[athKey],
+          );
+
+        if (sorted.length > 0) {
+          html += '<div class="std-athlete-list">';
+          for (const a of sorted) {
+            const grade = a.grades[athKey];
+            html += `<div class="std-athlete-row">
+              <span class="std-athlete-name">${a.name}</span>
+              <span class="std-athlete-val">${typeof a[athKey] === "number" ? (Number.isInteger(a[athKey]) ? a[athKey] : a[athKey].toFixed(2)) : a[athKey]} ${mm ? mm.unit : ""}</span>
+              <span class="std-athlete-tier">${grade ? gradeBadge(grade) : '<span class="na">—</span>'}</span>
+            </div>`;
+          }
+          html += "</div>";
+        }
+      }
+
+      // Team grade summary cards (when showing all metrics)
+      if (mFilter === "all") {
+        html += '<div class="std-summary-row">';
+        for (const a of groupAthletes.sort((x, y) => {
+          const sx = x.overallGrade ? x.overallGrade.score : 0;
+          const sy = y.overallGrade ? y.overallGrade.score : 0;
+          return sy - sx;
+        })) {
+          const og = a.overallGrade;
+          if (!og) continue;
+          const gradeChips = Object.entries(a.grades)
+            .map(([k, g]) => {
+              const mm2 = metricMeta.find((m) => m.key === k);
+              return `<span class="grade-chip grade-bg-${g.tier}" title="${mm2 ? mm2.label : k}: ${g.label}">${mm2 ? mm2.label.substring(0, 6) : k}</span>`;
+            })
+            .join("");
+          html += `<div class="grade-summary-card">
+            <div class="grade-summary-header">
+              <strong>${a.name}</strong> <small>${a.position || ""}</small>
+              <span class="grade-badge grade-bg-${og.tier}" style="margin-left:auto">${og.label} (${og.score})</span>
+            </div>
+            <div class="grade-chips-row">${gradeChips}</div>
+          </div>`;
+        }
+        html += "</div>";
+      }
+
+      html += "</div>";
+    }
+
+    container.innerHTML =
+      html || '<p class="placeholder-text">No standards data available.</p>';
+  };
+
+  /* ========== TESTING LOG ========== */
+  window.renderTestingLog = function () {
+    const D = window.CLUB;
+    const filter = document.getElementById("logFilter").value;
+    let log = D.testingLog;
+    if (filter !== "all") log = log.filter((e) => e.test === filter);
+
+    const tbody = document.querySelector("#logTable tbody");
+    tbody.innerHTML = log
+      .map((e) => {
+        let result = "";
+        if (e.test === "Sprint") {
+          const parts = [];
+          if (e.sprint020 != null) parts.push(`0–20: ${e.sprint020}s`);
+          if (e.sprint2030 != null) parts.push(`20–30: ${e.sprint2030}s`);
+          if (e.sprint3040 != null) parts.push(`30–40: ${e.sprint3040}s`);
+          result = parts.join(" | ") || "—";
+        } else if (e.test === "Jump") {
+          const parts = [];
+          if (e.vert) parts.push(`VJ: ${e.vert} in`);
+          if (e.broad) parts.push(`BJ: ${e.broad} in`);
+          result = parts.join(" | ") || "—";
+        } else if (e.test === "Strength") {
+          const parts = [];
+          if (e.bench) parts.push(`Bench: ${e.bench} lb`);
+          if (e.squat) parts.push(`Squat: ${e.squat} lb`);
+          result = parts.join(" | ") || "—";
+        } else if (e.test === "Med Ball") {
+          result =
+            e.medball != null
+              ? `MB: ${e.medball} in (${Math.floor(e.medball / 12)}' ${e.medball % 12}")`
+              : "—";
+        }
+
+        return `<tr>
+        <td data-sort-value="${e.date || ""}">${formatLogDate(e.date)}</td>
+        <td><strong>${e.name}</strong></td>
+        <td><span class="test-type-badge test-${(e.test || "Unknown").replace(/\s/g, "")}">${e.test || "Unknown"}</span></td>
+        <td>${result}</td>
+        <td>${e.location || ""}</td>
+      </tr>`;
+      })
+      .join("");
+  };
+
+  /* ========== TESTING WEEK PLAN ========== */
+  function renderTestingWeekPlan() {
+    const D = window.CLUB;
+    const container = document.getElementById("planContent");
+
+    if (!D.testingWeekPlan || D.testingWeekPlan.length === 0) {
+      container.innerHTML =
+        '<p class="placeholder-text">No testing week plan available.</p>';
+      return;
+    }
+
+    container.innerHTML = D.testingWeekPlan
+      .map(
+        (day) => `
+      <div class="plan-day-card">
+        <div class="plan-day-header">
+          <span class="plan-day-num">Day ${day.day}</span>
+          <span class="plan-day-label">${day.label}</span>
+          <span class="plan-day-focus">${day.focus}</span>
+        </div>
+        <div class="plan-day-body">
+          <div class="plan-section">
+            <strong>Tests:</strong>
+            <ul>${day.tests.map((t) => `<li>${t}</li>`).join("")}</ul>
+          </div>
+          <div class="plan-section">
+            <strong>Equipment:</strong> ${day.equipment}
+          </div>
+          <div class="plan-section">
+            <strong>Warm-Up Protocol:</strong> ${day.warm_up}
+          </div>
+          <div class="plan-section plan-notes">
+            <strong>Notes:</strong> ${day.notes}
+          </div>
+        </div>
+      </div>
+    `,
+      )
+      .join("");
+  }
+
+  /* ========== CONSTANTS REFERENCE ========== */
+  function renderConstants() {
+    const D = window.CLUB;
+    const grid = document.getElementById("constantsGrid");
+    const notes = document.getElementById("formulaNotes");
+
+    const constDefs = [
+      { key: "LB_TO_KG", unit: "kg/lb", desc: "Pounds to kilograms" },
+      { key: "IN_TO_CM", unit: "cm/in", desc: "Inches to centimeters" },
+      { key: "TEN_YD_M", unit: "m", desc: "10 yards in meters" },
+      { key: "TWENTY_YD_M", unit: "m", desc: "20 yards in meters" },
+      { key: "G", unit: "m/s²", desc: "Gravity constant" },
+      { key: "SAYERS_A", unit: "", desc: "Sayers VJ coefficient" },
+      { key: "SAYERS_B", unit: "", desc: "Sayers mass coefficient" },
+      { key: "SAYERS_C", unit: "W", desc: "Sayers constant term" },
+    ];
+
+    grid.innerHTML = constDefs
+      .map(
+        (c) => `
+      <div class="const-item">
+        <span class="const-name">${c.key}</span>
+        <span class="const-val">${D.constants[c.key]}</span>
+        <span class="const-unit">${c.unit}</span>
+        <span class="const-desc">${c.desc}</span>
+      </div>
+    `,
+      )
+      .join("");
+
+    notes.innerHTML = `
+      <h4>Derived Sprint Formulas</h4>
+      <ul>
+        <li><strong>Velocity:</strong> v = distance / time (segment distances: 0–20yd = 18.288m, 20–30/30–40 = 9.144m)</li>
+        <li><strong>Acceleration:</strong> a₁ = v₁/t₁ (from rest); a₂ = (v₂−v₁)/t₂; a₃ = (v₃−v₂)/t₃</li>
+        <li><strong>Force:</strong> F = mass × acceleration (N)</li>
+        <li><strong>Impulse:</strong> J = F × t (N·s)</li>
+        <li><strong>Momentum:</strong> p = mass × velocity (kg·m/s). Peak Momentum uses the best 10-yard split velocity.</li>
+        <li><strong>Power:</strong> P = F × v (W)</li>
+      </ul>
+      <h4>Derived Strength & Power</h4>
+      <ul>
+        <li><strong>Sayers Peak Power:</strong> P = 60.7 × VJ(cm) + 45.3 × mass(kg) − 2055</li>
+        <li><strong>Relative Strength:</strong> Bench/BW or Squat/BW</li>
+        <li><strong>Strength Utilisation:</strong> F₁ / (Squat_kg × g) — ratio of sprint force to max strength</li>
+      </ul>
+      <h4>Scoring</h4>
+      <ul>
+        <li><strong>Explosive Upper Index:</strong> 0.6 × z(MB_rel) + 0.4 × z(RelBench)</li>
+        <li><strong>Total Explosive Index:</strong> 0.45 × ExplosiveUpper + 0.30 × z(PeakPower) + 0.25 × z(vMax)</li>
+        <li><strong>Tiers:</strong> Elite ≥90th, Strong 75–90th, Solid 50–75th, Competitive 25–50th, Developing &lt;25th</li>
+      </ul>
+      <p style="margin-top:.75rem"><em>${D.notes.join(" ")}</em></p>
+    `;
+  }
+
+  /* ========== SORTABLE TABLES ========== */
+  function handleSort(table, col, th) {
+    const tbody = table.querySelector("tbody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    const isCurrentCol =
+      th.classList.contains("sorted-asc") ||
+      th.classList.contains("sorted-desc");
+    const dir =
+      isCurrentCol && th.classList.contains("sorted-asc") ? "desc" : "asc";
+    table
+      .querySelectorAll("thead th")
+      .forEach((t) => t.classList.remove("sorted-asc", "sorted-desc"));
+    th.classList.add(dir === "asc" ? "sorted-asc" : "sorted-desc");
+    const colIdx = Array.from(th.parentElement.children).indexOf(th);
+
+    rows.sort((a, b) => {
+      // Prefer data-sort-value attribute for custom sort values (e.g. ISO dates)
+      const aSortAttr = a.children[colIdx]?.getAttribute("data-sort-value");
+      const bSortAttr = b.children[colIdx]?.getAttribute("data-sort-value");
+      let aVal = aSortAttr ?? (a.children[colIdx]?.textContent.trim() || "");
+      let bVal = bSortAttr ?? (b.children[colIdx]?.textContent.trim() || "");
+      if (aVal === "—") aVal = "";
+      if (bVal === "—") bVal = "";
+      const aNum = parseFloat(aVal.replace(/[^0-9.\-+]/g, ""));
+      const bNum = parseFloat(bVal.replace(/[^0-9.\-+]/g, ""));
+      if (!isNaN(aNum) && !isNaN(bNum))
+        return dir === "asc" ? aNum - bNum : bNum - aNum;
+      if (aVal === "" && bVal !== "") return 1;
+      if (bVal === "" && aVal !== "") return -1;
+      return dir === "asc"
+        ? aVal.localeCompare(bVal)
+        : bVal.localeCompare(aVal);
+    });
+    rows.forEach((r) => tbody.appendChild(r));
+  }
+
+  /* ========== PRINT ========== */
+  window.printProfile = function () {
+    const id = document.getElementById("athleteSelect").value;
+    if (!id) {
+      alert("Select an athlete first.");
+      return;
+    }
+    document
+      .querySelectorAll(".tab-panel")
+      .forEach((p) => p.classList.remove("print-active"));
+    document.getElementById("tab-profiles").classList.add("print-active");
+    window.print();
+    setTimeout(
+      () =>
+        document
+          .getElementById("tab-profiles")
+          .classList.remove("print-active"),
+      500,
+    );
+  };
+
+  /* ========== HEAD-TO-HEAD COMPARISON ========== */
+  let cmpChartInstance = null;
+
+  window.renderComparison = function () {
+    const D = window.CLUB;
+    const container = document.getElementById("compareContent");
+    const ids = [
+      document.getElementById("cmpA").value,
+      document.getElementById("cmpB").value,
+      document.getElementById("cmpC").value,
+    ].filter(Boolean);
+
+    if (ids.length < 2) {
+      container.innerHTML =
+        '<p class="placeholder-text">Select two or three athletes to compare.</p>';
+      return;
+    }
+    const athletes = ids
+      .map((id) => D.athletes.find((a) => a.id === id))
+      .filter(Boolean);
+    if (athletes.length < 2) {
+      container.innerHTML =
+        '<p class="placeholder-text">Athletes not found.</p>';
+      return;
+    }
+
+    const cols = athletes.length;
+    const palette = ["#a78bfa", "#4ade80", "#60a5fa"];
+    const paletteBg = [
+      "rgba(167,139,250,.2)",
+      "rgba(74,222,128,.2)",
+      "rgba(96,165,250,.2)",
+    ];
+
+    // Profile cards
+    let html = `<div class="cmp-profile-row cols-${cols}">`;
+    for (const a of athletes) {
+      html += `<div class="cmp-card">
+        <div class="cmp-avatar">${a.initials}</div>
+        <div class="cmp-name">${a.name}</div>
+        <div class="cmp-meta">${a.position || "—"} · ${a.group} · ${a.weight || "—"} lb${a.overallGrade ? ' · <span class="grade-badge grade-bg-' + a.overallGrade.tier + '">' + a.overallGrade.label + "</span>" : ""}</div>
+      </div>`;
+    }
+    html += "</div>";
+
+    // Comparison metrics
+    const cmpMetrics = [
+      { key: "bench", label: "Bench 1RM", unit: "lb", dec: 0 },
+      { key: "squat", label: "Squat 1RM", unit: "lb", dec: 0 },
+      { key: "relBench", label: "Rel Bench", unit: "xBW", dec: 2 },
+      { key: "relSquat", label: "Rel Squat", unit: "xBW", dec: 2 },
+      { key: "medball", label: "Med Ball", unit: "in", dec: 0 },
+      { key: "vert", label: "Vert Jump", unit: "in", dec: 1 },
+      { key: "broad", label: "Broad Jump", unit: "in", dec: 0 },
+      { key: "forty", label: "40 yd Dash", unit: "s", dec: 2, invert: true },
+      { key: "vMax", label: "Max Velocity", unit: "m/s", dec: 2 },
+      { key: "v10Max", label: "Best 10yd Vel", unit: "m/s", dec: 2 },
+      { key: "F1", label: "Sprint Force", unit: "N", dec: 1 },
+      { key: "momMax", label: "Peak Momentum", unit: "kg·m/s", dec: 1 },
+      { key: "peakPower", label: "Peak Power", unit: "W", dec: 0 },
+      { key: "relPeakPower", label: "Rel Peak Power", unit: "W/kg", dec: 1 },
+    ];
+
+    html +=
+      '<div class="table-wrap"><table class="cmp-table"><thead><tr><th>Metric</th>';
+    for (const a of athletes) html += `<th>${a.name.split(" ")[0]}</th>`;
+    html += "<th>Δ</th></tr></thead><tbody>";
+
+    for (const m of cmpMetrics) {
+      const vals = athletes.map((a) => a[m.key]);
+      const numVals = vals.filter((v) => v !== null);
+      let bestIdx = -1;
+      let worstIdx = -1;
+      if (numVals.length >= 2) {
+        if (m.invert) {
+          const best = Math.min(...numVals);
+          const worst = Math.max(...numVals);
+          if (best !== worst) {
+            bestIdx = vals.indexOf(best);
+            worstIdx = vals.indexOf(worst);
+          }
+        } else {
+          const best = Math.max(...numVals);
+          const worst = Math.min(...numVals);
+          if (best !== worst) {
+            bestIdx = vals.indexOf(best);
+            worstIdx = vals.indexOf(worst);
+          }
+        }
+      }
+      const delta =
+        numVals.length >= 2
+          ? Math.abs(Math.max(...numVals) - Math.min(...numVals))
+          : null;
+
+      html += `<tr><td>${m.label} <small>(${m.unit})</small></td>`;
+      for (let i = 0; i < athletes.length; i++) {
+        const v = vals[i];
+        const cls =
+          i === bestIdx
+            ? "cmp-best"
+            : i === worstIdx && athletes.length > 2
+              ? "cmp-worst"
+              : "";
+        html += `<td class="num ${cls}">${v !== null ? v.toFixed(m.dec) : "—"}</td>`;
+      }
+      html += `<td class="num">${delta !== null ? delta.toFixed(m.dec) : "—"}</td>`;
+      html += "</tr>";
+    }
+    html += "</tbody></table></div>";
+
+    // Radar overlay
+    html += '<div class="cmp-radar-wrap"><canvas id="cmpRadar"></canvas></div>';
+    container.innerHTML = html;
+
+    // Build overlaid radar chart
+    if (cmpChartInstance) {
+      cmpChartInstance.destroy();
+      cmpChartInstance = null;
+    }
+    const radarKeys = [
+      "bench",
+      "squat",
+      "medball",
+      "vert",
+      "broad",
+      "forty",
+      "F1",
+      "peakPower",
+      "momMax",
+    ];
+    const radarLabels = radarKeys.map((k) => METRIC_INFO[k]?.name || k);
+
+    function normVal(val, key) {
+      if (val === null) return 0;
+      const allVals = D.athletes.map((x) => x[key]).filter((v) => v !== null);
+      if (allVals.length === 0) return 0;
+      const max = Math.max(...allVals);
+      return max > 0 ? Math.round((val / max) * 100) : 0;
+    }
+    function normInv(val, key) {
+      if (val === null) return 0;
+      const allVals = D.athletes.map((x) => x[key]).filter((v) => v !== null);
+      if (allVals.length === 0) return 0;
+      const min = Math.min(...allVals);
+      const max = Math.max(...allVals);
+      if (max === min) return 100;
+      return Math.round(((max - val) / (max - min)) * 100);
+    }
+
+    const datasets = athletes.map((a, i) => ({
+      label: a.name,
+      data: [
+        normVal(a.bench, "bench"),
+        normVal(a.squat, "squat"),
+        normVal(a.medball, "medball"),
+        normVal(a.vert, "vert"),
+        normVal(a.broad, "broad"),
+        normInv(a.forty, "forty"),
+        normVal(a.F1, "F1"),
+        normVal(a.peakPower, "peakPower"),
+        normVal(a.momMax, "momMax"),
+      ],
+      fill: true,
+      backgroundColor: paletteBg[i],
+      borderColor: palette[i],
+      pointBackgroundColor: palette[i],
+      pointBorderColor: "#fff",
+      pointHoverRadius: 6,
+    }));
+
+    cmpChartInstance = new Chart(document.getElementById("cmpRadar"), {
+      type: "radar",
+      data: { labels: radarLabels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+          r: {
+            beginAtZero: true,
+            max: 100,
+            ticks: { display: false },
+            grid: { color: "rgba(255,255,255,.08)" },
+            angleLines: { color: "rgba(255,255,255,.08)" },
+            pointLabels: {
+              color: "#8b90a0",
+              font: { size: 11, weight: "600" },
+            },
+          },
+        },
+        plugins: {
+          legend: { labels: { color: "#e4e6ed", font: { size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}% of team max`,
+            },
+          },
+        },
+      },
+    });
+  };
+
+  /* ========== POSITION GROUP DASHBOARD ========== */
+  let grpCharts = [];
+
+  window.renderGroupDashboard = function () {
+    const D = window.CLUB;
+    const container = document.getElementById("groupDashContent");
+    const gFilter = document.getElementById("grpDash").value;
+    const groups =
+      gFilter === "all"
+        ? ["Skill", "Big Skill", "Linemen", "Other"]
+        : [gFilter];
+
+    // Clean up old charts
+    for (const c of grpCharts) c.destroy();
+    grpCharts = [];
+
+    const summaryMetrics = [
+      { key: "bench", label: "Avg Bench", unit: "lb", dec: 0 },
+      { key: "squat", label: "Avg Squat", unit: "lb", dec: 0 },
+      { key: "medball", label: "Avg MB", unit: "in", dec: 0 },
+      { key: "vert", label: "Avg Vert", unit: "in", dec: 1 },
+      { key: "forty", label: "Avg 40yd", unit: "s", dec: 2 },
+      { key: "peakPower", label: "Avg PP", unit: "W", dec: 0 },
+    ];
+
+    let html = '<div class="grp-dashboard">';
+
+    for (const g of groups) {
+      const ga = D.athletes.filter((a) => a.group === g);
+      if (ga.length === 0) continue;
+      const groupLabels = {
+        Skill: "Skill (RB/WR/DB)",
+        "Big Skill": "Big Skill (QB/TE/LB)",
+        Linemen: "Linemen (OL/DL)",
+        Other: "Other",
+      };
+
+      html += `<div class="grp-panel">
+        <div class="grp-panel-header">
+          <span class="grp-panel-title">${groupLabels[g] || g}</span>
+          <span class="grp-panel-count">${ga.length} athletes</span>
+        </div>`;
+
+      // Avg stats
+      html += '<div class="grp-stats-grid">';
+      for (const sm of summaryMetrics) {
+        const vals = ga.map((a) => a[sm.key]).filter((v) => v !== null);
+        const avg = vals.length
+          ? vals.reduce((s, v) => s + v, 0) / vals.length
+          : null;
+        const best = vals.length
+          ? sm.key === "forty"
+            ? Math.min(...vals)
+            : Math.max(...vals)
+          : null;
+        html += `<div class="grp-stat-card">
+          <div class="grp-stat-label">${sm.label}</div>
+          <div class="grp-stat-val">${avg !== null ? avg.toFixed(sm.dec) : "—"}<small> ${sm.unit}</small></div>
+          <div class="grp-stat-sub">Best: ${best !== null ? best.toFixed(sm.dec) : "—"} · n=${vals.length}</div>
+        </div>`;
+      }
+      html += "</div>";
+
+      // Grade distribution
+      const tierCounts = {
+        elite: 0,
+        excellent: 0,
+        good: 0,
+        average: 0,
+        below: 0,
+      };
+      for (const a of ga) {
+        if (a.overallGrade) tierCounts[a.overallGrade.tier]++;
+      }
+      const totalGraded = Object.values(tierCounts).reduce((s, v) => s + v, 0);
+      if (totalGraded > 0) {
+        html += '<div class="grp-grade-dist">';
+        const tierLabels = {
+          elite: "Elite",
+          excellent: "Excellent",
+          good: "Good",
+          average: "Average",
+          below: "Below Avg",
+        };
+        for (const [t, c] of Object.entries(tierCounts)) {
+          if (c > 0) {
+            html += `<span class="grade-badge grade-bg-${t}">${tierLabels[t]}: ${c}</span>`;
+          }
+        }
+        html += "</div>";
+      }
+
+      // Top athletes by overall grade
+      const ranked = ga
+        .filter((a) => a.overallGrade)
+        .sort((a, b) => b.overallGrade.score - a.overallGrade.score);
+      if (ranked.length > 0) {
+        html +=
+          '<div style="margin-top:.75rem"><strong style="font-size:.75rem;color:var(--text-muted);text-transform:uppercase">Top Athletes by Grade</strong>';
+        for (let i = 0; i < Math.min(5, ranked.length); i++) {
+          const a = ranked[i];
+          html += `<div class="grp-top-athlete">
+            <span class="grp-top-rank">#${i + 1}</span>
+            <strong>${a.name}</strong>
+            <span style="color:var(--text-muted);font-size:.75rem">${a.position || "—"}</span>
+            <span class="grade-badge grade-bg-${a.overallGrade.tier}" style="margin-left:auto">${a.overallGrade.label} (${a.overallGrade.score})</span>
+          </div>`;
+        }
+        html += "</div>";
+      }
+
+      // Weakest areas — find metrics where group avg grade is lowest
+      const metricAvgGrades = [];
+      for (const mm of D.hsStandards._meta) {
+        const scores = ga
+          .map((a) => a.grades[mm.key]?.score)
+          .filter((v) => v !== undefined);
+        if (scores.length > 0) {
+          const avgScore = scores.reduce((s, v) => s + v, 0) / scores.length;
+          metricAvgGrades.push({ key: mm.key, label: mm.label, avg: avgScore });
+        }
+      }
+      metricAvgGrades.sort((a, b) => a.avg - b.avg);
+      if (metricAvgGrades.length > 0) {
+        const weakest = metricAvgGrades.slice(0, 3);
+        const strongest = metricAvgGrades.slice(-3).reverse();
+        html += '<div class="grp-chart-row">';
+        html +=
+          '<div><strong style="font-size:.75rem;color:var(--text-muted);text-transform:uppercase">⚠️ Weakest Areas</strong>';
+        for (const m of weakest) {
+          const tierLabel =
+            m.avg >= 4.5
+              ? "Elite"
+              : m.avg >= 3.5
+                ? "Excellent"
+                : m.avg >= 2.5
+                  ? "Good"
+                  : m.avg >= 1.5
+                    ? "Average"
+                    : "Below Avg";
+          html += `<div class="grp-top-athlete"><strong>${m.label}</strong><span style="margin-left:auto;font-family:var(--mono);font-size:.78rem">${m.avg.toFixed(1)}/5 (${tierLabel})</span></div>`;
+        }
+        html += "</div>";
+        html +=
+          '<div><strong style="font-size:.75rem;color:var(--text-muted);text-transform:uppercase">💪 Strongest Areas</strong>';
+        for (const m of strongest) {
+          const tierLabel =
+            m.avg >= 4.5
+              ? "Elite"
+              : m.avg >= 3.5
+                ? "Excellent"
+                : m.avg >= 2.5
+                  ? "Good"
+                  : m.avg >= 1.5
+                    ? "Average"
+                    : "Below Avg";
+          html += `<div class="grp-top-athlete"><strong>${m.label}</strong><span style="margin-left:auto;font-family:var(--mono);font-size:.78rem">${m.avg.toFixed(1)}/5 (${tierLabel})</span></div>`;
+        }
+        html += "</div></div>";
+      }
+
+      html += "</div>";
+    }
+    html += "</div>";
+    container.innerHTML = html;
+  };
+
+  /* ========== CSV EXPORT ========== */
+  window.exportCSV = function () {
+    const D = window.CLUB;
+    const headers = [
+      "Name",
+      "Position",
+      "Group",
+      "Height (in)",
+      "Weight (lb)",
+      "Bench (lb)",
+      "Squat (lb)",
+      "Med Ball (in)",
+      "Vert (in)",
+      "Broad (in)",
+      "0-20 (s)",
+      "20-30 (s)",
+      "30-40 (s)",
+      "40yd (s)",
+      "Rel Bench",
+      "Rel Squat",
+      "MB Rel",
+      "vMax (m/s)",
+      "v10Max (m/s)",
+      "F1 (N)",
+      "Peak Momentum",
+      "Peak Power (W)",
+      "Rel Peak Power",
+      "Strength Util",
+      "Overall Grade",
+      "Grade Score",
+    ];
+    const rows = [headers.join(",")];
+    for (const a of D.athletes) {
+      const row = [
+        '"' + (a.name || "") + '"',
+        a.position || "",
+        a.group || "",
+        a.height ?? "",
+        a.weight ?? "",
+        a.bench ?? "",
+        a.squat ?? "",
+        a.medball ?? "",
+        a.vert ?? "",
+        a.broad ?? "",
+        a.sprint020 ?? "",
+        a.sprint2030 ?? "",
+        a.sprint3040 ?? "",
+        a.forty ?? "",
+        a.relBench ?? "",
+        a.relSquat ?? "",
+        a.mbRel ?? "",
+        a.vMax ?? "",
+        a.v10Max ?? "",
+        a.F1 ?? "",
+        a.momMax ?? "",
+        a.peakPower ?? "",
+        a.relPeakPower ?? "",
+        a.strengthUtil ?? "",
+        a.overallGrade ? a.overallGrade.label : "",
+        a.overallGrade ? a.overallGrade.score : "",
+      ];
+      rows.push(row.join(","));
+    }
+    const csv = rows.join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "lifting_club_data.csv";
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
+  /* ========== SNAPSHOT MANAGEMENT ========== */
+  function refreshSnapshotList() {
+    const sel = document.getElementById("snapshotSelect");
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Load Snapshot —</option>';
+    const snapshots = JSON.parse(localStorage.getItem("lc_snapshots") || "[]");
+    for (const s of snapshots) {
+      const o = document.createElement("option");
+      o.value = s.name;
+      o.textContent = `${s.name} (${s.date})`;
+      sel.appendChild(o);
+    }
+  }
+
+  function updateDataStatus() {
+    const el = document.getElementById("dataStatus");
+    if (!el) return;
+    const hasEdits = localStorage.getItem("lc_edits");
+    const added = JSON.parse(localStorage.getItem("lc_added") || "[]");
+    const deleted = JSON.parse(localStorage.getItem("lc_deleted") || "[]");
+    const snapshots = JSON.parse(localStorage.getItem("lc_snapshots") || "[]");
+    const parts = [];
+    if (hasEdits) parts.push("edits");
+    if (added.length) parts.push("+" + added.length + " added");
+    if (deleted.length) parts.push("-" + deleted.length + " deleted");
+    if (parts.length) {
+      el.textContent = "⚡ Modified data: " + parts.join(", ");
+      el.className = "data-status has-edits";
+    } else {
+      el.textContent = `Original data · ${snapshots.length} snapshot${snapshots.length !== 1 ? "s" : ""} saved`;
+      el.className = "data-status";
+    }
+  }
+
+  window.saveSnapshot = function () {
+    const name = prompt(
+      "Snapshot name:",
+      "Snapshot " + new Date().toLocaleDateString(),
+    );
+    if (!name) return;
+    const snapshots = JSON.parse(localStorage.getItem("lc_snapshots") || "[]");
+    // Build a snapshot of the current state (original + additions - deletions + edits)
+    const rawCopy = JSON.parse(JSON.stringify(window._rawDataCache));
+
+    // Apply additions
+    const added = JSON.parse(localStorage.getItem("lc_added") || "[]");
+    for (const a of added) {
+      if (!rawCopy.athletes.find((x) => x.id === a.id))
+        rawCopy.athletes.push(a);
+    }
+
+    // Apply deletions
+    const deleted = JSON.parse(localStorage.getItem("lc_deleted") || "[]");
+    if (deleted.length)
+      rawCopy.athletes = rawCopy.athletes.filter(
+        (a) => !deleted.includes(a.id),
+      );
+
+    // Apply edits
+    const edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
+    for (const edit of edits) {
+      const athlete = rawCopy.athletes.find((a) => a.id === edit.id);
+      if (athlete) Object.assign(athlete, edit.changes);
+    }
+    snapshots.push({
+      name,
+      date: new Date().toLocaleString(),
+      data: rawCopy,
+    });
+    localStorage.setItem("lc_snapshots", JSON.stringify(snapshots));
+    refreshSnapshotList();
+    updateDataStatus();
+    alert('Snapshot "' + name + '" saved!');
+  };
+
+  window.loadSnapshot = function () {
+    const sel = document.getElementById("snapshotSelect");
+    const name = sel.value;
+    if (!name) {
+      alert("Select a snapshot to load.");
+      return;
+    }
+    const snapshots = JSON.parse(localStorage.getItem("lc_snapshots") || "[]");
+    const snap = snapshots.find((s) => s.name === name);
+    if (!snap) {
+      alert("Snapshot not found.");
+      return;
+    }
+    if (
+      !confirm('Load snapshot "' + name + '"? This will replace current data.')
+    )
+      return;
+    // Clear all local modifications
+    localStorage.removeItem("lc_edits");
+    localStorage.removeItem("lc_added");
+    localStorage.removeItem("lc_deleted");
+    window.CLUB = window._processData(JSON.parse(JSON.stringify(snap.data)));
+    reRenderAll();
+    updateDataStatus();
+    alert('Snapshot "' + name + '" loaded!');
+  };
+
+  window.deleteSnapshot = function () {
+    const sel = document.getElementById("snapshotSelect");
+    const name = sel.value;
+    if (!name) {
+      alert("Select a snapshot to delete.");
+      return;
+    }
+    if (!confirm('Delete snapshot "' + name + '"?')) return;
+    let snapshots = JSON.parse(localStorage.getItem("lc_snapshots") || "[]");
+    snapshots = snapshots.filter((s) => s.name !== name);
+    localStorage.setItem("lc_snapshots", JSON.stringify(snapshots));
+    refreshSnapshotList();
+    updateDataStatus();
+  };
+
+  window.resetToOriginal = function () {
+    if (
+      !confirm(
+        "Discard all edits, added athletes, and deletions? This restores the original dataset.",
+      )
+    )
+      return;
+    localStorage.removeItem("lc_edits");
+    localStorage.removeItem("lc_added");
+    localStorage.removeItem("lc_deleted");
+    const raw = JSON.parse(JSON.stringify(window._rawDataCache));
+    window.CLUB = window._processData(raw);
+    // Close edit panel if open
+    const panel = document.getElementById("editPanel");
+    if (panel && panel.classList.contains("open")) closeEditPanel();
+    reRenderAll();
+    updateDataStatus();
+  };
+
+  function refreshAthleteDropdowns() {
+    const D = window.CLUB;
+    const athSel = document.getElementById("athleteSelect");
+    const scFilt = document.getElementById("scorecardFilter");
+    const cmpSelects = [
+      document.getElementById("cmpA"),
+      document.getElementById("cmpB"),
+      document.getElementById("cmpC"),
+    ];
+
+    // Save current selections
+    const prevAth = athSel.value;
+    const prevSc = scFilt.value;
+    const prevCmp = cmpSelects.map((s) => s.value);
+
+    // Clear existing options (keep first placeholder option)
+    [athSel, scFilt, ...cmpSelects].forEach((sel) => {
+      while (sel.options.length > 1) sel.remove(1);
+    });
+
+    // Repopulate
+    D.athletes
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach((a) => {
+        const label = `${a.name}${a.position ? " (" + a.position + ")" : ""}`;
+        athSel.add(new Option(label, a.id));
+        scFilt.add(new Option(label, a.id));
+        cmpSelects.forEach((sel) => sel.add(new Option(label, a.id)));
+      });
+
+    // Restore previous selections
+    athSel.value = prevAth;
+    scFilt.value = prevSc;
+    cmpSelects.forEach((sel, i) => (sel.value = prevCmp[i]));
+  }
+
+  function reRenderAll() {
+    // Refresh athlete dropdowns (names/positions may have changed)
+    refreshAthleteDropdowns();
+
+    renderOverview();
+    renderLeaderboards();
+    renderSprintAnalysis();
+    renderStrengthPower();
+    renderScorecard();
+    renderBenchmarks();
+    renderTestingLog();
+    renderTestingWeekPlan();
+    renderConstants();
+    renderGroupDashboard();
+    // Re-render profile if one is selected
+    const id = document.getElementById("athleteSelect").value;
+    if (id) renderProfile();
+  }
+
+  /* ========== REBUILD DATA FROM LOCALSTORAGE ========== */
+  function rebuildFromStorage() {
+    const rawCopy = JSON.parse(JSON.stringify(window._rawDataCache));
+
+    // Apply additions
+    const added = JSON.parse(localStorage.getItem("lc_added") || "[]");
+    for (const a of added) {
+      if (
+        !rawCopy.athletes.find(function (x) {
+          return x.id === a.id;
+        })
+      ) {
+        rawCopy.athletes.push(a);
+      }
+    }
+
+    // Apply deletions
+    const deleted = JSON.parse(localStorage.getItem("lc_deleted") || "[]");
+    if (deleted.length) {
+      rawCopy.athletes = rawCopy.athletes.filter(function (a) {
+        return !deleted.includes(a.id);
+      });
+    }
+
+    // Apply edits
+    const edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
+    for (const edit of edits) {
+      const athlete = rawCopy.athletes.find(function (a) {
+        return a.id === edit.id;
+      });
+      if (athlete) Object.assign(athlete, edit.changes);
+    }
+
+    window.CLUB = window._processData(rawCopy);
+  }
+
+  /* ========== NEXT ATHLETE ID ========== */
+  function nextAthleteId() {
+    const D = window.CLUB;
+    const added = JSON.parse(localStorage.getItem("lc_added") || "[]");
+    // Collect all existing IDs from processed data + localStorage additions
+    const allIds = D.athletes.map(function (a) {
+      return a.id;
+    });
+    for (const a of added) {
+      if (allIds.indexOf(a.id) === -1) allIds.push(a.id);
+    }
+    // Also check the raw cache for any IDs in the original JSON
+    if (window._rawDataCache && window._rawDataCache.athletes) {
+      for (const a of window._rawDataCache.athletes) {
+        if (allIds.indexOf(a.id) === -1) allIds.push(a.id);
+      }
+    }
+
+    // Find the highest numeric suffix
+    let maxNum = 0;
+    for (const id of allIds) {
+      const m = id.match(/^ATH(\d+)$/);
+      if (m) {
+        const n = parseInt(m[1], 10);
+        if (n > maxNum) maxNum = n;
+      }
+    }
+    // Pad to 3 digits (or more if needed)
+    const next = maxNum + 1;
+    const padded = String(next).padStart(3, "0");
+    return "ATH" + padded;
+  }
+
+  /* ========== ADD ATHLETE ========== */
+  window.addAthlete = function () {
+    const name = prompt("Enter athlete name:");
+    if (!name || !name.trim()) return;
+
+    const id = nextAthleteId();
+    const newAthlete = {
+      id: id,
+      name: name.trim(),
+      position: null,
+      height_in: null,
+      weight_lb: null,
+      bench_1rm: null,
+      squat_1rm: null,
+      medball_in: null,
+      vert_in: null,
+      broad_in: null,
+      sprint_020: null,
+      sprint_2030: null,
+      sprint_3040: null,
+    };
+
+    // Save to lc_added
+    const added = JSON.parse(localStorage.getItem("lc_added") || "[]");
+    added.push(newAthlete);
+    localStorage.setItem("lc_added", JSON.stringify(added));
+
+    // Rebuild & re-render
+    rebuildFromStorage();
+    reRenderAll();
+    updateDataStatus();
+
+    // Select the new athlete and open the edit panel
+    document.getElementById("athleteSelect").value = id;
+    showTab("profiles");
+    renderProfile();
+    openEditPanel(id);
+
+    showToast("Added " + name.trim() + " (" + id + ")", "success");
+  };
+
+  /* ========== DELETE ATHLETE ========== */
+  window.deleteCurrentAthlete = function () {
+    // Determine which athlete to delete
+    let id = editingAthleteId || document.getElementById("athleteSelect").value;
+    if (!id) {
+      showToast("Select an athlete first.", "warn");
+      return;
+    }
+
+    const a = window.CLUB.athletes.find(function (x) {
+      return x.id === id;
+    });
+    const displayName = a ? a.name : id;
+
+    if (
+      !confirm(
+        "Delete " +
+          displayName +
+          " (" +
+          id +
+          ")? This cannot be undone (unless you reset to original).",
+      )
+    )
+      return;
+
+    // Close edit panel if we're deleting the currently-edited athlete
+    if (editingAthleteId === id) {
+      closeEditPanel();
+    }
+
+    // Add to lc_deleted
+    const deleted = JSON.parse(localStorage.getItem("lc_deleted") || "[]");
+    if (deleted.indexOf(id) === -1) deleted.push(id);
+    localStorage.setItem("lc_deleted", JSON.stringify(deleted));
+
+    // Also remove from lc_added if it was a newly added athlete
+    let added = JSON.parse(localStorage.getItem("lc_added") || "[]");
+    added = added.filter(function (a) {
+      return a.id !== id;
+    });
+    localStorage.setItem("lc_added", JSON.stringify(added));
+
+    // Also remove from lc_edits
+    let edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
+    edits = edits.filter(function (e) {
+      return e.id !== id;
+    });
+    localStorage.setItem("lc_edits", JSON.stringify(edits));
+
+    // Rebuild & re-render
+    rebuildFromStorage();
+
+    // Clear the athlete selector
+    document.getElementById("athleteSelect").value = "";
+    document.getElementById("profileContent").innerHTML =
+      '<p class=\"placeholder-text\">Select an athlete to view their profile.</p>';
+
+    reRenderAll();
+    updateDataStatus();
+
+    showToast("Deleted " + displayName + " (" + id + ")", "info");
+  };
+
+  /* ========== EDIT PANEL (slide-in) ========== */
+  let editingAthleteId = null;
+  let autoSaveTimer = null;
+
+  const EDITABLE_FIELDS = [
+    {
+      key: "name",
+      jsonKey: "name",
+      label: "Name",
+      type: "text",
+      section: "Bio",
+    },
+    {
+      key: "position",
+      jsonKey: "position",
+      label: "Position",
+      type: "select",
+      options: ["RB", "WR", "DB", "QB", "TE", "LB", "OL", "DL"],
+      section: "Bio",
+    },
+    {
+      key: "height",
+      jsonKey: "height_in",
+      label: "Height (in)",
+      type: "number",
+      step: "0.5",
+      section: "Bio",
+    },
+    {
+      key: "weight",
+      jsonKey: "weight_lb",
+      label: "Weight (lb)",
+      type: "number",
+      step: "1",
+      section: "Bio",
+    },
+    {
+      key: "bench",
+      jsonKey: "bench_1rm",
+      label: "Bench 1RM (lb)",
+      type: "number",
+      step: "5",
+      section: "Strength",
+    },
+    {
+      key: "squat",
+      jsonKey: "squat_1rm",
+      label: "Squat 1RM (lb)",
+      type: "number",
+      step: "5",
+      section: "Strength",
+    },
+    {
+      key: "medball",
+      jsonKey: "medball_in",
+      label: "Med Ball (in)",
+      type: "number",
+      step: "1",
+      section: "Explosiveness",
+    },
+    {
+      key: "vert",
+      jsonKey: "vert_in",
+      label: "Vertical Jump (in)",
+      type: "number",
+      step: "0.5",
+      section: "Explosiveness",
+    },
+    {
+      key: "broad",
+      jsonKey: "broad_in",
+      label: "Broad Jump (in)",
+      type: "number",
+      step: "1",
+      section: "Explosiveness",
+    },
+    {
+      key: "sprint020",
+      jsonKey: "sprint_020",
+      label: "0–20yd Split (s)",
+      type: "number",
+      step: "0.01",
+      section: "Sprint",
+    },
+    {
+      key: "sprint2030",
+      jsonKey: "sprint_2030",
+      label: "20–30yd Split (s)",
+      type: "number",
+      step: "0.01",
+      section: "Sprint",
+    },
+    {
+      key: "sprint3040",
+      jsonKey: "sprint_3040",
+      label: "30–40yd Split (s)",
+      type: "number",
+      step: "0.01",
+      section: "Sprint",
+    },
+  ];
+
+  /* ---------- Toast Notifications ---------- */
+  function showToast(msg, type) {
+    type = type || "info";
+    const container = document.getElementById("toastContainer");
+    if (!container) return;
+    const t = document.createElement("div");
+    t.className = "toast toast-" + type;
+    t.textContent = msg;
+    container.appendChild(t);
+    setTimeout(function () {
+      t.remove();
+    }, 3200);
+  }
+
+  /* ---------- Edit Panel helpers ---------- */
+  function populateEditAthleteSelect() {
+    const D = window.CLUB;
+    const sel = document.getElementById("editAthleteSelect");
+    if (!sel) return;
+    sel.innerHTML = "";
+    D.athletes
+      .slice()
+      .sort(function (a, b) {
+        return a.name.localeCompare(b.name);
+      })
+      .forEach(function (a) {
+        const o = document.createElement("option");
+        o.value = a.id;
+        o.textContent = a.name + (a.position ? " (" + a.position + ")" : "");
+        sel.appendChild(o);
+      });
+  }
+
+  function buildEditFields(a) {
+    const body = document.getElementById("editPanelBody");
+    if (!body) return;
+
+    // Get saved edits for this athlete to detect changes
+    const edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
+    const athleteEdits = edits.find(function (e) {
+      return e.id === a.id;
+    });
+    const changedKeys = athleteEdits ? Object.keys(athleteEdits.changes) : [];
+
+    let html = "";
+    let currentSection = "";
+
+    for (let i = 0; i < EDITABLE_FIELDS.length; i++) {
+      const f = EDITABLE_FIELDS[i];
+
+      // Start new section?
+      if (f.section !== currentSection) {
+        if (currentSection !== "") html += "</div>"; // close previous grid
+        currentSection = f.section;
+        html += '<div class="edit-section-title">' + f.section + "</div>";
+        html += '<div class="edit-grid">';
+      }
+
+      const val = a[f.key];
+      const isChanged = changedKeys.indexOf(f.jsonKey) >= 0;
+      const changedCls = isChanged ? " field-changed" : "";
+
+      if (f.type === "select") {
+        html += '<div class="edit-field"><label>' + f.label + "</label>";
+        html +=
+          '<select id="edit_' +
+          f.key +
+          '" data-field="' +
+          f.key +
+          '" class="' +
+          changedCls.trim() +
+          '">';
+        html += '<option value="">— None —</option>';
+        for (let oi = 0; oi < f.options.length; oi++) {
+          html +=
+            '<option value="' +
+            f.options[oi] +
+            '"' +
+            (val === f.options[oi] ? " selected" : "") +
+            ">" +
+            f.options[oi] +
+            "</option>";
+        }
+        html += "</select></div>";
+      } else {
+        html += '<div class="edit-field"><label>' + f.label + "</label>";
+        html +=
+          '<input type="' +
+          f.type +
+          '" id="edit_' +
+          f.key +
+          '" data-field="' +
+          f.key +
+          '" class="' +
+          changedCls.trim() +
+          '" value="' +
+          (val !== null && val !== undefined ? val : "") +
+          '"' +
+          (f.step ? ' step="' + f.step + '"' : "") +
+          " /></div>";
+      }
+    }
+    if (currentSection !== "") html += "</div>"; // close last grid
+
+    body.innerHTML = html;
+
+    // Attach auto-save listeners to all fields
+    body.querySelectorAll("input, select").forEach(function (el) {
+      el.addEventListener("input", scheduleAutoSave);
+      el.addEventListener("change", scheduleAutoSave);
+    });
+  }
+
+  /* ---------- Auto-save ---------- */
+  function scheduleAutoSave() {
+    if (autoSaveTimer) clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(doAutoSave, 500);
+
+    // Show typing indicator
+    const statusEl = document.getElementById("autoSaveStatus");
+    if (statusEl) {
+      statusEl.textContent = "typing…";
+      statusEl.classList.add("visible");
+    }
+  }
+
+  function doAutoSave() {
+    if (!editingAthleteId) return;
+
+    // Gather current field values
+    const changes = {};
+    for (let i = 0; i < EDITABLE_FIELDS.length; i++) {
+      const f = EDITABLE_FIELDS[i];
+      const el = document.getElementById("edit_" + f.key);
+      if (!el) continue;
+      const rawVal = el.value.trim();
+      if (f.type === "number") {
+        changes[f.jsonKey] = rawVal === "" ? null : parseFloat(rawVal);
+      } else {
+        changes[f.jsonKey] = rawVal || null;
+      }
+    }
+
+    // Save to localStorage
+    let edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
+    const existing = edits.find(function (e) {
+      return e.id === editingAthleteId;
+    });
+    if (existing) {
+      Object.assign(existing.changes, changes);
+    } else {
+      edits.push({ id: editingAthleteId, changes: changes });
+    }
+    localStorage.setItem("lc_edits", JSON.stringify(edits));
+
+    // Reprocess data
+    rebuildFromStorage();
+
+    // Re-render everything (panel stays open)
+    reRenderAll();
+    updateDataStatus();
+
+    // Keep athlete selected & profile visible
+    const athSel = document.getElementById("athleteSelect");
+    if (athSel) athSel.value = editingAthleteId;
+    renderProfile();
+
+    // Update the edit panel nav dropdown
+    populateEditAthleteSelect();
+    document.getElementById("editAthleteSelect").value = editingAthleteId;
+
+    // Mark changed fields
+    markChangedFields();
+
+    // Show save confirmation
+    const statusEl = document.getElementById("autoSaveStatus");
+    if (statusEl) {
+      statusEl.textContent = "✓ Saved";
+      statusEl.classList.add("visible");
+      setTimeout(function () {
+        statusEl.classList.remove("visible");
+      }, 2000);
+    }
+  }
+
+  function markChangedFields() {
+    const edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
+    const athleteEdits = edits.find(function (e) {
+      return e.id === editingAthleteId;
+    });
+    const changedKeys = athleteEdits ? Object.keys(athleteEdits.changes) : [];
+
+    for (let i = 0; i < EDITABLE_FIELDS.length; i++) {
+      const f = EDITABLE_FIELDS[i];
+      const el = document.getElementById("edit_" + f.key);
+      if (!el) continue;
+      if (changedKeys.indexOf(f.jsonKey) >= 0) {
+        el.classList.add("field-changed");
+      } else {
+        el.classList.remove("field-changed");
+      }
+    }
+  }
+
+  /* ---------- Panel open / close / navigate ---------- */
+  window.openEditPanel = function (athleteId) {
+    const D = window.CLUB;
+    const id = athleteId || document.getElementById("athleteSelect").value;
+    if (!id) {
+      showToast("Select an athlete first.", "warn");
+      return;
+    }
+    const a = D.athletes.find(function (x) {
+      return x.id === id;
+    });
+    if (!a) return;
+    editingAthleteId = id;
+
+    // Populate the nav dropdown
+    populateEditAthleteSelect();
+    document.getElementById("editAthleteSelect").value = id;
+
+    // Set title
+    document.getElementById("editPanelTitle").textContent = "Edit: " + a.name;
+
+    // Build fields
+    buildEditFields(a);
+
+    // Open panel with animation
+    document.getElementById("editPanel").classList.add("open");
+    document.getElementById("editPanelBackdrop").classList.add("open");
+
+    // Also select this athlete in the main profile tab
+    document.getElementById("athleteSelect").value = id;
+    renderProfile();
+  };
+
+  window.closeEditPanel = function () {
+    document.getElementById("editPanel").classList.remove("open");
+    document.getElementById("editPanelBackdrop").classList.remove("open");
+    if (autoSaveTimer) {
+      clearTimeout(autoSaveTimer);
+      autoSaveTimer = null;
+    }
+    editingAthleteId = null;
+  };
+
+  window.editPanelSelectAthlete = function (id) {
+    if (!id) return;
+    // Flush any pending auto-save for previous athlete
+    if (autoSaveTimer) {
+      clearTimeout(autoSaveTimer);
+      autoSaveTimer = null;
+      doAutoSave();
+    }
+    openEditPanel(id);
+  };
+
+  window.editPanelPrev = function () {
+    const D = window.CLUB;
+    const sorted = D.athletes.slice().sort(function (a, b) {
+      return a.name.localeCompare(b.name);
+    });
+    let idx = sorted.findIndex(function (a) {
+      return a.id === editingAthleteId;
+    });
+    if (idx <= 0) idx = sorted.length;
+    openEditPanel(sorted[idx - 1].id);
+  };
+
+  window.editPanelNext = function () {
+    const D = window.CLUB;
+    const sorted = D.athletes.slice().sort(function (a, b) {
+      return a.name.localeCompare(b.name);
+    });
+    let idx = sorted.findIndex(function (a) {
+      return a.id === editingAthleteId;
+    });
+    if (idx >= sorted.length - 1) idx = -1;
+    openEditPanel(sorted[idx + 1].id);
+  };
+
+  /* ---------- Undo & athlete-level export ---------- */
+  window.undoAthleteEdits = function () {
+    if (!editingAthleteId) return;
+    let edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
+    edits = edits.filter(function (e) {
+      return e.id !== editingAthleteId;
+    });
+    localStorage.setItem("lc_edits", JSON.stringify(edits));
+
+    // Reprocess from original + remaining edits
+    rebuildFromStorage();
+    reRenderAll();
+    updateDataStatus();
+
+    // Refresh the panel with original data
+    const a = window.CLUB.athletes.find(function (x) {
+      return x.id === editingAthleteId;
+    });
+    if (a) {
+      buildEditFields(a);
+      document.getElementById("editPanelTitle").textContent = "Edit: " + a.name;
+      populateEditAthleteSelect();
+      document.getElementById("editAthleteSelect").value = editingAthleteId;
+    }
+    showToast("Changes undone for this athlete.", "info");
+  };
+
+  window.exportAthleteJSON = function () {
+    if (!editingAthleteId) return;
+    const a = window.CLUB.athletes.find(function (x) {
+      return x.id === editingAthleteId;
+    });
+    if (!a) return;
+
+    const exported = {
+      id: a.id,
+      name: a.name,
+      position: a.position,
+      group: a.group,
+      height_in: a.height,
+      weight_lb: a.weight,
+      bench_1rm: a.bench,
+      squat_1rm: a.squat,
+      medball_in: a.medball,
+      vert_in: a.vert,
+      broad_in: a.broad,
+      sprint_020: a.sprint020,
+      sprint_2030: a.sprint2030,
+      sprint_3040: a.sprint3040,
+    };
+
+    const json = JSON.stringify(exported, null, 2);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard
+        .writeText(json)
+        .then(function () {
+          showToast("Athlete JSON copied to clipboard!", "success");
+        })
+        .catch(function () {
+          prompt("Copy this JSON:", json);
+        });
+    } else {
+      prompt("Copy this JSON:", json);
+    }
+  };
+
+  // Close panel on Escape key
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      const panel = document.getElementById("editPanel");
+      if (panel && panel.classList.contains("open")) {
+        closeEditPanel();
+      }
+    }
+  });
+
+  /* ========== JSON EXPORT (full dataset) ========== */
+  window.exportJSON = function () {
+    const D = window.CLUB;
+    const exportData = {
+      exportDate: new Date().toISOString(),
+      source: "Lifting Club Dashboard",
+      athleteCount: D.athletes.length,
+      athletes: D.athletes.map(function (a) {
+        return {
+          id: a.id,
+          name: a.name,
+          position: a.position,
+          group: a.group,
+          height_in: a.height,
+          weight_lb: a.weight,
+          bench_1rm: a.bench,
+          squat_1rm: a.squat,
+          medball_in: a.medball,
+          vert_in: a.vert,
+          broad_in: a.broad,
+          sprint_020: a.sprint020,
+          sprint_2030: a.sprint2030,
+          sprint_3040: a.sprint3040,
+          forty: a.forty,
+          relBench: a.relBench,
+          relSquat: a.relSquat,
+          mbRel: a.mbRel,
+          vMax: a.vMax,
+          peakPower: a.peakPower,
+          relPeakPower: a.relPeakPower,
+          overallGrade: a.overallGrade ? a.overallGrade.label : null,
+          gradeScore: a.overallGrade ? a.overallGrade.score : null,
+        };
+      }),
+    };
+
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download =
+      "lifting_club_data_" + new Date().toISOString().slice(0, 10) + ".json";
+    link.click();
+    URL.revokeObjectURL(link.href);
+    showToast("JSON exported — " + D.athletes.length + " athletes", "success");
+  };
+
+  // Legacy compat
+  window.openEditModal = window.openEditPanel;
+  window.closeEditModal = window.closeEditPanel;
+  window.saveEdit = doAutoSave;
+})();

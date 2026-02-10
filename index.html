@@ -1,0 +1,1972 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lifting Club — Athletic Testing Dashboard</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏋️</text></svg>"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+    <!-- ===== HEADER ===== -->
+    <header class="site-header">
+      <div class="header-inner">
+        <h1 class="logo">🏋️ Lifting Club</h1>
+        <span class="header-subtitle">Athletic Performance Dashboard</span>
+      </div>
+    </header>
+
+    <!-- ===== NAVIGATION TABS ===== -->
+    <nav class="tabs" role="tablist" aria-label="Main navigation">
+      <button
+        class="tab active"
+        role="tab"
+        aria-selected="true"
+        data-tab="overview"
+        onclick="showTab('overview')"
+      >
+        Team Overview
+      </button>
+      <button
+        class="tab"
+        role="tab"
+        aria-selected="false"
+        data-tab="profiles"
+        onclick="showTab('profiles')"
+      >
+        Athlete Profiles
+      </button>
+      <button
+        class="tab"
+        role="tab"
+        aria-selected="false"
+        data-tab="leaderboards"
+        onclick="showTab('leaderboards')"
+      >
+        Leaderboards
+      </button>
+      <button
+        class="tab"
+        role="tab"
+        aria-selected="false"
+        data-tab="sprint"
+        onclick="showTab('sprint')"
+      >
+        Sprint Analysis
+      </button>
+      <button
+        class="tab"
+        role="tab"
+        aria-selected="false"
+        data-tab="strength"
+        onclick="showTab('strength')"
+      >
+        Strength &amp; Power
+      </button>
+      <button
+        class="tab"
+        role="tab"
+        aria-selected="false"
+        data-tab="scorecard"
+        onclick="showTab('scorecard')"
+      >
+        Scorecard
+      </button>
+      <button
+        class="tab"
+        role="tab"
+        aria-selected="false"
+        data-tab="compare"
+        onclick="showTab('compare')"
+      >
+        Compare
+      </button>
+      <button
+        class="tab"
+        role="tab"
+        aria-selected="false"
+        data-tab="groups"
+        onclick="showTab('groups')"
+      >
+        Groups
+      </button>
+      <button
+        class="tab"
+        role="tab"
+        aria-selected="false"
+        data-tab="benchmarks"
+        onclick="showTab('benchmarks')"
+      >
+        Standards
+      </button>
+      <button
+        class="tab"
+        role="tab"
+        aria-selected="false"
+        data-tab="log"
+        onclick="showTab('log')"
+      >
+        Testing Log
+      </button>
+      <button
+        class="tab"
+        role="tab"
+        aria-selected="false"
+        data-tab="plan"
+        onclick="showTab('plan')"
+      >
+        Testing Week
+      </button>
+    </nav>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="content">
+      <!-- Loading indicator -->
+      <div id="loadingIndicator" class="loading-indicator">
+        <div class="loading-spinner"></div>
+        <p>Loading athlete data…</p>
+      </div>
+
+      <!-- ——— TAB: Team Overview ——— -->
+      <section id="tab-overview" class="tab-panel active">
+        <div class="section-header">
+          <h2>Team Overview</h2>
+          <div class="filters">
+            <input
+              type="text"
+              id="rosterSearch"
+              class="input"
+              placeholder="Search athletes…"
+              oninput="renderOverview()"
+              style="min-width: 160px"
+            />
+            <select id="overviewPosFilter" onchange="renderOverview()">
+              <option value="all">All Positions</option>
+            </select>
+            <select id="overviewGroupFilter" onchange="renderOverview()">
+              <option value="all">All Groups</option>
+              <option value="Skill">Skill</option>
+              <option value="Big Skill">Big Skill</option>
+              <option value="Linemen">Linemen</option>
+              <option value="Other">Other</option>
+            </select>
+            <select id="overviewGradeFilter" onchange="renderOverview()">
+              <option value="all">All Grades</option>
+              <option value="elite">Elite Only</option>
+              <option value="excellent">Excellent+</option>
+              <option value="good">Good+</option>
+              <option value="average">Average+</option>
+              <option value="below">Below Avg</option>
+            </select>
+            <button
+              class="btn btn-sm"
+              onclick="exportCSV()"
+              title="Download team data as CSV"
+            >
+              📥 CSV
+            </button>
+          </div>
+        </div>
+        <div class="card-row" id="summaryCards"></div>
+        <div id="dataWarnings"></div>
+        <div class="table-wrap">
+          <table id="rosterTable" class="data-table sortable">
+            <thead>
+              <tr>
+                <th data-sort="name">Athlete</th>
+                <th data-sort="position" title="Playing position">Pos</th>
+                <th
+                  data-sort="group"
+                  title="Position group: Skill, Big Skill, Linemen, or Other"
+                >
+                  Group
+                </th>
+                <th
+                  data-sort="height"
+                  title="Standing height in inches. Affects leverage, reach, and position suitability."
+                >
+                  Ht (in)
+                </th>
+                <th
+                  data-sort="weight"
+                  title="Body weight in pounds. Affects force production, momentum, and position fit."
+                >
+                  Wt (lb)
+                </th>
+                <th
+                  data-sort="bench"
+                  title="Bench Press 1RM (lb). Max upper-body pressing strength — key for blocking and stiff-arms."
+                >
+                  Bench
+                </th>
+                <th
+                  data-sort="squat"
+                  title="Back Squat 1RM (lb). Max lower-body strength — foundational for sprinting, jumping, and COD."
+                >
+                  Squat
+                </th>
+                <th
+                  data-sort="medball"
+                  title="Seated Med Ball Throw (in). Upper-body explosive power — great predictor of hitting/throwing power."
+                >
+                  MB
+                </th>
+                <th
+                  data-sort="vert"
+                  title="Vertical Jump (in). Lower-body explosive power — correlates with acceleration and COD."
+                >
+                  VJ
+                </th>
+                <th
+                  data-sort="broad"
+                  title="Broad Jump (in). Horizontal explosive power — good general athleticism indicator."
+                >
+                  BJ
+                </th>
+                <th
+                  data-sort="forty"
+                  title="40-Yard Dash (s). Linear sprint speed. Lower is better."
+                >
+                  40 yd
+                </th>
+                <th
+                  data-sort="zMB"
+                  title="Med Ball Z-Score. Standard deviations from team mean. Positive = above average."
+                >
+                  z(MB)
+                </th>
+                <th
+                  data-sort="overallGrade"
+                  title="Overall grade based on absolute HS performance standards. Average of all available metric grades."
+                >
+                  Grade
+                </th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ——— TAB: Athlete Profiles ——— -->
+      <section id="tab-profiles" class="tab-panel">
+        <div class="section-header">
+          <h2>Athlete Profiles</h2>
+          <div class="filters">
+            <select id="athleteSelect" onchange="renderProfile()">
+              <option value="">— Select Athlete —</option>
+            </select>
+            <button
+              class="btn btn-sm"
+              onclick="printProfile()"
+              title="Print current profile"
+            >
+              🖨️ Print
+            </button>
+            <button
+              class="btn btn-sm"
+              onclick="openEditPanel()"
+              title="Edit athlete data"
+            >
+              ✏️ Edit
+            </button>
+            <button
+              class="btn btn-sm btn-add"
+              onclick="addAthlete()"
+              title="Add a new athlete"
+            >
+              ➕ Add Athlete
+            </button>
+            <button
+              class="btn btn-sm btn-danger"
+              onclick="deleteCurrentAthlete()"
+              title="Delete selected athlete"
+            >
+              🗑️ Delete
+            </button>
+          </div>
+        </div>
+        <div id="profileContent" class="profile-area">
+          <p class="placeholder-text">
+            Select an athlete to view their profile.
+          </p>
+        </div>
+      </section>
+
+      <!-- ——— TAB: Leaderboards ——— -->
+      <section id="tab-leaderboards" class="tab-panel">
+        <div class="section-header">
+          <h2>Leaderboards</h2>
+          <div class="filters">
+            <select id="lbMetric" onchange="renderLeaderboards()">
+              <option value="bench">Bench 1RM (lb)</option>
+              <option value="squat">Squat 1RM (lb)</option>
+              <option value="relBench">Relative Bench (xBW)</option>
+              <option value="relSquat">Relative Squat (xBW)</option>
+              <option value="medball">Med Ball Throw (in)</option>
+              <option value="mbRel">MB Relative (in/lb)</option>
+              <option value="vert">Vertical Jump (in)</option>
+              <option value="broad">Broad Jump (in)</option>
+              <option value="forty">40 yd Dash (s)</option>
+              <option value="vMax">Max Velocity (m/s)</option>
+              <option value="v10Max">Best 10-yd Velocity (m/s)</option>
+              <option value="F1">Sprint Force (N)</option>
+              <option value="momMax">Peak Momentum (kg·m/s)</option>
+              <option value="peakPower">Peak Power (W)</option>
+              <option value="zMB">MB Z-Score</option>
+            </select>
+          </div>
+        </div>
+        <div class="leaderboard-grid">
+          <div class="chart-card"><canvas id="lbChart"></canvas></div>
+          <div class="table-wrap">
+            <table id="lbTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Athlete</th>
+                  <th>Pos</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ——— TAB: Sprint Analysis ——— -->
+      <section id="tab-sprint" class="tab-panel">
+        <div class="section-header">
+          <h2>Derived Sprint Analysis</h2>
+        </div>
+        <p class="section-desc">
+          Velocity, acceleration, force, impulse, momentum, and power computed
+          from Freelap splits and body mass. Force values are field estimates of
+          average horizontal force using simplified kinematic equations.
+        </p>
+        <div class="info-banner">
+          <strong>📋 Workbook Note:</strong> If the late split slows (30–40
+          slower than 20–30), a3/F3 may be low or negative — useful flag for
+          speed endurance / mechanics.
+        </div>
+
+        <!-- Collapsible Column Reference Guide -->
+        <details class="sprint-reference">
+          <summary>📖 Column Reference Guide — What Every Column Means</summary>
+          <div class="sprint-ref-body">
+            <div class="ref-category">
+              <h4>🏃 Raw Splits & Timing</h4>
+              <div class="ref-grid">
+                <div class="ref-item">
+                  <span class="ref-col">Mass (kg)</span>
+                  <span class="ref-formula">= Weight (lb) × 0.4536</span>
+                  <p>
+                    Body mass converted to kilograms. Used in every physics
+                    calculation — force, momentum, and power all depend on mass.
+                    Heavier athletes produce more force/momentum but may be
+                    slower.
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">0–20 (s)</span>
+                  <span class="ref-formula">Raw Freelap split</span>
+                  <p>
+                    Time from start to 20-yard mark. This is the
+                    <em>acceleration / drive phase</em> — the most important
+                    phase for football because plays begin from a stop or
+                    near-stop. Includes reaction and first-step quickness.
+                    <strong>Lower is better.</strong>
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">20–30 (s)</span>
+                  <span class="ref-formula">Raw Freelap split</span>
+                  <p>
+                    Time for the 10 yards from the 20 to 30 mark. The
+                    <em>transition phase</em> — athlete is shifting from
+                    acceleration mechanics (forward lean) to upright top-end
+                    sprinting. <strong>Lower is better.</strong>
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">30–40 (s)</span>
+                  <span class="ref-formula">Raw Freelap split</span>
+                  <p>
+                    Time for the final 10 yards. The
+                    <em>top-speed / max-velocity phase</em>. If this is slower
+                    than the 20–30 split, the athlete is decelerating — a flag
+                    for speed endurance or mechanics breakdown.
+                    <strong>Lower is better.</strong>
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">40 Total</span>
+                  <span class="ref-formula">= (0–20) + (20–30) + (30–40)</span>
+                  <p>
+                    Sum of all three splits. The traditional NFL Combine
+                    benchmark for straight-line speed.
+                    <strong
+                      >Graded against HS standards by position group.</strong
+                    >
+                    Lower is better.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="ref-category">
+              <h4>⚡ Velocity (Speed)</h4>
+              <div class="ref-grid">
+                <div class="ref-item">
+                  <span class="ref-col">v1 (m/s)</span>
+                  <span class="ref-formula">= 18.288 m ÷ t<sub>0–20</sub></span>
+                  <p>
+                    Average velocity over the first 20 yards (18.288 meters).
+                    Tells you how fast they're moving on average during the
+                    drive phase. Higher is better. Typical HS range: 5.5 – 7.5
+                    m/s.
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">v2 (m/s)</span>
+                  <span class="ref-formula">= 9.144 m ÷ t<sub>20–30</sub></span>
+                  <p>
+                    Average velocity over the 20–30 yard segment (9.144 meters).
+                    Should be higher than v1 if the athlete is still
+                    accelerating. Typical HS range: 7.0 – 9.5 m/s.
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">v3 (m/s)</span>
+                  <span class="ref-formula">= 9.144 m ÷ t<sub>30–40</sub></span>
+                  <p>
+                    Average velocity over the final 10-yard segment. This is the
+                    closest measure to true top-end speed. If v3 &lt; v2, the
+                    athlete is slowing down. Typical HS range: 7.0 – 9.8 m/s.
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">vMax</span>
+                  <span class="ref-formula">= max(v1, v2, v3)</span>
+                  <p>
+                    The highest velocity recorded across all three segments —
+                    the athlete's raw speed ceiling. Almost always v2 or v3
+                    unless there's timing error.
+                    <strong>Graded against HS standards.</strong>
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">v10 Best</span>
+                  <span class="ref-formula">= max(v2, v3)</span>
+                  <p>
+                    Best 10-yard split velocity. Removes the 20-yard
+                    acceleration segment (which includes starting from rest) to
+                    give the purest top-end speed comparison.
+                    <strong>Graded against HS standards.</strong>
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">Top MPH</span>
+                  <span class="ref-formula">= vMax × 2.237</span>
+                  <p>
+                    Top speed converted to miles per hour — the most intuitive
+                    speed reference for coaches and players. An 8.0 m/s vMax ≈
+                    17.9 mph; 9.0 m/s ≈ 20.1 mph. For context, elite NFL combine
+                    sprinters reach ~22-23 mph.
+                    <strong>Not separately graded</strong> (same ranking as
+                    vMax).
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="ref-category">
+              <h4>🚀 Acceleration</h4>
+              <div class="ref-grid">
+                <div class="ref-item">
+                  <span class="ref-col">a1 (m/s²)</span>
+                  <span class="ref-formula">= v1 ÷ t<sub>0–20</sub></span>
+                  <p>
+                    Average acceleration during the drive phase (from
+                    standstill). This is the
+                    <em>first-step explosiveness</em> metric — critical for
+                    linemen off the snap, WRs off the line, DBs breaking on the
+                    ball. <strong>Higher is better.</strong> Note: this uses
+                    average velocity, so the true kinematic acceleration is
+                    approximately 2× this value. The simplified formula keeps
+                    all athletes on the same scale for comparison.
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">a2</span>
+                  <span class="ref-formula"
+                    >= (v2 − v1) ÷ t<sub>20–30</sub></span
+                  >
+                  <p>
+                    Rate of velocity change during transition.
+                    <strong>Positive = still speeding up.</strong> Near-zero
+                    means plateauing. This is color-coded:
+                    <span style="color: #4ade80">green = positive</span>,
+                    <span style="color: #f87171">red = negative</span>
+                    (decelerating).
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">a3</span>
+                  <span class="ref-formula"
+                    >= (v3 − v2) ÷ t<sub>30–40</sub></span
+                  >
+                  <p>
+                    Rate of velocity change at top speed.
+                    <strong>Negative values are common</strong> — most HS
+                    athletes decelerate here. A large negative flags poor speed
+                    endurance or mechanical breakdown. Color-coded like a2.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="ref-category">
+              <h4>💪 Force (Newtons)</h4>
+              <div class="ref-grid">
+                <div class="ref-item">
+                  <span class="ref-col">F1 (N)</span>
+                  <span class="ref-formula">= mass (kg) × a1</span>
+                  <p>
+                    Average horizontal force during the drive phase. This is the
+                    "how hard they push off the ground" number. Combines size
+                    AND acceleration — a 200 lb athlete who accelerates well
+                    will have a very high F1.
+                    <strong>Graded against HS standards.</strong> Higher is
+                    better.
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">F2</span>
+                  <span class="ref-formula">= mass (kg) × a2</span>
+                  <p>
+                    Average horizontal force during transition. Usually small or
+                    slightly positive — athlete is near top speed. Color-coded:
+                    <span style="color: #4ade80">green if positive</span>,
+                    <span style="color: #f87171">red if negative</span>.
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">F3</span>
+                  <span class="ref-formula">= mass (kg) × a3</span>
+                  <p>
+                    Average horizontal force during last 10 yards.
+                    <strong>Often negative</strong> — meaning the athlete is
+                    decelerating (net braking force). Very negative values
+                    indicate the athlete's sprint mechanics or conditioning
+                    break down at top speed.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="ref-category">
+              <h4>🚂 Momentum & Power</h4>
+              <div class="ref-grid">
+                <div class="ref-item">
+                  <span class="ref-col">pₑ (kg·m/s)</span>
+                  <span class="ref-formula">= mass (kg) × v10 Best</span>
+                  <p>
+                    <strong>Peak Momentum</strong> — the "freight train" number
+                    and the "how hard to tackle" metric. Combines mass and
+                    top-end speed. A 100 kg lineman at 8 m/s (pₑ = 800) is
+                    harder to stop than a 70 kg WR at 9 m/s (pₑ = 630).
+                    <strong>Graded against HS standards.</strong>
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">p1 (kg·m/s)</span>
+                  <span class="ref-formula">= mass (kg) × v1</span>
+                  <p>
+                    Momentum at the end of the 0–20 yard phase. How much force
+                    an opponent would need to stop them after their initial
+                    burst. Different from pₑ — this captures momentum after
+                    acceleration, not at top speed.
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">P1 (W)</span>
+                  <span class="ref-formula">= F1 × v1</span>
+                  <p>
+                    <strong>Sprint Power</strong> during drive phase. Mechanical
+                    power output = force × velocity. Higher values mean the
+                    athlete is producing high force WHILE moving fast. The
+                    ultimate acceleration performance metric.
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">P2</span>
+                  <span class="ref-formula">= F2 × v2</span>
+                  <p>
+                    Sprint power during transition. Because a2 (and thus F2) is
+                    often small, P2 is usually much lower than P1 — the athlete
+                    is fast but not accelerating much. Color-coded.
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">P3</span>
+                  <span class="ref-formula">= F3 × v3</span>
+                  <p>
+                    Sprint power in the max-velocity phase. Usually low or
+                    negative (deceleration). If positive, the athlete is still
+                    gaining speed in the last 10 yards — rare and impressive at
+                    the HS level. Color-coded.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="ref-category">
+              <h4>📐 Math Notes & Methodology</h4>
+              <div class="ref-grid" style="grid-template-columns: 1fr">
+                <div class="ref-item">
+                  <p>
+                    <strong>Distance conversions:</strong> 20 yards = 18.288 m,
+                    10 yards = 9.144 m (1 yard = 0.9144 m)
+                  </p>
+                  <p>
+                    <strong>Acceleration model:</strong> Uses a simplified a₁ =
+                    v_avg / t formula. Under true constant-acceleration
+                    kinematics from rest, a = 2d/t² (double the reported value).
+                    We use the simplified model because (a) it's standard
+                    practice in HS/college field sprint testing, (b) real
+                    sprints aren't constant-acceleration, and (c) the simplified
+                    values are internally consistent — every athlete is compared
+                    on the same scale, so rankings and grades are valid even
+                    though the absolute Newton values are field estimates rather
+                    than lab-grade.
+                  </p>
+                  <p>
+                    <strong>What drives each metric:</strong> Velocity metrics
+                    reward pure speed. Force metrics reward the combination of
+                    size + acceleration (favors bigger athletes who move well).
+                    Momentum favors mass × speed. Power favors the rare athlete
+                    who is both forceful AND fast.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <!-- Collapsible Grading Standards Reference -->
+        <details class="sprint-reference" id="sprintGradingRef">
+          <summary>
+            🏆 Grading Standards — What Makes Elite / Excellent / Good / Average
+          </summary>
+          <div class="sprint-ref-body">
+            <p class="ref-intro">
+              Sprint metrics are graded against published HS football norms
+              (NSCA, state combine data). Thresholds vary by position group
+              because expectations differ — a 4.75s forty is elite for a skill
+              player but only good for a lineman's standards. Metrics without a
+              grade column are used for diagnostic comparison only.
+            </p>
+
+            <div class="grade-tables-wrap">
+              <div class="grade-table-block">
+                <h4>Skill (RB, WR, DB)</h4>
+                <table class="grade-std-table">
+                  <thead>
+                    <tr>
+                      <th>Metric</th>
+                      <th>Elite</th>
+                      <th>Excellent</th>
+                      <th>Good</th>
+                      <th>Average</th>
+                      <th>Below</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>40-Yard (s)</td>
+                      <td>≤ 4.75</td>
+                      <td>≤ 4.95</td>
+                      <td>≤ 5.15</td>
+                      <td>≤ 5.35</td>
+                      <td>&gt; 5.35</td>
+                    </tr>
+                    <tr>
+                      <td>vMax (m/s)</td>
+                      <td>≥ 9.0</td>
+                      <td>≥ 8.5</td>
+                      <td>≥ 8.0</td>
+                      <td>≥ 7.5</td>
+                      <td>&lt; 7.5</td>
+                    </tr>
+                    <tr>
+                      <td>v10 Best (m/s)</td>
+                      <td>≥ 9.0</td>
+                      <td>≥ 8.5</td>
+                      <td>≥ 8.0</td>
+                      <td>≥ 7.5</td>
+                      <td>&lt; 7.5</td>
+                    </tr>
+                    <tr>
+                      <td>F1 – Sprint Force (N)</td>
+                      <td>≥ 120</td>
+                      <td>≥ 100</td>
+                      <td>≥ 85</td>
+                      <td>≥ 70</td>
+                      <td>&lt; 70</td>
+                    </tr>
+                    <tr>
+                      <td>pₑ – Peak Momentum</td>
+                      <td>≥ 680</td>
+                      <td>≥ 600</td>
+                      <td>≥ 520</td>
+                      <td>≥ 440</td>
+                      <td>&lt; 440</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="grade-table-block">
+                <h4>Big Skill (QB, TE, LB)</h4>
+                <table class="grade-std-table">
+                  <thead>
+                    <tr>
+                      <th>Metric</th>
+                      <th>Elite</th>
+                      <th>Excellent</th>
+                      <th>Good</th>
+                      <th>Average</th>
+                      <th>Below</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>40-Yard (s)</td>
+                      <td>≤ 4.95</td>
+                      <td>≤ 5.15</td>
+                      <td>≤ 5.35</td>
+                      <td>≤ 5.60</td>
+                      <td>&gt; 5.60</td>
+                    </tr>
+                    <tr>
+                      <td>vMax (m/s)</td>
+                      <td>≥ 8.8</td>
+                      <td>≥ 8.3</td>
+                      <td>≥ 7.8</td>
+                      <td>≥ 7.3</td>
+                      <td>&lt; 7.3</td>
+                    </tr>
+                    <tr>
+                      <td>v10 Best (m/s)</td>
+                      <td>≥ 8.8</td>
+                      <td>≥ 8.3</td>
+                      <td>≥ 7.8</td>
+                      <td>≥ 7.3</td>
+                      <td>&lt; 7.3</td>
+                    </tr>
+                    <tr>
+                      <td>F1 – Sprint Force (N)</td>
+                      <td>≥ 130</td>
+                      <td>≥ 110</td>
+                      <td>≥ 92</td>
+                      <td>≥ 75</td>
+                      <td>&lt; 75</td>
+                    </tr>
+                    <tr>
+                      <td>pₑ – Peak Momentum</td>
+                      <td>≥ 770</td>
+                      <td>≥ 680</td>
+                      <td>≥ 590</td>
+                      <td>≥ 500</td>
+                      <td>&lt; 500</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="grade-table-block">
+                <h4>Linemen (OL, DL)</h4>
+                <table class="grade-std-table">
+                  <thead>
+                    <tr>
+                      <th>Metric</th>
+                      <th>Elite</th>
+                      <th>Excellent</th>
+                      <th>Good</th>
+                      <th>Average</th>
+                      <th>Below</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>40-Yard (s)</td>
+                      <td>≤ 5.25</td>
+                      <td>≤ 5.50</td>
+                      <td>≤ 5.75</td>
+                      <td>≤ 6.00</td>
+                      <td>&gt; 6.00</td>
+                    </tr>
+                    <tr>
+                      <td>vMax (m/s)</td>
+                      <td>≥ 8.4</td>
+                      <td>≥ 7.9</td>
+                      <td>≥ 7.4</td>
+                      <td>≥ 6.9</td>
+                      <td>&lt; 6.9</td>
+                    </tr>
+                    <tr>
+                      <td>v10 Best (m/s)</td>
+                      <td>≥ 8.4</td>
+                      <td>≥ 7.9</td>
+                      <td>≥ 7.4</td>
+                      <td>≥ 6.9</td>
+                      <td>&lt; 6.9</td>
+                    </tr>
+                    <tr>
+                      <td>F1 – Sprint Force (N)</td>
+                      <td>≥ 140</td>
+                      <td>≥ 120</td>
+                      <td>≥ 100</td>
+                      <td>≥ 82</td>
+                      <td>&lt; 82</td>
+                    </tr>
+                    <tr>
+                      <td>pₑ – Peak Momentum</td>
+                      <td>≥ 880</td>
+                      <td>≥ 780</td>
+                      <td>≥ 680</td>
+                      <td>≥ 580</td>
+                      <td>&lt; 580</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="ref-category" style="margin-top: 1rem">
+              <h4>📊 Ungraded Diagnostic Columns</h4>
+              <p style="font-size: 0.8rem; color: var(--text-muted)">
+                These columns don't have formal HS standards but are valuable
+                for coaching diagnostics:
+              </p>
+              <ul class="ref-diag-list">
+                <li>
+                  <strong>Individual splits (0–20, 20–30, 30–40):</strong>
+                  Identify WHERE in the sprint an athlete is strong or weak.
+                </li>
+                <li>
+                  <strong>v1, v2, v3:</strong> Compare velocity across phases —
+                  are they still building speed or dropping off?
+                </li>
+                <li>
+                  <strong>a2, a3:</strong> Positive = still accelerating,
+                  negative = decelerating. Diagnose speed endurance issues.
+                </li>
+                <li>
+                  <strong>F2, F3:</strong> Force in later phases — typically
+                  small. Large negative F3 means significant deceleration.
+                </li>
+                <li>
+                  <strong>p1:</strong> Momentum after acceleration phase —
+                  compare to pₑ to see how much momentum they gain in the last
+                  20 yards.
+                </li>
+                <li>
+                  <strong>P1, P2, P3:</strong> Sprint power by phase — P1 is the
+                  key performance metric; P2/P3 are diagnostic.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </details>
+
+        <div class="table-wrap">
+          <table id="sprintTable" class="data-table sortable">
+            <thead>
+              <tr>
+                <th data-sort="name">Athlete</th>
+                <th data-sort="position" title="Playing position">Pos</th>
+                <th
+                  data-sort="weight"
+                  title="Body mass in kilograms. Used in all physics calculations (force, momentum, power)."
+                >
+                  Mass (kg)
+                </th>
+                <th
+                  data-sort="sprint020"
+                  title="Time for first 20 yards from standstill. Includes reaction/start. Lower is better."
+                >
+                  0–20 (s)
+                </th>
+                <th
+                  data-sort="sprint2030"
+                  title="Time for 10 yards during transition phase. Lower is better."
+                >
+                  20–30 (s)
+                </th>
+                <th
+                  data-sort="sprint3040"
+                  title="Time for final 10 yards. If slower than 20-30, athlete is decelerating."
+                >
+                  30–40 (s)
+                </th>
+                <th
+                  data-sort="forty"
+                  title="Total 40-yard time = sum of all splits."
+                >
+                  40 Total
+                </th>
+                <th
+                  data-sort="v1"
+                  title="Average velocity 0-20 yd (m/s). Distance / time. Includes acceleration from standstill."
+                >
+                  v1 (m/s)
+                </th>
+                <th
+                  data-sort="v2"
+                  title="Average velocity 20-30 yd (m/s). Speed as athlete transitions to top-end."
+                >
+                  v2 (m/s)
+                </th>
+                <th
+                  data-sort="v3"
+                  title="Average velocity 30-40 yd (m/s). Top-end speed maintenance."
+                >
+                  v3 (m/s)
+                </th>
+                <th
+                  data-sort="vMax"
+                  title="Highest velocity across all segments. The athlete's raw top speed."
+                >
+                  vMax
+                </th>
+                <th
+                  data-sort="v10Max"
+                  title="Best 10-yd velocity = max(v2, v3). Pure top-end speed without 20-yd acceleration bias."
+                >
+                  v10 Best
+                </th>
+                <th
+                  data-sort="topMph"
+                  title="Top speed in miles per hour = vMax × 2.237. Familiar speed reference for coaches and players."
+                >
+                  Top MPH
+                </th>
+                <th
+                  data-sort="a1"
+                  title="Acceleration 0-20 yd (m/s²) = v1/t1. How quickly they get up to speed. Critical first-step metric."
+                >
+                  a1 (m/s²)
+                </th>
+                <th
+                  data-sort="a2"
+                  title="Acceleration 20-30 yd = (v2-v1)/t2. Positive = still speeding up."
+                >
+                  a2
+                </th>
+                <th
+                  data-sort="a3"
+                  title="Acceleration 30-40 yd = (v3-v2)/t3. Negative = decelerating — flags speed endurance."
+                >
+                  a3
+                </th>
+                <th
+                  data-sort="F1"
+                  title="Sprint Force 0-20 yd (N) = mass × a1. Horizontal force during drive phase. Bigger + faster = more."
+                >
+                  F1 (N)
+                </th>
+                <th
+                  data-sort="F2"
+                  title="Sprint Force 20-30 yd (N) = mass × a2. Force during transition."
+                >
+                  F2
+                </th>
+                <th
+                  data-sort="F3"
+                  title="Sprint Force 30-40 yd (N) = mass × a3. May be negative if decelerating."
+                >
+                  F3
+                </th>
+                <th
+                  data-sort="momMax"
+                  title="Peak Momentum (kg·m/s) = mass × best 10yd velocity. The 'how hard to tackle' number."
+                >
+                  pₑ (kg·m/s)
+                </th>
+                <th
+                  data-sort="mom1"
+                  title="Momentum at end of 0-20 yd = mass × v1. How much force needed to stop them after acceleration."
+                >
+                  p1 (kg·m/s)
+                </th>
+                <th
+                  data-sort="pow1"
+                  title="Sprint Power 0-20 yd (W) = F1 × v1. Mechanical power output during drive phase."
+                >
+                  P1 (W)
+                </th>
+                <th
+                  data-sort="pow2"
+                  title="Sprint Power 20-30 yd (W) = F2 × v2. Power during transition."
+                >
+                  P2
+                </th>
+                <th
+                  data-sort="pow3"
+                  title="Sprint Power 30-40 yd (W) = F3 × v3. Power at top speed."
+                >
+                  P3
+                </th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ——— TAB: Strength & Power ——— -->
+      <section id="tab-strength" class="tab-panel">
+        <div class="section-header">
+          <h2>Derived Strength &amp; Power</h2>
+        </div>
+        <p class="section-desc">
+          Peak power (Sayers formula), relative strength ratios, and
+          sprint-strength utilisation. All 1RM values are tested maxes; derived
+          metrics combine them with body mass and vertical jump.
+        </p>
+        <div class="info-banner">
+          <strong>📐 Sayers Peak Power:</strong> P<sub>peak</sub> = 60.7 ×
+          VJ<sub>cm</sub> + 45.3 × mass<sub>kg</sub> − 2055 &nbsp;|&nbsp;
+          <strong>Strength Utilisation:</strong> F<sub>1</sub> / (Squat<sub
+            >kg</sub
+          >
+          × g) — how much max strength is expressed during sprint acceleration.
+        </div>
+
+        <!-- Collapsible Column Reference Guide -->
+        <details class="sprint-reference">
+          <summary>📖 Column Reference Guide — What Every Column Means</summary>
+          <div class="sprint-ref-body">
+            <div class="ref-category">
+              <h4>🏋️ Raw Strength Measures</h4>
+              <div class="ref-grid">
+                <div class="ref-item">
+                  <span class="ref-col">Wt (lb)</span>
+                  <span class="ref-formula">Raw measured weight</span>
+                  <p>
+                    Body weight in pounds as recorded during testing.
+                    Contextualizes all other metrics — a 300 lb bench means
+                    something very different for a 150 lb WR vs a 250 lb
+                    lineman. Also used to compute relative strength ratios.
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">Mass (kg)</span>
+                  <span class="ref-formula">= Weight (lb) × 0.4536</span>
+                  <p>
+                    Body mass in kilograms. Required for physics-based
+                    calculations (Sayers Peak Power, sprint force, momentum).
+                    The international standard unit for mass in all biomechanics
+                    equations.
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">Bench (lb)</span>
+                  <span class="ref-formula">Bench Press 1RM (tested max)</span>
+                  <p>
+                    Maximum weight the athlete can press for one rep on the flat
+                    bench press. The primary measure of
+                    <em>upper-body pressing strength</em>. Important for
+                    blocking (OL), shedding blocks (DL), and tackling power
+                    (LB). <strong>Graded against HS standards.</strong> Higher
+                    is better.
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">Squat (lb)</span>
+                  <span class="ref-formula">Back Squat 1RM (tested max)</span>
+                  <p>
+                    Maximum weight in the barbell back squat. The gold-standard
+                    measure of <em>lower-body maximal strength</em>.
+                    Foundational for sprinting (drive phase), jumping, and
+                    change of direction. Strongly correlated with sprint
+                    acceleration (a1) and 40-yard times.
+                    <strong>Graded against HS standards.</strong> Higher is
+                    better.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="ref-category">
+              <h4>⚖️ Relative Strength (Pound-for-Pound)</h4>
+              <div class="ref-grid">
+                <div class="ref-item">
+                  <span class="ref-col">Rel Bench</span>
+                  <span class="ref-formula"
+                    >= Bench 1RM (lb) ÷ Body Weight (lb)</span
+                  >
+                  <p>
+                    Upper-body strength relative to body weight. A value of 1.0
+                    means the athlete can bench their own body weight — a solid
+                    baseline for HS athletes. Values above 1.3 are excellent.
+                    Allows fair comparison across weight classes.
+                    <strong>Graded against HS standards.</strong>
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">Rel Squat</span>
+                  <span class="ref-formula"
+                    >= Squat 1RM (lb) ÷ Body Weight (lb)</span
+                  >
+                  <p>
+                    Lower-body strength relative to body weight. This is one of
+                    the <em>strongest predictors of athletic performance</em> —
+                    research shows it correlates with sprint times, vertical
+                    jump, and change of direction. A value of 1.5+ is strong at
+                    the HS level; 2.0+ is elite.
+                    <strong>Graded against HS standards.</strong>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="ref-category">
+              <h4>💥 Explosive Power Measures</h4>
+              <div class="ref-grid">
+                <div class="ref-item">
+                  <span class="ref-col">VJ (in)</span>
+                  <span class="ref-formula"
+                    >Countermovement Vertical Jump (tested)</span
+                  >
+                  <p>
+                    Standing vertical jump height in inches. Measures
+                    <em>lower-body explosive power</em> — the ability to
+                    generate force rapidly. Used directly in the Sayers Peak
+                    Power formula. Key metric for skill positions (WR, DB) and
+                    any athlete who needs to elevate.
+                    <strong>Graded against HS standards.</strong> Higher is
+                    better.
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">Peak Power (W)</span>
+                  <span class="ref-formula"
+                    >= 60.7 × VJ<sub>cm</sub> + 45.3 × mass<sub>kg</sub> −
+                    2055</span
+                  >
+                  <p>
+                    <strong>Sayers Peak Power</strong> — a validated estimate of
+                    lower-body peak mechanical power output (in Watts). Combines
+                    vertical jump height with body mass. Published by Sayers et
+                    al. (1999) and widely used in S&amp;C research. Higher
+                    values mean the athlete can produce more force rapidly.
+                    <strong>Graded against HS standards.</strong>
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">Rel PP (W/kg)</span>
+                  <span class="ref-formula">= Peak Power (W) ÷ mass (kg)</span>
+                  <p>
+                    Relative Peak Power — power output per kilogram of body
+                    mass. Normalizes for size, so a lighter athlete who jumps
+                    high can score equally to a heavier athlete. Important for
+                    positions where you need to move your own body quickly (WR,
+                    DB, RB). <strong>Graded against HS standards.</strong>
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">MB (in)</span>
+                  <span class="ref-formula"
+                    >Seated Med Ball Throw (tested)</span
+                  >
+                  <p>
+                    Distance of a seated medicine ball chest pass (in inches).
+                    Measures <em>upper-body explosive power</em> — the ability
+                    to generate force rapidly through the arms and chest.
+                    Correlates with hitting power, stiff-arm ability, and
+                    throwing velocity. Complementary to bench press: bench
+                    measures max strength, MB measures how fast you can apply
+                    it. <strong>Graded against HS standards.</strong>
+                  </p>
+                </div>
+                <div class="ref-item">
+                  <span class="ref-col">MB Rel</span>
+                  <span class="ref-formula"
+                    >= MB Throw (in) ÷ Body Weight (lb)</span
+                  >
+                  <p>
+                    Med Ball throw distance relative to body weight. Measures
+                    explosive power efficiency — how much "pop" you get per
+                    pound. Helps identify athletes who are explosive for their
+                    size vs. athletes who throw far purely because they're big.
+                    <strong>Graded against HS standards.</strong>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="ref-category">
+              <h4>🔗 Sprint-Strength Link</h4>
+              <div class="ref-grid">
+                <div class="ref-item">
+                  <span class="ref-col">Strength Util</span>
+                  <span class="ref-formula"
+                    >= F1 ÷ (Squat<sub>kg</sub> × 9.81)</span
+                  >
+                  <p>
+                    <strong>Strength Utilisation ratio</strong> — asks "how much
+                    of this athlete's maximal strength is actually expressed
+                    during sprinting?" F1 (sprint force) is divided by the
+                    theoretical max force from the squat (squat weight in kg ×
+                    gravity). A low value means the athlete is strong in the
+                    weight room but
+                    <em>isn't translating it to sprint acceleration</em> — a
+                    coaching flag for sprint mechanics, rate of force
+                    development, or neural activation. Typical range: 0.05 –
+                    0.20. <strong>Not formally graded</strong> — used as a
+                    diagnostic tool.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="ref-category">
+              <h4>📐 Formulas & Methodology</h4>
+              <div class="ref-grid" style="grid-template-columns: 1fr">
+                <div class="ref-item">
+                  <p>
+                    <strong>Sayers Formula:</strong> P<sub>peak</sub> = 60.7 ×
+                    VJ(cm) + 45.3 × mass(kg) − 2055. Published by Sayers et al.
+                    (1999), validated against force-plate measurements. Requires
+                    both vertical jump and body mass. VJ is converted from
+                    inches to cm (× 2.54), weight from lb to kg (× 0.4536).
+                  </p>
+                  <p>
+                    <strong>Relative measures:</strong> Dividing by body weight
+                    (lb-to-lb for bench/squat/MB) creates a fair comparison
+                    across body sizes. A 150 lb athlete benching 195 lb (Rel
+                    1.30) is performing at the same relative level as a 220 lb
+                    athlete benching 286 lb (Rel 1.30).
+                  </p>
+                  <p>
+                    <strong>Strength Utilisation context:</strong> Because
+                    sprint F1 uses the simplified kinematic model (see Sprint
+                    Analysis tab), the absolute Strength Util numbers are
+                    relative — not directly interpretable as a "percentage of
+                    max strength." But the ranking across athletes is valid:
+                    higher = better strength transfer to sprinting.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <!-- Collapsible Grading Standards Reference -->
+        <details class="sprint-reference" id="strengthGradingRef">
+          <summary>
+            🏆 Grading Standards — What Makes Elite / Excellent / Good / Average
+          </summary>
+          <div class="sprint-ref-body">
+            <p class="ref-intro">
+              Strength & power metrics are graded against published HS football
+              norms (NSCA, state combine databases, S&amp;C literature).
+              Thresholds are position-group specific — linemen are expected to
+              lift heavier absolute loads, while skill players are held to
+              higher relative and speed-power standards.
+            </p>
+
+            <div class="grade-tables-wrap">
+              <div class="grade-table-block">
+                <h4>Skill (RB, WR, DB)</h4>
+                <table class="grade-std-table">
+                  <thead>
+                    <tr>
+                      <th>Metric</th>
+                      <th>Elite</th>
+                      <th>Excellent</th>
+                      <th>Good</th>
+                      <th>Average</th>
+                      <th>Below</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Bench 1RM (lb)</td>
+                      <td>≥ 205</td>
+                      <td>≥ 175</td>
+                      <td>≥ 145</td>
+                      <td>≥ 115</td>
+                      <td>&lt; 115</td>
+                    </tr>
+                    <tr>
+                      <td>Squat 1RM (lb)</td>
+                      <td>≥ 335</td>
+                      <td>≥ 285</td>
+                      <td>≥ 235</td>
+                      <td>≥ 185</td>
+                      <td>&lt; 185</td>
+                    </tr>
+                    <tr>
+                      <td>Rel Bench (×BW)</td>
+                      <td>≥ 1.30</td>
+                      <td>≥ 1.10</td>
+                      <td>≥ 0.90</td>
+                      <td>≥ 0.70</td>
+                      <td>&lt; 0.70</td>
+                    </tr>
+                    <tr>
+                      <td>Rel Squat (×BW)</td>
+                      <td>≥ 1.90</td>
+                      <td>≥ 1.65</td>
+                      <td>≥ 1.40</td>
+                      <td>≥ 1.15</td>
+                      <td>&lt; 1.15</td>
+                    </tr>
+                    <tr>
+                      <td>Vertical Jump (in)</td>
+                      <td>≥ 33</td>
+                      <td>≥ 29</td>
+                      <td>≥ 25</td>
+                      <td>≥ 21</td>
+                      <td>&lt; 21</td>
+                    </tr>
+                    <tr>
+                      <td>Peak Power (W)</td>
+                      <td>≥ 5200</td>
+                      <td>≥ 4600</td>
+                      <td>≥ 4000</td>
+                      <td>≥ 3500</td>
+                      <td>&lt; 3500</td>
+                    </tr>
+                    <tr>
+                      <td>Rel Peak Power (W/kg)</td>
+                      <td>≥ 70</td>
+                      <td>≥ 62</td>
+                      <td>≥ 55</td>
+                      <td>≥ 48</td>
+                      <td>&lt; 48</td>
+                    </tr>
+                    <tr>
+                      <td>Med Ball (in)</td>
+                      <td>≥ 185</td>
+                      <td>≥ 165</td>
+                      <td>≥ 148</td>
+                      <td>≥ 130</td>
+                      <td>&lt; 130</td>
+                    </tr>
+                    <tr>
+                      <td>MB Relative (in/lb)</td>
+                      <td>≥ 1.10</td>
+                      <td>≥ 0.95</td>
+                      <td>≥ 0.80</td>
+                      <td>≥ 0.65</td>
+                      <td>&lt; 0.65</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="grade-table-block">
+                <h4>Big Skill (QB, TE, LB)</h4>
+                <table class="grade-std-table">
+                  <thead>
+                    <tr>
+                      <th>Metric</th>
+                      <th>Elite</th>
+                      <th>Excellent</th>
+                      <th>Good</th>
+                      <th>Average</th>
+                      <th>Below</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Bench 1RM (lb)</td>
+                      <td>≥ 255</td>
+                      <td>≥ 215</td>
+                      <td>≥ 175</td>
+                      <td>≥ 140</td>
+                      <td>&lt; 140</td>
+                    </tr>
+                    <tr>
+                      <td>Squat 1RM (lb)</td>
+                      <td>≥ 350</td>
+                      <td>≥ 300</td>
+                      <td>≥ 250</td>
+                      <td>≥ 200</td>
+                      <td>&lt; 200</td>
+                    </tr>
+                    <tr>
+                      <td>Rel Bench (×BW)</td>
+                      <td>≥ 1.40</td>
+                      <td>≥ 1.20</td>
+                      <td>≥ 1.00</td>
+                      <td>≥ 0.80</td>
+                      <td>&lt; 0.80</td>
+                    </tr>
+                    <tr>
+                      <td>Rel Squat (×BW)</td>
+                      <td>≥ 1.85</td>
+                      <td>≥ 1.60</td>
+                      <td>≥ 1.35</td>
+                      <td>≥ 1.10</td>
+                      <td>&lt; 1.10</td>
+                    </tr>
+                    <tr>
+                      <td>Vertical Jump (in)</td>
+                      <td>≥ 31</td>
+                      <td>≥ 27</td>
+                      <td>≥ 23</td>
+                      <td>≥ 19</td>
+                      <td>&lt; 19</td>
+                    </tr>
+                    <tr>
+                      <td>Peak Power (W)</td>
+                      <td>≥ 5800</td>
+                      <td>≥ 5100</td>
+                      <td>≥ 4400</td>
+                      <td>≥ 3800</td>
+                      <td>&lt; 3800</td>
+                    </tr>
+                    <tr>
+                      <td>Rel Peak Power (W/kg)</td>
+                      <td>≥ 68</td>
+                      <td>≥ 60</td>
+                      <td>≥ 53</td>
+                      <td>≥ 46</td>
+                      <td>&lt; 46</td>
+                    </tr>
+                    <tr>
+                      <td>Med Ball (in)</td>
+                      <td>≥ 200</td>
+                      <td>≥ 178</td>
+                      <td>≥ 158</td>
+                      <td>≥ 138</td>
+                      <td>&lt; 138</td>
+                    </tr>
+                    <tr>
+                      <td>MB Relative (in/lb)</td>
+                      <td>≥ 1.05</td>
+                      <td>≥ 0.90</td>
+                      <td>≥ 0.78</td>
+                      <td>≥ 0.65</td>
+                      <td>&lt; 0.65</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="grade-table-block">
+                <h4>Linemen (OL, DL)</h4>
+                <table class="grade-std-table">
+                  <thead>
+                    <tr>
+                      <th>Metric</th>
+                      <th>Elite</th>
+                      <th>Excellent</th>
+                      <th>Good</th>
+                      <th>Average</th>
+                      <th>Below</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Bench 1RM (lb)</td>
+                      <td>≥ 290</td>
+                      <td>≥ 250</td>
+                      <td>≥ 210</td>
+                      <td>≥ 170</td>
+                      <td>&lt; 170</td>
+                    </tr>
+                    <tr>
+                      <td>Squat 1RM (lb)</td>
+                      <td>≥ 375</td>
+                      <td>≥ 325</td>
+                      <td>≥ 275</td>
+                      <td>≥ 225</td>
+                      <td>&lt; 225</td>
+                    </tr>
+                    <tr>
+                      <td>Rel Bench (×BW)</td>
+                      <td>≥ 1.35</td>
+                      <td>≥ 1.15</td>
+                      <td>≥ 0.95</td>
+                      <td>≥ 0.75</td>
+                      <td>&lt; 0.75</td>
+                    </tr>
+                    <tr>
+                      <td>Rel Squat (×BW)</td>
+                      <td>≥ 1.70</td>
+                      <td>≥ 1.45</td>
+                      <td>≥ 1.25</td>
+                      <td>≥ 1.05</td>
+                      <td>&lt; 1.05</td>
+                    </tr>
+                    <tr>
+                      <td>Vertical Jump (in)</td>
+                      <td>≥ 29</td>
+                      <td>≥ 25</td>
+                      <td>≥ 21</td>
+                      <td>≥ 17</td>
+                      <td>&lt; 17</td>
+                    </tr>
+                    <tr>
+                      <td>Peak Power (W)</td>
+                      <td>≥ 6300</td>
+                      <td>≥ 5500</td>
+                      <td>≥ 4800</td>
+                      <td>≥ 4100</td>
+                      <td>&lt; 4100</td>
+                    </tr>
+                    <tr>
+                      <td>Rel Peak Power (W/kg)</td>
+                      <td>≥ 58</td>
+                      <td>≥ 52</td>
+                      <td>≥ 46</td>
+                      <td>≥ 40</td>
+                      <td>&lt; 40</td>
+                    </tr>
+                    <tr>
+                      <td>Med Ball (in)</td>
+                      <td>≥ 210</td>
+                      <td>≥ 188</td>
+                      <td>≥ 168</td>
+                      <td>≥ 148</td>
+                      <td>&lt; 148</td>
+                    </tr>
+                    <tr>
+                      <td>MB Relative (in/lb)</td>
+                      <td>≥ 0.95</td>
+                      <td>≥ 0.82</td>
+                      <td>≥ 0.72</td>
+                      <td>≥ 0.60</td>
+                      <td>&lt; 0.60</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="ref-category" style="margin-top: 1rem">
+              <h4>📊 Ungraded Diagnostic Columns</h4>
+              <p style="font-size: 0.8rem; color: var(--text-muted)">
+                These columns don't have formal grading thresholds but provide
+                important context:
+              </p>
+              <ul class="ref-diag-list">
+                <li>
+                  <strong>Wt (lb) / Mass (kg):</strong> Body composition
+                  context. Not graded because optimal weight varies drastically
+                  by position — a 160 lb WR and a 280 lb OL can both be
+                  perfectly built for their roles.
+                </li>
+                <li>
+                  <strong>Strength Utilisation:</strong> Diagnostic ratio
+                  comparing sprint force to squat strength. Low values flag
+                  athletes who are strong in the weight room but aren't
+                  expressing it on the field — a coaching target for sprint
+                  mechanics and rate-of-force development training.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </details>
+
+        <div class="table-wrap">
+          <table id="strengthTable" class="data-table sortable">
+            <thead>
+              <tr>
+                <th data-sort="name">Athlete</th>
+                <th data-sort="position" title="Playing position">Pos</th>
+                <th
+                  data-sort="weight"
+                  title="Body weight (lb). Affects force production, momentum, and position suitability."
+                >
+                  Wt (lb)
+                </th>
+                <th
+                  data-sort="massKg"
+                  title="Body mass in kg. Used in all physics calculations."
+                >
+                  Mass (kg)
+                </th>
+                <th
+                  data-sort="bench"
+                  title="Bench Press 1RM (lb). Max upper-body pressing strength."
+                >
+                  Bench (lb)
+                </th>
+                <th
+                  data-sort="squat"
+                  title="Back Squat 1RM (lb). Max lower-body strength."
+                >
+                  Squat (lb)
+                </th>
+                <th
+                  data-sort="relBench"
+                  title="Relative Bench = Bench 1RM / Body Weight. Upper-body strength pound-for-pound. 1.0+ is solid for HS."
+                >
+                  Rel Bench
+                </th>
+                <th
+                  data-sort="relSquat"
+                  title="Relative Squat = Squat 1RM / Body Weight. Lower-body strength pound-for-pound. Correlates with sprint acceleration."
+                >
+                  Rel Squat
+                </th>
+                <th
+                  data-sort="vert"
+                  title="Vertical Jump (in). Lower-body explosive power from counter-movement."
+                >
+                  VJ (in)
+                </th>
+                <th
+                  data-sort="peakPower"
+                  title="Sayers Peak Power (W) = 60.7×VJ(cm) + 45.3×mass(kg) − 2055. Validated lower-body power estimate."
+                >
+                  Peak Power (W)
+                </th>
+                <th
+                  data-sort="relPeakPower"
+                  title="Relative Peak Power = Peak Power / mass(kg). Power-to-weight ratio."
+                >
+                  Rel PP (W/kg)
+                </th>
+                <th
+                  data-sort="medball"
+                  title="Seated Med Ball Throw (in). Upper-body explosive power — predictor of hitting/throwing power."
+                >
+                  MB (in)
+                </th>
+                <th
+                  data-sort="mbRel"
+                  title="Med Ball Relative = MB Throw / Body Weight. Explosive power efficiency."
+                >
+                  MB Rel
+                </th>
+                <th
+                  data-sort="strengthUtil"
+                  title="Strength Utilisation = Sprint F1 / (Squat_kg × g). How much max strength is used during sprinting."
+                >
+                  Strength Util
+                </th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ——— TAB: Scorecard ——— -->
+      <section id="tab-scorecard" class="tab-panel">
+        <div class="section-header">
+          <h2>Athlete Scorecard</h2>
+          <div class="filters">
+            <select id="scorecardFilter" onchange="renderScorecard()">
+              <option value="all">All Athletes</option>
+            </select>
+          </div>
+        </div>
+        <p class="section-desc">
+          Percentile-based tier assignments across all metrics. Each cell shows
+          the athlete's percentile rank within the team.
+        </p>
+        <div class="tier-legend">
+          <span class="tier-badge tier-elite">Elite ≥90th</span>
+          <span class="tier-badge tier-strong">Strong 75–90th</span>
+          <span class="tier-badge tier-solid">Solid 50–75th</span>
+          <span class="tier-badge tier-competitive">Competitive 25–50th</span>
+          <span class="tier-badge tier-developing">Developing &lt;25th</span>
+        </div>
+        <div class="table-wrap" id="scorecardContent">
+          <table id="scorecardTable" class="data-table">
+            <thead>
+              <tr id="scorecardHeader"></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ——— TAB: Head-to-Head Compare ——— -->
+      <section id="tab-compare" class="tab-panel">
+        <div class="section-header">
+          <h2>Head-to-Head Comparison</h2>
+          <div class="filters">
+            <select id="cmpA" onchange="renderComparison()">
+              <option value="">— Athlete A —</option>
+            </select>
+            <span style="color: var(--text-muted); font-weight: 700">vs</span>
+            <select id="cmpB" onchange="renderComparison()">
+              <option value="">— Athlete B —</option>
+            </select>
+            <select id="cmpC" onchange="renderComparison()">
+              <option value="">— Athlete C (opt) —</option>
+            </select>
+          </div>
+        </div>
+        <div id="compareContent">
+          <p class="placeholder-text">
+            Select two or three athletes to compare.
+          </p>
+        </div>
+      </section>
+
+      <!-- ——— TAB: Position Group Dashboard ——— -->
+      <section id="tab-groups" class="tab-panel">
+        <div class="section-header">
+          <h2>Position Group Dashboard</h2>
+          <div class="filters">
+            <select id="grpDash" onchange="renderGroupDashboard()">
+              <option value="all">All Groups</option>
+              <option value="Skill">Skill</option>
+              <option value="Big Skill">Big Skill</option>
+              <option value="Linemen">Linemen</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div id="groupDashContent"></div>
+      </section>
+
+      <!-- ——— TAB: Benchmarks ——— -->
+      <section id="tab-benchmarks" class="tab-panel">
+        <div class="section-header">
+          <h2>Performance Standards</h2>
+        </div>
+        <p class="section-desc">
+          Absolute HS football performance standards by position group. Grades
+          are based on published norms (NSCA, state combine data) with 5 tiers:
+          Elite, Excellent, Good, Average, Below Avg. Filter by group and metric
+          to drill down.
+        </p>
+        <div class="filters">
+          <select id="bmGroup" onchange="renderBenchmarks()">
+            <option value="all">All Groups</option>
+            <option value="Skill">Skill (RB/WR/DB)</option>
+            <option value="Big Skill">Big Skill (QB/TE/LB)</option>
+            <option value="Linemen">Linemen (OL/DL)</option>
+          </select>
+          <select id="bmMetric" onchange="renderBenchmarks()">
+            <option value="all">All Metrics</option>
+            <option value="forty">40-Yard Dash</option>
+            <option value="bench">Bench 1RM</option>
+            <option value="squat">Squat 1RM</option>
+            <option value="relBench">Relative Bench</option>
+            <option value="relSquat">Relative Squat</option>
+            <option value="vert">Vertical Jump</option>
+            <option value="broad">Broad Jump</option>
+            <option value="medball">Med Ball Throw</option>
+            <option value="mbRel">MB Relative</option>
+            <option value="vMax">Max Velocity</option>
+            <option value="v10Max">Best 10yd Velocity</option>
+            <option value="peakPower">Peak Power</option>
+            <option value="relPeakPower">Rel Peak Power</option>
+            <option value="F1">Sprint Force</option>
+            <option value="momMax">Peak Momentum</option>
+          </select>
+        </div>
+        <div id="benchmarksContent"></div>
+      </section>
+
+      <!-- ——— TAB: Testing Log ——— -->
+      <section id="tab-log" class="tab-panel">
+        <div class="section-header">
+          <h2>Testing Log</h2>
+          <div class="filters">
+            <select id="logFilter" onchange="renderTestingLog()">
+              <option value="all">All Tests</option>
+              <option value="Sprint">Sprint</option>
+              <option value="Jump">Jump</option>
+              <option value="Strength">Strength</option>
+              <option value="Med Ball">Med Ball</option>
+            </select>
+          </div>
+        </div>
+        <p class="section-desc">
+          Chronological record of all testing sessions.
+        </p>
+        <div class="table-wrap">
+          <table id="logTable" class="data-table sortable">
+            <thead>
+              <tr>
+                <th data-sort="date">Date</th>
+                <th data-sort="name">Athlete</th>
+                <th data-sort="test">Test</th>
+                <th>Result</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ——— TAB: Testing Week Plan ——— -->
+      <section id="tab-plan" class="tab-panel">
+        <div class="section-header">
+          <h2>Testing Week Plan</h2>
+        </div>
+        <p class="section-desc">
+          Day-by-day schedule for comprehensive athletic testing.
+        </p>
+        <div id="planContent"></div>
+      </section>
+    </main>
+
+    <!-- ===== DATA MANAGEMENT BAR ===== -->
+    <section class="data-mgmt-bar">
+      <div class="data-mgmt-inner">
+        <div class="data-mgmt-left">
+          <span class="data-mgmt-label">💾 Data</span>
+          <button
+            class="btn btn-sm"
+            onclick="saveSnapshot()"
+            title="Save current data as named snapshot"
+          >
+            Save Snapshot
+          </button>
+          <select id="snapshotSelect" class="input" style="min-width: 150px">
+            <option value="">— Load Snapshot —</option>
+          </select>
+          <button
+            class="btn btn-sm"
+            onclick="loadSnapshot()"
+            title="Load selected snapshot"
+          >
+            Load
+          </button>
+          <button
+            class="btn btn-sm"
+            onclick="deleteSnapshot()"
+            title="Delete selected snapshot"
+          >
+            🗑
+          </button>
+          <button
+            class="btn btn-sm"
+            onclick="resetToOriginal()"
+            title="Discard all edits and reload original data"
+          >
+            Reset to Original
+          </button>
+          <span class="data-mgmt-sep">|</span>
+          <button
+            class="btn btn-sm"
+            onclick="exportCSV()"
+            title="Export all data as CSV"
+          >
+            📄 CSV
+          </button>
+          <button
+            class="btn btn-sm"
+            onclick="exportJSON()"
+            title="Export all data as JSON"
+          >
+            📦 JSON
+          </button>
+        </div>
+        <div class="data-mgmt-right">
+          <span id="dataStatus" class="data-status"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== EDIT PANEL (slide-in) ===== -->
+    <div id="editPanel" class="edit-panel">
+      <div class="edit-panel-header">
+        <h3 id="editPanelTitle">Edit Athlete</h3>
+        <div class="edit-panel-actions">
+          <span id="autoSaveStatus" class="autosave-status"></span>
+          <button class="modal-close" onclick="closeEditPanel()" title="Close">
+            ✕
+          </button>
+        </div>
+      </div>
+      <div class="edit-panel-nav">
+        <button
+          class="btn btn-sm"
+          onclick="editPanelPrev()"
+          title="Previous athlete"
+        >
+          ◀ Prev
+        </button>
+        <select
+          id="editAthleteSelect"
+          class="input"
+          onchange="editPanelSelectAthlete(this.value)"
+          style="flex: 1; min-width: 0"
+        ></select>
+        <button
+          class="btn btn-sm"
+          onclick="editPanelNext()"
+          title="Next athlete"
+        >
+          Next ▶
+        </button>
+      </div>
+      <div class="edit-panel-body" id="editPanelBody"></div>
+      <div class="edit-panel-footer">
+        <button
+          class="btn btn-sm"
+          onclick="undoAthleteEdits()"
+          title="Undo all changes for this athlete"
+        >
+          ↩ Undo
+        </button>
+        <button
+          class="btn btn-sm btn-danger"
+          onclick="deleteCurrentAthlete()"
+          title="Delete this athlete"
+        >
+          🗑️ Delete
+        </button>
+        <button
+          class="btn btn-sm btn-primary"
+          onclick="exportAthleteJSON()"
+          title="Export this athlete as JSON"
+        >
+          📋 JSON
+        </button>
+      </div>
+    </div>
+    <div
+      id="editPanelBackdrop"
+      class="edit-panel-backdrop"
+      onclick="closeEditPanel()"
+    ></div>
+
+    <!-- ===== TOAST NOTIFICATION ===== -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- ===== CONSTANTS REFERENCE (collapsible) ===== -->
+    <section class="constants-footer">
+      <details>
+        <summary>📐 Workbook Constants &amp; Formulas Reference</summary>
+        <div class="constants-grid" id="constantsGrid"></div>
+        <div class="formula-notes" id="formulaNotes"></div>
+      </details>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="site-footer">
+      <p>
+        Lifting Club Dashboard &middot; Data exported
+        <span id="exportDate"></span> &middot; Source:
+        ATHLETE_WORKBOOK_ANALYTICS_SYNERGY_PLUS.xlsx
+      </p>
+    </footer>
+
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
