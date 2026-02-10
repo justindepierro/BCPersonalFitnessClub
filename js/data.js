@@ -725,6 +725,37 @@
         }
       }
 
+      // Apply latest test date values as current data
+      const savedTestH = localStorage.getItem("lc_test_history");
+      if (savedTestH) {
+        try {
+          const testH = JSON.parse(savedTestH);
+          const testIds = Object.keys(testH);
+          for (let ti = 0; ti < testIds.length; ti++) {
+            const tAid = testIds[ti];
+            const tEntries = testH[tAid];
+            if (!tEntries || tEntries.length === 0) continue;
+            let latestDate = tEntries[0].date;
+            for (let tj = 1; tj < tEntries.length; tj++) {
+              if (tEntries[tj].date > latestDate) latestDate = tEntries[tj].date;
+            }
+            const tAthlete = raw.athletes.find((a) => a.id === tAid);
+            if (!tAthlete) continue;
+            for (let tk = 0; tk < tEntries.length; tk++) {
+              if (tEntries[tk].date !== latestDate) continue;
+              const vals = tEntries[tk].values;
+              for (const vk in vals) {
+                if (vals[vk] !== null && vals[vk] !== undefined && vals[vk] !== '') {
+                  tAthlete[vk] = vals[vk];
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.warn("Failed to apply latest test data:", e);
+        }
+      }
+
       window.CLUB = processData(raw);
       document.dispatchEvent(new Event("club-data-ready"));
     })
