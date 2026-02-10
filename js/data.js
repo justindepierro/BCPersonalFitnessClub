@@ -730,9 +730,15 @@
     })
     .catch((err) => {
       console.error("Data load error:", err);
-      document.body.innerHTML =
-        '<div style="padding:3rem;text-align:center;color:#ef4444;"><h2>Error loading data</h2><p>' +
-        err.message +
-        "</p></div>";
+      const el = document.getElementById("loadingIndicator");
+      if (el) {
+        const safeMsg = String(err.message).replace(/[<>&"']/g, function (c) {
+          return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+        el.innerHTML =
+          '<div style="padding:2rem;text-align:center;color:#ef4444;"><h2>Error loading data</h2><p>' +
+          safeMsg +
+          "</p></div>";
+      }
     });
 })();

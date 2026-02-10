@@ -3,13 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Burke Catholic Personal Fitness Club — Athletic Testing Dashboard</title>
+    <title>
+      Burke Catholic Personal Fitness Club — Athletic Testing Dashboard
+    </title>
     <link
       rel="icon"
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏋️</text></svg>"
     />
     <link rel="stylesheet" href="css/styles.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
+      integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
+      crossorigin="anonymous"
+    ></script>
   </head>
   <body>
     <!-- ===== HEADER ===== -->
@@ -25,7 +31,9 @@
       <button
         class="tab active"
         role="tab"
+        id="tab-btn-overview"
         aria-selected="true"
+        aria-controls="tab-overview"
         data-tab="overview"
         onclick="showTab('overview')"
       >
@@ -34,7 +42,10 @@
       <button
         class="tab"
         role="tab"
+        id="tab-btn-profiles"
         aria-selected="false"
+        aria-controls="tab-profiles"
+        tabindex="-1"
         data-tab="profiles"
         onclick="showTab('profiles')"
       >
@@ -43,7 +54,10 @@
       <button
         class="tab"
         role="tab"
+        id="tab-btn-leaderboards"
         aria-selected="false"
+        aria-controls="tab-leaderboards"
+        tabindex="-1"
         data-tab="leaderboards"
         onclick="showTab('leaderboards')"
       >
@@ -52,7 +66,10 @@
       <button
         class="tab"
         role="tab"
+        id="tab-btn-sprint"
         aria-selected="false"
+        aria-controls="tab-sprint"
+        tabindex="-1"
         data-tab="sprint"
         onclick="showTab('sprint')"
       >
@@ -61,7 +78,10 @@
       <button
         class="tab"
         role="tab"
+        id="tab-btn-strength"
         aria-selected="false"
+        aria-controls="tab-strength"
+        tabindex="-1"
         data-tab="strength"
         onclick="showTab('strength')"
       >
@@ -70,7 +90,10 @@
       <button
         class="tab"
         role="tab"
+        id="tab-btn-scorecard"
         aria-selected="false"
+        aria-controls="tab-scorecard"
+        tabindex="-1"
         data-tab="scorecard"
         onclick="showTab('scorecard')"
       >
@@ -79,7 +102,10 @@
       <button
         class="tab"
         role="tab"
+        id="tab-btn-compare"
         aria-selected="false"
+        aria-controls="tab-compare"
+        tabindex="-1"
         data-tab="compare"
         onclick="showTab('compare')"
       >
@@ -88,7 +114,10 @@
       <button
         class="tab"
         role="tab"
+        id="tab-btn-groups"
         aria-selected="false"
+        aria-controls="tab-groups"
+        tabindex="-1"
         data-tab="groups"
         onclick="showTab('groups')"
       >
@@ -97,7 +126,10 @@
       <button
         class="tab"
         role="tab"
+        id="tab-btn-benchmarks"
         aria-selected="false"
+        aria-controls="tab-benchmarks"
+        tabindex="-1"
         data-tab="benchmarks"
         onclick="showTab('benchmarks')"
       >
@@ -106,7 +138,10 @@
       <button
         class="tab"
         role="tab"
+        id="tab-btn-log"
         aria-selected="false"
+        aria-controls="tab-log"
+        tabindex="-1"
         data-tab="log"
         onclick="showTab('log')"
       >
@@ -115,7 +150,10 @@
       <button
         class="tab"
         role="tab"
+        id="tab-btn-plan"
         aria-selected="false"
+        aria-controls="tab-plan"
+        tabindex="-1"
         data-tab="plan"
         onclick="showTab('plan')"
       >
@@ -132,7 +170,7 @@
       </div>
 
       <!-- ——— TAB: Team Overview ——— -->
-      <section id="tab-overview" class="tab-panel active">
+      <section id="tab-overview" class="tab-panel active" role="tabpanel" aria-labelledby="tab-btn-overview">
         <div class="section-header">
           <h2>Team Overview</h2>
           <div class="filters">
@@ -253,7 +291,7 @@
       </section>
 
       <!-- ——— TAB: Athlete Profiles ——— -->
-      <section id="tab-profiles" class="tab-panel">
+      <section id="tab-profiles" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-profiles">
         <div class="section-header">
           <h2>Athlete Profiles</h2>
           <div class="filters">
@@ -298,7 +336,7 @@
       </section>
 
       <!-- ——— TAB: Leaderboards ——— -->
-      <section id="tab-leaderboards" class="tab-panel">
+      <section id="tab-leaderboards" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-leaderboards">
         <div class="section-header">
           <h2>Leaderboards</h2>
           <div class="filters">
@@ -340,7 +378,7 @@
       </section>
 
       <!-- ——— TAB: Sprint Analysis ——— -->
-      <section id="tab-sprint" class="tab-panel">
+      <section id="tab-sprint" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-sprint">
         <div class="section-header">
           <h2>Derived Sprint Analysis</h2>
         </div>
@@ -1032,7 +1070,7 @@
       </section>
 
       <!-- ——— TAB: Strength & Power ——— -->
-      <section id="tab-strength" class="tab-panel">
+      <section id="tab-strength" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-strength">
         <div class="section-header">
           <h2>Derived Strength &amp; Power</h2>
         </div>
@@ -1667,7 +1705,7 @@
       </section>
 
       <!-- ——— TAB: Scorecard ——— -->
-      <section id="tab-scorecard" class="tab-panel">
+      <section id="tab-scorecard" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-scorecard">
         <div class="section-header">
           <h2>Athlete Scorecard</h2>
           <div class="filters">
@@ -1698,7 +1736,7 @@
       </section>
 
       <!-- ——— TAB: Head-to-Head Compare ——— -->
-      <section id="tab-compare" class="tab-panel">
+      <section id="tab-compare" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-compare">
         <div class="section-header">
           <h2>Head-to-Head Comparison</h2>
           <div class="filters">
@@ -1722,7 +1760,7 @@
       </section>
 
       <!-- ——— TAB: Position Group Dashboard ——— -->
-      <section id="tab-groups" class="tab-panel">
+      <section id="tab-groups" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-groups">
         <div class="section-header">
           <h2>Position Group Dashboard</h2>
           <div class="filters">
@@ -1739,7 +1777,7 @@
       </section>
 
       <!-- ——— TAB: Benchmarks ——— -->
-      <section id="tab-benchmarks" class="tab-panel">
+      <section id="tab-benchmarks" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-benchmarks">
         <div class="section-header">
           <h2>Performance Standards</h2>
         </div>
@@ -1779,7 +1817,7 @@
       </section>
 
       <!-- ——— TAB: Testing Log ——— -->
-      <section id="tab-log" class="tab-panel">
+      <section id="tab-log" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-log">
         <div class="section-header">
           <h2>Testing Log</h2>
           <div class="filters">
@@ -1812,7 +1850,7 @@
       </section>
 
       <!-- ——— TAB: Testing Week Plan ——— -->
-      <section id="tab-plan" class="tab-panel">
+      <section id="tab-plan" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-plan">
         <div class="section-header">
           <h2>Testing Week Plan</h2>
         </div>

@@ -11,6 +11,46 @@
   let lbChartInstance = null;
   let profileChartInstance = null;
 
+  /* ---------- HTML Escaping (XSS protection) ---------- */
+  const ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  function esc(s) {
+    if (s === null || s === undefined) return "";
+    return String(s).replace(/[&<>"']/g, function (c) { return ESC_MAP[c]; });
+  }
+
+  /* ---------- Safe localStorage (quota-aware) ---------- */
+  function safeLSSet(key, value) {
+    try {
+      localStorage.setItem(key, typeof value === "string" ? value : JSON.stringify(value));
+    } catch (e) {
+      if (e.name === "QuotaExceededError" || e.code === 22) {
+        showToast("Storage full — consider deleting old snapshots.", "error");
+      }
+      console.error("localStorage write failed:", e);
+    }
+  }
+
+  /* ---------- Lazy Tab Re-rendering ---------- */
+  const _tabDirty = {};
+  function markTabsDirty() {
+    const tabs = ["overview", "leaderboards", "sprint", "strength", "scorecard",
+      "benchmarks", "log", "plan", "constants", "groups", "profiles", "compare"];
+    for (const t of tabs) _tabDirty[t] = true;
+  }
+  function renderIfDirty(tabId) {
+    if (!_tabDirty[tabId]) return;
+    _tabDirty[tabId] = false;
+    const renderers = {
+      overview: renderOverview, leaderboards: renderLeaderboards,
+      sprint: renderSprintAnalysis, strength: renderStrengthPower,
+      scorecard: renderScorecard, benchmarks: renderBenchmarks,
+      log: renderTestingLog, plan: renderTestingWeekPlan,
+      constants: renderConstants, groups: renderGroupDashboard,
+      profiles: renderProfile, compare: renderComparison
+    };
+    if (renderers[tabId]) renderers[tabId]();
+  }
+
   /* ---------- Metric Descriptions (for tooltips) ---------- */
   const METRIC_INFO = {
     bench: {
@@ -323,17 +363,6 @@
     },
   };
 
-  function getTooltip(key) {
-    const m = METRIC_INFO[key];
-    if (!m) return key;
-    return m.name + (m.unit ? " (" + m.unit + ")" : "");
-  }
-  function getTooltipFull(key) {
-    const m = METRIC_INFO[key];
-    if (!m) return "";
-    return m.measures + ". " + m.tellsYou;
-  }
-
   /* ---------- Boot ---------- */
   document.addEventListener("club-data-ready", function () {
     // Hide loading indicator
@@ -434,12 +463,15 @@
   /* ========== TAB SWITCHING ========== */
   window.showTab = function (tabId) {
     document.querySelectorAll(".tab").forEach((t) => {
-      t.classList.toggle("active", t.dataset.tab === tabId);
-      t.setAttribute("aria-selected", t.dataset.tab === tabId);
+      const isActive = t.dataset.tab === tabId;
+      t.classList.toggle("active", isActive);
+      t.setAttribute("aria-selected", String(isActive));
+      t.setAttribute("tabindex", isActive ? "0" : "-1");
     });
     document.querySelectorAll(".tab-panel").forEach((p) => {
       p.classList.toggle("active", p.id === "tab-" + tabId);
     });
+    renderIfDirty(tabId);
   };
 
   /* ========== HELPERS ========== */
@@ -617,10 +649,10 @@
     tbody.innerHTML = list
       .map(
         (a) => `
-      <tr class="clickable" onclick="selectAthlete('${a.id}')">
-        <td><strong>${a.name}</strong></td>
-        <td>${a.position || "—"}</td>
-        <td><span class="group-tag group-${a.group.replace(/\s/g, "")}">${a.group}</span></td>
+      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${a.id}')" onkeydown="if(event.key==='Enter')selectAthlete('${a.id}')">
+        <td><strong>${esc(a.name)}</strong></td>
+        <td>${esc(a.position) || "—"}</td>
+        <td><span class="group-tag group-${a.group.replace(/\s/g, "")}">${esc(a.group)}</span></td>
         ${tdNum(a.height, 1)}
         ${tdNum(a.weight)}
         ${tdGraded(a.bench, 0, a.grades.bench)}
@@ -666,9 +698,9 @@
       <div class="profile-header">
         <div class="profile-avatar">${a.initials}</div>
         <div>
-          <div class="profile-name">${a.name} ${a.overallGrade ? `<span class="grade-badge grade-bg-${a.overallGrade.tier}" style="font-size:.7rem;vertical-align:middle;margin-left:.5rem">${a.overallGrade.label} (${a.overallGrade.score})</span>` : ""}</div>
+          <div class="profile-name">${esc(a.name)} ${a.overallGrade ? `<span class="grade-badge grade-bg-${a.overallGrade.tier}" style="font-size:.7rem;vertical-align:middle;margin-left:.5rem">${a.overallGrade.label} (${a.overallGrade.score})</span>` : ""}</div>
           <div class="profile-meta">
-            <span class="meta-item"><strong>Position:</strong> ${a.position || "N/A"}</span>
+            <span class="meta-item"><strong>Position:</strong> ${esc(a.position) || "N/A"}</span>
             <span class="meta-item"><strong>Group:</strong> <span class="group-tag group-${a.group.replace(/\s/g, "")}">${a.group}</span></span>
             <span class="meta-item"><strong>Height:</strong> ${a.height ? Math.floor(a.height / 12) + "'" + (a.height % 12 === Math.round(a.height % 12) ? Math.round(a.height % 12) : (a.height % 12).toFixed(1)) + '"' + " (" + a.height + " in)" : "N/A"}</span>
             <span class="meta-item"><strong>Weight:</strong> ${a.weight ? a.weight + " lb (" + a.massKg + " kg)" : "N/A"}</span>
@@ -781,6 +813,26 @@
     </div>`;
   }
 
+  /* ---------- Shared normalization (used by radar + comparison) ---------- */
+  function normMetric(val, key) {
+    if (val === null) return 0;
+    const D = window.CLUB;
+    const vals = D.athletes.map((x) => x[key]).filter((v) => v !== null);
+    if (vals.length === 0) return 0;
+    const max = Math.max(...vals);
+    return max > 0 ? Math.round((val / max) * 100) : 0;
+  }
+  function normMetricInv(val, key) {
+    if (val === null) return 0;
+    const D = window.CLUB;
+    const vals = D.athletes.map((x) => x[key]).filter((v) => v !== null);
+    if (vals.length === 0) return 0;
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    if (max === min) return 100;
+    return Math.round(((max - val) / (max - min)) * 100);
+  }
+
   function buildProfileRadar(a) {
     const D = window.CLUB;
     const canvas = document.getElementById("profileRadar");
@@ -788,23 +840,6 @@
     if (profileChartInstance) {
       profileChartInstance.destroy();
       profileChartInstance = null;
-    }
-
-    function norm(val, key) {
-      if (val === null) return 0;
-      const vals = D.athletes.map((x) => x[key]).filter((v) => v !== null);
-      if (vals.length === 0) return 0;
-      const max = Math.max(...vals);
-      return max > 0 ? Math.round((val / max) * 100) : 0;
-    }
-    function normInv(val, key) {
-      if (val === null) return 0;
-      const vals = D.athletes.map((x) => x[key]).filter((v) => v !== null);
-      if (vals.length === 0) return 0;
-      const min = Math.min(...vals);
-      const max = Math.max(...vals);
-      if (max === min) return 100;
-      return Math.round(((max - val) / (max - min)) * 100);
     }
 
     const radarKeys = [
@@ -820,15 +855,15 @@
     ];
     const labels = radarKeys.map((k) => METRIC_INFO[k]?.name || k);
     const values = [
-      norm(a.bench, "bench"),
-      norm(a.squat, "squat"),
-      norm(a.medball, "medball"),
-      norm(a.vert, "vert"),
-      norm(a.broad, "broad"),
-      normInv(a.forty, "forty"),
-      norm(a.F1, "F1"),
-      norm(a.peakPower, "peakPower"),
-      norm(a.momMax, "momMax"),
+      normMetric(a.bench, "bench"),
+      normMetric(a.squat, "squat"),
+      normMetric(a.medball, "medball"),
+      normMetric(a.vert, "vert"),
+      normMetric(a.broad, "broad"),
+      normMetricInv(a.forty, "forty"),
+      normMetric(a.F1, "F1"),
+      normMetric(a.peakPower, "peakPower"),
+      normMetric(a.momMax, "momMax"),
     ];
 
     profileChartInstance = new Chart(canvas, {
@@ -917,10 +952,10 @@
     tbody.innerHTML = top
       .map(
         (e, i) => `
-      <tr class="clickable" onclick="selectAthlete('${e.id}')">
+      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${e.id}')" onkeydown="if(event.key==='Enter')selectAthlete('${e.id}')">
         <td class="num">${i + 1}</td>
-        <td><strong>${e.name}</strong></td>
-        <td>${e.position}</td>
+        <td><strong>${esc(e.name)}</strong></td>
+        <td>${esc(e.position)}</td>
         <td class="num">${typeof e.val === "number" ? (Number.isInteger(e.val) ? e.val : e.val.toFixed(2)) : e.val}</td>
       </tr>
     `,
@@ -1018,8 +1053,8 @@
       .map(
         (a) => `
       <tr>
-        <td><strong>${a.name}</strong></td>
-        <td>${a.position || "—"}</td>
+        <td><strong>${esc(a.name)}</strong></td>
+        <td>${esc(a.position) || "—"}</td>
         ${tdNum(a.massKg, 1)}
         ${tdNum(a.sprint020, 2)}
         ${tdNum(a.sprint2030, 2)}
@@ -1068,9 +1103,9 @@
     tbody.innerHTML = list
       .map(
         (a) => `
-      <tr class="clickable" onclick="selectAthlete('${a.id}')">
-        <td><strong>${a.name}</strong></td>
-        <td>${a.position || "—"}</td>
+      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${a.id}')" onkeydown="if(event.key==='Enter')selectAthlete('${a.id}')">
+        <td><strong>${esc(a.name)}</strong></td>
+        <td>${esc(a.position) || "—"}</td>
         ${tdNum(a.weight)}
         ${tdNum(a.massKg, 1)}
         ${tdGraded(a.bench, 0, a.grades.bench)}
@@ -1087,6 +1122,10 @@
     `,
       )
       .join("");
+
+    if (list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="14" class="placeholder-text">No strength data available.</td></tr>';
+    }
   }
 
   /* ========== SCORECARD ========== */
@@ -1098,6 +1137,11 @@
 
     // Only show athletes with at least one scorecard entry
     list = list.filter((a) => Object.keys(a.scorecard).length > 0);
+
+    if (list.length === 0) {
+      document.querySelector("#scorecardTable tbody").innerHTML = '<tr><td colspan="20" class="placeholder-text">No scorecard data available.</td></tr>';
+      return;
+    }
 
     const metrics = D.scorecardMetrics;
     const header = document.getElementById("scorecardHeader");
@@ -1133,9 +1177,9 @@
           })
           .join("");
         return `<tr>
-        <td><strong>${a.name}</strong></td>
-        <td>${a.position || "—"}</td>
-        <td><span class="group-tag group-${a.group.replace(/\s/g, "")}">${a.group}</span></td>
+        <td><strong>${esc(a.name)}</strong></td>
+        <td>${esc(a.position) || "—"}</td>
+        <td><span class="group-tag group-${a.group.replace(/\s/g, "")}">${esc(a.group)}</span></td>
         ${cells}
       </tr>`;
       })
@@ -1270,7 +1314,7 @@
           for (const a of sorted) {
             const grade = a.grades[athKey];
             html += `<div class="std-athlete-row">
-              <span class="std-athlete-name">${a.name}</span>
+              <span class="std-athlete-name">${esc(a.name)}</span>
               <span class="std-athlete-val">${typeof a[athKey] === "number" ? (Number.isInteger(a[athKey]) ? a[athKey] : a[athKey].toFixed(2)) : a[athKey]} ${mm ? mm.unit : ""}</span>
               <span class="std-athlete-tier">${grade ? gradeBadge(grade) : '<span class="na">—</span>'}</span>
             </div>`;
@@ -1297,7 +1341,7 @@
             .join("");
           html += `<div class="grade-summary-card">
             <div class="grade-summary-header">
-              <strong>${a.name}</strong> <small>${a.position || ""}</small>
+              <strong>${esc(a.name)}</strong> <small>${esc(a.position) || ""}</small>
               <span class="grade-badge grade-bg-${og.tier}" style="margin-left:auto">${og.label} (${og.score})</span>
             </div>
             <div class="grade-chips-row">${gradeChips}</div>
@@ -1349,8 +1393,8 @@
 
         return `<tr>
         <td data-sort-value="${e.date || ""}">${formatLogDate(e.date)}</td>
-        <td><strong>${e.name}</strong></td>
-        <td><span class="test-type-badge test-${(e.test || "Unknown").replace(/\s/g, "")}">${e.test || "Unknown"}</span></td>
+        <td><strong>${esc(e.name)}</strong></td>
+        <td><span class="test-type-badge test-${(e.test || "Unknown").replace(/\s/g, "")}">${esc(e.test) || "Unknown"}</span></td>
         <td>${result}</td>
         <td>${e.location || ""}</td>
       </tr>`;
@@ -1551,8 +1595,8 @@
     for (const a of athletes) {
       html += `<div class="cmp-card">
         <div class="cmp-avatar">${a.initials}</div>
-        <div class="cmp-name">${a.name}</div>
-        <div class="cmp-meta">${a.position || "—"} · ${a.group} · ${a.weight || "—"} lb${a.overallGrade ? ' · <span class="grade-badge grade-bg-' + a.overallGrade.tier + '">' + a.overallGrade.label + "</span>" : ""}</div>
+        <div class="cmp-name">${esc(a.name)}</div>
+        <div class="cmp-meta">${esc(a.position) || "—"} · ${esc(a.group)} · ${a.weight || "—"} lb${a.overallGrade ? ' · <span class="grade-badge grade-bg-' + a.overallGrade.tier + '">' + a.overallGrade.label + "</span>" : ""}</div>
       </div>`;
     }
     html += "</div>";
@@ -1577,7 +1621,7 @@
 
     html +=
       '<div class="table-wrap"><table class="cmp-table"><thead><tr><th>Metric</th>';
-    for (const a of athletes) html += `<th>${a.name.split(" ")[0]}</th>`;
+    for (const a of athletes) html += `<th>${esc(a.name).split(" ")[0]}</th>`;
     html += "<th>Δ</th></tr></thead><tbody>";
 
     for (const m of cmpMetrics) {
@@ -1646,20 +1690,10 @@
     const radarLabels = radarKeys.map((k) => METRIC_INFO[k]?.name || k);
 
     function normVal(val, key) {
-      if (val === null) return 0;
-      const allVals = D.athletes.map((x) => x[key]).filter((v) => v !== null);
-      if (allVals.length === 0) return 0;
-      const max = Math.max(...allVals);
-      return max > 0 ? Math.round((val / max) * 100) : 0;
+      return normMetric(val, key);
     }
     function normInv(val, key) {
-      if (val === null) return 0;
-      const allVals = D.athletes.map((x) => x[key]).filter((v) => v !== null);
-      if (allVals.length === 0) return 0;
-      const min = Math.min(...allVals);
-      const max = Math.max(...allVals);
-      if (max === min) return 100;
-      return Math.round(((max - val) / (max - min)) * 100);
+      return normMetricInv(val, key);
     }
 
     const datasets = athletes.map((a, i) => ({
@@ -1715,8 +1749,6 @@
   };
 
   /* ========== POSITION GROUP DASHBOARD ========== */
-  let grpCharts = [];
-
   window.renderGroupDashboard = function () {
     const D = window.CLUB;
     const container = document.getElementById("groupDashContent");
@@ -1725,10 +1757,6 @@
       gFilter === "all"
         ? ["Skill", "Big Skill", "Linemen", "Other"]
         : [gFilter];
-
-    // Clean up old charts
-    for (const c of grpCharts) c.destroy();
-    grpCharts = [];
 
     const summaryMetrics = [
       { key: "bench", label: "Avg Bench", unit: "lb", dec: 0 },
@@ -1817,8 +1845,8 @@
           const a = ranked[i];
           html += `<div class="grp-top-athlete">
             <span class="grp-top-rank">#${i + 1}</span>
-            <strong>${a.name}</strong>
-            <span style="color:var(--text-muted);font-size:.75rem">${a.position || "—"}</span>
+            <strong>${esc(a.name)}</strong>
+            <span style="color:var(--text-muted);font-size:.75rem">${esc(a.position) || "—"}</span>
             <span class="grade-badge grade-bg-${a.overallGrade.tier}" style="margin-left:auto">${a.overallGrade.label} (${a.overallGrade.score})</span>
           </div>`;
         }
@@ -1915,9 +1943,9 @@
     const rows = [headers.join(",")];
     for (const a of D.athletes) {
       const row = [
-        '"' + (a.name || "") + '"',
-        a.position || "",
-        a.group || "",
+        '"' + (a.name || "").replace(/"/g, '""') + '"',
+        '"' + (a.position || "").replace(/"/g, '""') + '"',
+        '"' + (a.group || "").replace(/"/g, '""') + '"',
         a.height ?? "",
         a.weight ?? "",
         a.bench ?? "",
@@ -1994,6 +2022,14 @@
     );
     if (!name) return;
     const snapshots = JSON.parse(localStorage.getItem("lc_snapshots") || "[]");
+
+    // Prevent duplicate snapshot names
+    if (snapshots.some(function (s) { return s.name === name; })) {
+      if (!confirm('A snapshot named "' + name + '" already exists. Overwrite it?')) return;
+      const idx = snapshots.findIndex(function (s) { return s.name === name; });
+      snapshots.splice(idx, 1);
+    }
+
     // Build a snapshot of the current state (original + additions - deletions + edits)
     const rawCopy = JSON.parse(JSON.stringify(window._rawDataCache));
 
@@ -2022,7 +2058,7 @@
       date: new Date().toLocaleString(),
       data: rawCopy,
     });
-    localStorage.setItem("lc_snapshots", JSON.stringify(snapshots));
+    safeLSSet("lc_snapshots", JSON.stringify(snapshots));
     refreshSnapshotList();
     updateDataStatus();
     alert('Snapshot "' + name + '" saved!');
@@ -2065,7 +2101,7 @@
     if (!confirm('Delete snapshot "' + name + '"?')) return;
     let snapshots = JSON.parse(localStorage.getItem("lc_snapshots") || "[]");
     snapshots = snapshots.filter((s) => s.name !== name);
-    localStorage.setItem("lc_snapshots", JSON.stringify(snapshots));
+    safeLSSet("lc_snapshots", JSON.stringify(snapshots));
     refreshSnapshotList();
     updateDataStatus();
   };
@@ -2130,19 +2166,14 @@
     // Refresh athlete dropdowns (names/positions may have changed)
     refreshAthleteDropdowns();
 
-    renderOverview();
-    renderLeaderboards();
-    renderSprintAnalysis();
-    renderStrengthPower();
-    renderScorecard();
-    renderBenchmarks();
-    renderTestingLog();
-    renderTestingWeekPlan();
-    renderConstants();
-    renderGroupDashboard();
-    // Re-render profile if one is selected
+    // Mark all tabs dirty; only render the currently active one
+    markTabsDirty();
+    const activeTab = document.querySelector(".tab.active");
+    if (activeTab) renderIfDirty(activeTab.dataset.tab);
+
+    // Also render profile if one is selected
     const id = document.getElementById("athleteSelect").value;
-    if (id) renderProfile();
+    if (id && activeTab && activeTab.dataset.tab === "profiles") renderProfile();
   }
 
   /* ========== REBUILD DATA FROM LOCALSTORAGE ========== */
@@ -2239,7 +2270,7 @@
     // Save to lc_added
     const added = JSON.parse(localStorage.getItem("lc_added") || "[]");
     added.push(newAthlete);
-    localStorage.setItem("lc_added", JSON.stringify(added));
+    safeLSSet("lc_added", JSON.stringify(added));
 
     // Rebuild & re-render
     rebuildFromStorage();
@@ -2288,21 +2319,21 @@
     // Add to lc_deleted
     const deleted = JSON.parse(localStorage.getItem("lc_deleted") || "[]");
     if (deleted.indexOf(id) === -1) deleted.push(id);
-    localStorage.setItem("lc_deleted", JSON.stringify(deleted));
+    safeLSSet("lc_deleted", JSON.stringify(deleted));
 
     // Also remove from lc_added if it was a newly added athlete
     let added = JSON.parse(localStorage.getItem("lc_added") || "[]");
     added = added.filter(function (a) {
       return a.id !== id;
     });
-    localStorage.setItem("lc_added", JSON.stringify(added));
+    safeLSSet("lc_added", JSON.stringify(added));
 
     // Also remove from lc_edits
     let edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
     edits = edits.filter(function (e) {
       return e.id !== id;
     });
-    localStorage.setItem("lc_edits", JSON.stringify(edits));
+    safeLSSet("lc_edits", JSON.stringify(edits));
 
     // Rebuild & re-render
     rebuildFromStorage();
@@ -2344,6 +2375,8 @@
       label: "Height (in)",
       type: "number",
       step: "0.5",
+      min: "48",
+      max: "84",
       section: "Bio",
     },
     {
@@ -2352,6 +2385,8 @@
       label: "Weight (lb)",
       type: "number",
       step: "1",
+      min: "80",
+      max: "400",
       section: "Bio",
     },
     {
@@ -2360,6 +2395,8 @@
       label: "Bench 1RM (lb)",
       type: "number",
       step: "5",
+      min: "0",
+      max: "600",
       section: "Strength",
     },
     {
@@ -2368,6 +2405,8 @@
       label: "Squat 1RM (lb)",
       type: "number",
       step: "5",
+      min: "0",
+      max: "800",
       section: "Strength",
     },
     {
@@ -2376,6 +2415,8 @@
       label: "Med Ball (in)",
       type: "number",
       step: "1",
+      min: "0",
+      max: "500",
       section: "Explosiveness",
     },
     {
@@ -2384,6 +2425,8 @@
       label: "Vertical Jump (in)",
       type: "number",
       step: "0.5",
+      min: "0",
+      max: "50",
       section: "Explosiveness",
     },
     {
@@ -2392,6 +2435,8 @@
       label: "Broad Jump (in)",
       type: "number",
       step: "1",
+      min: "0",
+      max: "150",
       section: "Explosiveness",
     },
     {
@@ -2400,6 +2445,8 @@
       label: "0–20yd Split (s)",
       type: "number",
       step: "0.01",
+      min: "1.5",
+      max: "6.0",
       section: "Sprint",
     },
     {
@@ -2408,6 +2455,8 @@
       label: "20–30yd Split (s)",
       type: "number",
       step: "0.01",
+      min: "0.5",
+      max: "3.0",
       section: "Sprint",
     },
     {
@@ -2416,6 +2465,8 @@
       label: "30–40yd Split (s)",
       type: "number",
       step: "0.01",
+      min: "0.5",
+      max: "3.0",
       section: "Sprint",
     },
   ];
@@ -2519,6 +2570,8 @@
           (val !== null && val !== undefined ? val : "") +
           '"' +
           (f.step ? ' step="' + f.step + '"' : "") +
+          (f.min !== undefined ? ' min="' + f.min + '"' : "") +
+          (f.max !== undefined ? ' max="' + f.max + '"' : "") +
           " /></div>";
       }
     }
@@ -2573,13 +2626,15 @@
     } else {
       edits.push({ id: editingAthleteId, changes: changes });
     }
-    localStorage.setItem("lc_edits", JSON.stringify(edits));
+    safeLSSet("lc_edits", JSON.stringify(edits));
 
     // Reprocess data
     rebuildFromStorage();
 
-    // Re-render everything (panel stays open)
-    reRenderAll();
+    // Re-render only active tab + profile
+    markTabsDirty();
+    const activeTab = document.querySelector(".tab.active");
+    if (activeTab) renderIfDirty(activeTab.dataset.tab);
     updateDataStatus();
 
     // Keep athlete selected & profile visible
@@ -2683,6 +2738,7 @@
     const sorted = D.athletes.slice().sort(function (a, b) {
       return a.name.localeCompare(b.name);
     });
+    if (sorted.length === 0) return;
     let idx = sorted.findIndex(function (a) {
       return a.id === editingAthleteId;
     });
@@ -2695,6 +2751,7 @@
     const sorted = D.athletes.slice().sort(function (a, b) {
       return a.name.localeCompare(b.name);
     });
+    if (sorted.length === 0) return;
     let idx = sorted.findIndex(function (a) {
       return a.id === editingAthleteId;
     });
@@ -2709,7 +2766,7 @@
     edits = edits.filter(function (e) {
       return e.id !== editingAthleteId;
     });
-    localStorage.setItem("lc_edits", JSON.stringify(edits));
+    safeLSSet("lc_edits", JSON.stringify(edits));
 
     // Reprocess from original + remaining edits
     rebuildFromStorage();
@@ -2847,7 +2904,9 @@
         }
 
         /* --- Check if this is an exported JSON (has source field) or raw format --- */
-        const isExport = data.source === "BC Personal Fitness Club Dashboard" || data.source === "Lifting Club Dashboard";
+        const isExport =
+          data.source === "BC Personal Fitness Club Dashboard" ||
+          data.source === "Lifting Club Dashboard";
 
         /* --- Map athletes back to raw format --- */
         const rawAthletes = athletes.map(function (a) {
@@ -2874,16 +2933,16 @@
           !confirm(
             "Import " +
               rawAthletes.length +
-              " athletes from \"" +
+              ' athletes from "' +
               file.name +
-              "\"?\n\nThis will replace ALL current data and clear any unsaved edits."
+              '"?\n\nThis will replace ALL current data and clear any unsaved edits.',
           )
         ) {
           inputEl.value = "";
           return;
         }
 
-        /* --- Build raw data object --- */
+        /* --- Build raw data object (preserve all top-level keys) --- */
         const rawData = {
           meta: data.meta || {
             source_workbook: "Imported from " + file.name,
@@ -2902,6 +2961,10 @@
           },
           athletes: rawAthletes,
         };
+        /* Carry over optional top-level collections if present */
+        if (data.testing_log) rawData.testing_log = data.testing_log;
+        if (data.testing_week_plan) rawData.testing_week_plan = data.testing_week_plan;
+        if (data.benchmarks) rawData.benchmarks = data.benchmarks;
 
         /* --- Clear all local modifications --- */
         localStorage.removeItem("lc_edits");
@@ -2915,7 +2978,7 @@
         updateDataStatus();
         showToast(
           "Imported " + rawAthletes.length + " athletes from " + file.name,
-          "success"
+          "success",
         );
       } catch (err) {
         console.error("Import error:", err);
@@ -2926,8 +2989,7 @@
     reader.readAsText(file);
   };
 
-  // Legacy compat
+  // Legacy compat (kept for any external references)
   window.openEditModal = window.openEditPanel;
   window.closeEditModal = window.closeEditPanel;
-  window.saveEdit = doAutoSave;
 })();
