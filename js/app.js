@@ -16,10 +16,18 @@
   let profileQuadrantInstance = null;
 
   /* ---------- HTML Escaping (XSS protection) ---------- */
-  const ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  const ESC_MAP = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  };
   function esc(s) {
     if (s === null || s === undefined) return "";
-    return String(s).replace(/[&<>"']/g, function (c) { return ESC_MAP[c]; });
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return ESC_MAP[c];
+    });
   }
 
   /* ---------- Debounce helper ---------- */
@@ -63,9 +71,27 @@
     { key: "medball", jsonKey: "medball_in", label: "Med Ball", unit: "in" },
     { key: "vert", jsonKey: "vert_in", label: "Vertical", unit: "in" },
     { key: "broad", jsonKey: "broad_in", label: "Broad Jump", unit: "in" },
-    { key: "sprint020", jsonKey: "sprint_020", label: "0-20 yd", unit: "s", lower: true },
-    { key: "sprint2030", jsonKey: "sprint_2030", label: "20-30 yd", unit: "s", lower: true },
-    { key: "sprint3040", jsonKey: "sprint_3040", label: "30-40 yd", unit: "s", lower: true },
+    {
+      key: "sprint020",
+      jsonKey: "sprint_020",
+      label: "0-20 yd",
+      unit: "s",
+      lower: true,
+    },
+    {
+      key: "sprint2030",
+      jsonKey: "sprint_2030",
+      label: "20-30 yd",
+      unit: "s",
+      lower: true,
+    },
+    {
+      key: "sprint3040",
+      jsonKey: "sprint_3040",
+      label: "30-40 yd",
+      unit: "s",
+      lower: true,
+    },
   ];
 
   /* ---------- Test History helpers ---------- */
@@ -111,7 +137,10 @@
   /* ---------- Safe localStorage (quota-aware) ---------- */
   function safeLSSet(key, value) {
     try {
-      localStorage.setItem(key, typeof value === "string" ? value : JSON.stringify(value));
+      localStorage.setItem(
+        key,
+        typeof value === "string" ? value : JSON.stringify(value),
+      );
     } catch (e) {
       if (e.name === "QuotaExceededError" || e.code === 22) {
         showToast("Storage full — consider deleting old snapshots.", "error");
@@ -123,20 +152,38 @@
   /* ---------- Lazy Tab Re-rendering ---------- */
   const _tabDirty = {};
   function markTabsDirty() {
-    const tabs = ["overview", "leaderboards", "sprint", "strength", "scorecard",
-      "benchmarks", "log", "plan", "constants", "groups", "profiles", "compare"];
+    const tabs = [
+      "overview",
+      "leaderboards",
+      "sprint",
+      "strength",
+      "scorecard",
+      "benchmarks",
+      "log",
+      "plan",
+      "constants",
+      "groups",
+      "profiles",
+      "compare",
+    ];
     for (const t of tabs) _tabDirty[t] = true;
   }
   function renderIfDirty(tabId) {
     if (!_tabDirty[tabId]) return;
     _tabDirty[tabId] = false;
     const renderers = {
-      overview: renderOverview, leaderboards: renderLeaderboards,
-      sprint: renderSprintAnalysis, strength: renderStrengthPower,
-      scorecard: renderScorecard, benchmarks: renderBenchmarks,
-      log: renderTestingLog, plan: renderTestingWeekPlan,
-      constants: renderConstants, groups: renderGroupDashboard,
-      profiles: renderProfile, compare: renderComparison
+      overview: renderOverview,
+      leaderboards: renderLeaderboards,
+      sprint: renderSprintAnalysis,
+      strength: renderStrengthPower,
+      scorecard: renderScorecard,
+      benchmarks: renderBenchmarks,
+      log: renderTestingLog,
+      plan: renderTestingWeekPlan,
+      constants: renderConstants,
+      groups: renderGroupDashboard,
+      profiles: renderProfile,
+      compare: renderComparison,
     };
     if (renderers[tabId]) renderers[tabId]();
   }
@@ -572,13 +619,34 @@
     const prevTab = document.querySelector(".tab.active");
     if (prevTab) {
       const prevId = prevTab.dataset.tab;
-      if (prevId === "profiles" && profileChartInstance) { profileChartInstance.destroy(); profileChartInstance = null; }
-      if (prevId === "profiles" && profilePctChartInstance) { profilePctChartInstance.destroy(); profilePctChartInstance = null; }
-      if (prevId === "profiles" && profileSprintChartInstance) { profileSprintChartInstance.destroy(); profileSprintChartInstance = null; }
-      if (prevId === "profiles" && profileDonutInstance) { profileDonutInstance.destroy(); profileDonutInstance = null; }
-      if (prevId === "profiles" && profileQuadrantInstance) { profileQuadrantInstance.destroy(); profileQuadrantInstance = null; }
-      if (prevId === "leaderboards" && lbChartInstance) { lbChartInstance.destroy(); lbChartInstance = null; }
-      if (prevId === "compare" && cmpChartInstance) { cmpChartInstance.destroy(); cmpChartInstance = null; }
+      if (prevId === "profiles" && profileChartInstance) {
+        profileChartInstance.destroy();
+        profileChartInstance = null;
+      }
+      if (prevId === "profiles" && profilePctChartInstance) {
+        profilePctChartInstance.destroy();
+        profilePctChartInstance = null;
+      }
+      if (prevId === "profiles" && profileSprintChartInstance) {
+        profileSprintChartInstance.destroy();
+        profileSprintChartInstance = null;
+      }
+      if (prevId === "profiles" && profileDonutInstance) {
+        profileDonutInstance.destroy();
+        profileDonutInstance = null;
+      }
+      if (prevId === "profiles" && profileQuadrantInstance) {
+        profileQuadrantInstance.destroy();
+        profileQuadrantInstance = null;
+      }
+      if (prevId === "leaderboards" && lbChartInstance) {
+        lbChartInstance.destroy();
+        lbChartInstance = null;
+      }
+      if (prevId === "compare" && cmpChartInstance) {
+        cmpChartInstance.destroy();
+        cmpChartInstance = null;
+      }
     }
     document.querySelectorAll(".tab").forEach((t) => {
       const isActive = t.dataset.tab === tabId;
@@ -769,11 +837,10 @@
 
     const tbody = document.querySelector("#rosterTable tbody");
     tbody.innerHTML = list
-      .map(
-        (a) => {
-          const isTested = coreFields.some((k) => a[k] !== null);
-          const rowCls = isTested ? "clickable" : "clickable untested-row";
-          return `
+      .map((a) => {
+        const isTested = coreFields.some((k) => a[k] !== null);
+        const rowCls = isTested ? "clickable" : "clickable untested-row";
+        return `
       <tr class="${rowCls}" tabindex="0" role="button" onclick="selectAthlete('${a.id}')" onkeydown="if(event.key==='Enter')selectAthlete('${a.id}')">
         <td><strong>${esc(a.name)}</strong>${!isTested ? ' <span class="untested-badge">Untested</span>' : ""}</td>
         <td>${esc(a.position) || "—"}</td>
@@ -790,13 +857,14 @@
         ${overallGradeCell(a.overallGrade)}
       </tr>
     `;
-        },
-      )
+      })
       .join("");
   };
 
   window.selectAthlete = function (id) {
-    const a = window.CLUB.athletes.find(function (x) { return x.id === id; });
+    const a = window.CLUB.athletes.find(function (x) {
+      return x.id === id;
+    });
     if (!a) {
       showToast("Athlete not found — data may have changed.", "warn");
       renderOverview();
@@ -991,7 +1059,8 @@
     const canvas = document.getElementById("profileRadar");
     if (!canvas) return;
     if (typeof Chart === "undefined") {
-      canvas.parentElement.innerHTML = '<p class="placeholder-text">Charts unavailable (Chart.js failed to load)</p>';
+      canvas.parentElement.innerHTML =
+        '<p class="placeholder-text">Charts unavailable (Chart.js failed to load)</p>';
       return;
     }
     if (profileChartInstance) {
@@ -1088,50 +1157,86 @@
     const D = window.CLUB;
     const canvas = document.getElementById("profilePercentileChart");
     if (!canvas || typeof Chart === "undefined") return;
-    if (profilePctChartInstance) { profilePctChartInstance.destroy(); profilePctChartInstance = null; }
+    if (profilePctChartInstance) {
+      profilePctChartInstance.destroy();
+      profilePctChartInstance = null;
+    }
 
     const entries = Object.entries(a.scorecard);
-    if (entries.length === 0) { canvas.parentElement.innerHTML = '<p class="placeholder-text">No scorecard data available.</p>'; return; }
+    if (entries.length === 0) {
+      canvas.parentElement.innerHTML =
+        '<p class="placeholder-text">No scorecard data available.</p>';
+      return;
+    }
 
-    const labels = entries.map(([k]) => { const m = D.scorecardMetrics.find(m => m.key === k); return m ? m.label : k; });
+    const labels = entries.map(([k]) => {
+      const m = D.scorecardMetrics.find((m) => m.key === k);
+      return m ? m.label : k;
+    });
     const values = entries.map(([, sc]) => sc.percentile);
-    const colors = values.map(v => v >= 80 ? '#a78bfa' : v >= 60 ? '#4ade80' : v >= 40 ? '#60a5fa' : v >= 20 ? '#facc15' : '#f87171');
+    const colors = values.map((v) =>
+      v >= 80
+        ? "#a78bfa"
+        : v >= 60
+          ? "#4ade80"
+          : v >= 40
+            ? "#60a5fa"
+            : v >= 20
+              ? "#facc15"
+              : "#f87171",
+    );
 
     profilePctChartInstance = new Chart(canvas, {
-      type: 'bar',
+      type: "bar",
       data: {
         labels,
-        datasets: [{
-          data: values,
-          backgroundColor: colors.map(c => c + '33'),
-          borderColor: colors,
-          borderWidth: 1.5,
-          borderRadius: 4,
-          barPercentage: 0.7,
-        }]
+        datasets: [
+          {
+            data: values,
+            backgroundColor: colors.map((c) => c + "33"),
+            borderColor: colors,
+            borderWidth: 1.5,
+            borderRadius: 4,
+            barPercentage: 0.7,
+          },
+        ],
       },
       options: {
-        indexAxis: 'y',
+        indexAxis: "y",
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          x: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,.06)' }, ticks: { color: '#8b90a0', callback: v => v + '%' } },
-          y: { grid: { display: false }, ticks: { color: '#e4e6ed', font: { size: 11 } } }
+          x: {
+            min: 0,
+            max: 100,
+            grid: { color: "rgba(255,255,255,.06)" },
+            ticks: { color: "#8b90a0", callback: (v) => v + "%" },
+          },
+          y: {
+            grid: { display: false },
+            ticks: { color: "#e4e6ed", font: { size: 11 } },
+          },
         },
         plugins: {
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: ctx => {
+              label: (ctx) => {
                 const key = entries[ctx.dataIndex][0];
                 const sc = a.scorecard[key];
-                const val = sc ? (typeof sc.value === 'number' ? (Number.isInteger(sc.value) ? sc.value : sc.value.toFixed(2)) : sc.value) : '';
-                return ctx.raw + 'th percentile — Value: ' + val;
-              }
-            }
-          }
-        }
-      }
+                const val = sc
+                  ? typeof sc.value === "number"
+                    ? Number.isInteger(sc.value)
+                      ? sc.value
+                      : sc.value.toFixed(2)
+                    : sc.value
+                  : "";
+                return ctx.raw + "th percentile — Value: " + val;
+              },
+            },
+          },
+        },
+      },
     });
   }
 
@@ -1140,75 +1245,105 @@
     const D = window.CLUB;
     const canvas = document.getElementById("profileSprintChart");
     if (!canvas || typeof Chart === "undefined") return;
-    if (profileSprintChartInstance) { profileSprintChartInstance.destroy(); profileSprintChartInstance = null; }
+    if (profileSprintChartInstance) {
+      profileSprintChartInstance.destroy();
+      profileSprintChartInstance = null;
+    }
 
-    if (!a.v1 && !a.v2 && !a.v3) { canvas.parentElement.innerHTML = '<p class="placeholder-text">No sprint data available.</p>'; return; }
+    if (!a.v1 && !a.v2 && !a.v3) {
+      canvas.parentElement.innerHTML =
+        '<p class="placeholder-text">No sprint data available.</p>';
+      return;
+    }
 
-    const phases = ['0–20 yd', '20–30 yd', '30–40 yd'];
+    const phases = ["0–20 yd", "20–30 yd", "30–40 yd"];
     const athleteVels = [a.v1, a.v2, a.v3];
 
     // Compute team averages
     const teamAvgs = [null, null, null];
     let count = [0, 0, 0];
     for (const t of D.athletes) {
-      if (t.v1 !== null) { teamAvgs[0] = (teamAvgs[0] || 0) + t.v1; count[0]++; }
-      if (t.v2 !== null) { teamAvgs[1] = (teamAvgs[1] || 0) + t.v2; count[1]++; }
-      if (t.v3 !== null) { teamAvgs[2] = (teamAvgs[2] || 0) + t.v3; count[2]++; }
+      if (t.v1 !== null) {
+        teamAvgs[0] = (teamAvgs[0] || 0) + t.v1;
+        count[0]++;
+      }
+      if (t.v2 !== null) {
+        teamAvgs[1] = (teamAvgs[1] || 0) + t.v2;
+        count[1]++;
+      }
+      if (t.v3 !== null) {
+        teamAvgs[2] = (teamAvgs[2] || 0) + t.v3;
+        count[2]++;
+      }
     }
-    for (let i = 0; i < 3; i++) { if (count[i] > 0) teamAvgs[i] = +(teamAvgs[i] / count[i]).toFixed(2); }
+    for (let i = 0; i < 3; i++) {
+      if (count[i] > 0) teamAvgs[i] = +(teamAvgs[i] / count[i]).toFixed(2);
+    }
 
     profileSprintChartInstance = new Chart(canvas, {
-      type: 'line',
+      type: "line",
       data: {
         labels: phases,
         datasets: [
           {
             label: a.name,
             data: athleteVels,
-            borderColor: '#a78bfa',
-            backgroundColor: 'rgba(167,139,250,.15)',
+            borderColor: "#a78bfa",
+            backgroundColor: "rgba(167,139,250,.15)",
             fill: true,
             tension: 0.3,
             pointRadius: 6,
-            pointBackgroundColor: '#a78bfa',
-            pointBorderColor: '#fff',
+            pointBackgroundColor: "#a78bfa",
+            pointBorderColor: "#fff",
             pointBorderWidth: 2,
           },
           {
-            label: 'Team Avg',
+            label: "Team Avg",
             data: teamAvgs,
-            borderColor: '#60a5fa',
-            backgroundColor: 'rgba(96,165,250,.08)',
+            borderColor: "#60a5fa",
+            backgroundColor: "rgba(96,165,250,.08)",
             fill: false,
             borderDash: [6, 3],
             tension: 0.3,
             pointRadius: 4,
-            pointBackgroundColor: '#60a5fa',
-            pointBorderColor: '#fff',
+            pointBackgroundColor: "#60a5fa",
+            pointBorderColor: "#fff",
             pointBorderWidth: 2,
-          }
-        ]
+          },
+        ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: true,
         scales: {
           y: {
-            title: { display: true, text: 'Velocity (m/s)', color: '#8b90a0' },
-            grid: { color: 'rgba(255,255,255,.06)' },
-            ticks: { color: '#8b90a0' }
+            title: { display: true, text: "Velocity (m/s)", color: "#8b90a0" },
+            grid: { color: "rgba(255,255,255,.06)" },
+            ticks: { color: "#8b90a0" },
           },
-          x: { grid: { color: 'rgba(255,255,255,.06)' }, ticks: { color: '#8b90a0' } }
+          x: {
+            grid: { color: "rgba(255,255,255,.06)" },
+            ticks: { color: "#8b90a0" },
+          },
         },
         plugins: {
-          legend: { labels: { color: '#e4e6ed', usePointStyle: true, pointStyle: 'circle' } },
+          legend: {
+            labels: {
+              color: "#e4e6ed",
+              usePointStyle: true,
+              pointStyle: "circle",
+            },
+          },
           tooltip: {
             callbacks: {
-              label: ctx => ctx.dataset.label + ': ' + (ctx.raw !== null ? ctx.raw + ' m/s' : 'N/A')
-            }
-          }
-        }
-      }
+              label: (ctx) =>
+                ctx.dataset.label +
+                ": " +
+                (ctx.raw !== null ? ctx.raw + " m/s" : "N/A"),
+            },
+          },
+        },
+      },
     });
   }
 
@@ -1216,51 +1351,98 @@
   function buildGradeDonut(a) {
     const canvas = document.getElementById("profileGradeDonut");
     if (!canvas || typeof Chart === "undefined") return;
-    if (profileDonutInstance) { profileDonutInstance.destroy(); profileDonutInstance = null; }
+    if (profileDonutInstance) {
+      profileDonutInstance.destroy();
+      profileDonutInstance = null;
+    }
 
     if (!a.grades || Object.keys(a.grades).length === 0) {
-      canvas.parentElement.innerHTML = '<p class="placeholder-text">No graded metrics available.</p>';
+      canvas.parentElement.innerHTML =
+        '<p class="placeholder-text">No graded metrics available.</p>';
       return;
     }
 
-    const tierCounts = { elite: 0, excellent: 0, good: 0, average: 0, below: 0 };
-    const tierLabels = { elite: 'Elite', excellent: 'Excellent', good: 'Good', average: 'Average', below: 'Below Avg' };
-    const tierColors = { elite: '#a78bfa', excellent: '#4ade80', good: '#60a5fa', average: '#facc15', below: '#f87171' };
+    const tierCounts = {
+      elite: 0,
+      excellent: 0,
+      good: 0,
+      average: 0,
+      below: 0,
+    };
+    const tierLabels = {
+      elite: "Elite",
+      excellent: "Excellent",
+      good: "Good",
+      average: "Average",
+      below: "Below Avg",
+    };
+    const tierColors = {
+      elite: "#a78bfa",
+      excellent: "#4ade80",
+      good: "#60a5fa",
+      average: "#facc15",
+      below: "#f87171",
+    };
 
     for (const g of Object.values(a.grades)) {
-      if (g && g.tier && tierCounts.hasOwnProperty(g.tier)) tierCounts[g.tier]++;
+      if (g && g.tier && tierCounts.hasOwnProperty(g.tier))
+        tierCounts[g.tier]++;
     }
 
-    const activeTiers = Object.keys(tierCounts).filter(t => tierCounts[t] > 0);
-    if (activeTiers.length === 0) { canvas.parentElement.innerHTML = '<p class="placeholder-text">No graded metrics available.</p>'; return; }
+    const activeTiers = Object.keys(tierCounts).filter(
+      (t) => tierCounts[t] > 0,
+    );
+    if (activeTiers.length === 0) {
+      canvas.parentElement.innerHTML =
+        '<p class="placeholder-text">No graded metrics available.</p>';
+      return;
+    }
 
     const totalGraded = activeTiers.reduce((s, t) => s + tierCounts[t], 0);
 
     profileDonutInstance = new Chart(canvas, {
-      type: 'doughnut',
+      type: "doughnut",
       data: {
-        labels: activeTiers.map(t => tierLabels[t]),
-        datasets: [{
-          data: activeTiers.map(t => tierCounts[t]),
-          backgroundColor: activeTiers.map(t => tierColors[t] + '44'),
-          borderColor: activeTiers.map(t => tierColors[t]),
-          borderWidth: 2,
-          hoverOffset: 8,
-        }]
+        labels: activeTiers.map((t) => tierLabels[t]),
+        datasets: [
+          {
+            data: activeTiers.map((t) => tierCounts[t]),
+            backgroundColor: activeTiers.map((t) => tierColors[t] + "44"),
+            borderColor: activeTiers.map((t) => tierColors[t]),
+            borderWidth: 2,
+            hoverOffset: 8,
+          },
+        ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: true,
-        cutout: '55%',
+        cutout: "55%",
         plugins: {
-          legend: { position: 'bottom', labels: { color: '#e4e6ed', padding: 16, usePointStyle: true, pointStyle: 'rectRounded' } },
+          legend: {
+            position: "bottom",
+            labels: {
+              color: "#e4e6ed",
+              padding: 16,
+              usePointStyle: true,
+              pointStyle: "rectRounded",
+            },
+          },
           tooltip: {
             callbacks: {
-              label: ctx => ctx.label + ': ' + ctx.raw + ' metric' + (ctx.raw !== 1 ? 's' : '') + ' (' + Math.round(ctx.raw / totalGraded * 100) + '%)'
-            }
-          }
-        }
-      }
+              label: (ctx) =>
+                ctx.label +
+                ": " +
+                ctx.raw +
+                " metric" +
+                (ctx.raw !== 1 ? "s" : "") +
+                " (" +
+                Math.round((ctx.raw / totalGraded) * 100) +
+                "%)",
+            },
+          },
+        },
+      },
     });
   }
 
@@ -1269,87 +1451,126 @@
     const D = window.CLUB;
     const canvas = document.getElementById("profileQuadrant");
     if (!canvas || typeof Chart === "undefined") return;
-    if (profileQuadrantInstance) { profileQuadrantInstance.destroy(); profileQuadrantInstance = null; }
+    if (profileQuadrantInstance) {
+      profileQuadrantInstance.destroy();
+      profileQuadrantInstance = null;
+    }
 
     // Use relative squat as "strength" and 40 time (inverted for speed) as "speed"
     if (a.relSquat === null || a.forty === null) {
-      canvas.parentElement.innerHTML = '<p class="placeholder-text">Needs squat and 40-yd data.</p>';
+      canvas.parentElement.innerHTML =
+        '<p class="placeholder-text">Needs squat and 40-yd data.</p>';
       return;
     }
 
     const teamPoints = [];
-    let sumStr = 0, sumSpd = 0, n = 0;
+    let sumStr = 0,
+      sumSpd = 0,
+      n = 0;
     for (const t of D.athletes) {
       if (t.relSquat !== null && t.forty !== null) {
         teamPoints.push({ x: t.relSquat, y: t.forty, name: t.name, id: t.id });
-        sumStr += t.relSquat; sumSpd += t.forty; n++;
+        sumStr += t.relSquat;
+        sumSpd += t.forty;
+        n++;
       }
     }
     if (n === 0) return;
     const avgStr = sumStr / n;
     const avgSpd = sumSpd / n;
 
-    const others = teamPoints.filter(p => p.id !== a.id);
+    const others = teamPoints.filter((p) => p.id !== a.id);
 
     profileQuadrantInstance = new Chart(canvas, {
-      type: 'scatter',
+      type: "scatter",
       data: {
         datasets: [
           {
-            label: 'Teammates',
-            data: others.map(p => ({ x: p.x, y: p.y })),
-            backgroundColor: 'rgba(96,165,250,.35)',
-            borderColor: '#60a5fa',
+            label: "Teammates",
+            data: others.map((p) => ({ x: p.x, y: p.y })),
+            backgroundColor: "rgba(96,165,250,.35)",
+            borderColor: "#60a5fa",
             pointRadius: 5,
             pointHoverRadius: 7,
-            _names: others.map(p => p.name),
+            _names: others.map((p) => p.name),
           },
           {
             label: a.name,
             data: [{ x: a.relSquat, y: a.forty }],
-            backgroundColor: '#a78bfa',
-            borderColor: '#fff',
+            backgroundColor: "#a78bfa",
+            borderColor: "#fff",
             pointRadius: 9,
             pointBorderWidth: 2,
             pointHoverRadius: 11,
-          }
-        ]
+          },
+        ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: true,
         scales: {
           x: {
-            title: { display: true, text: 'Relative Squat (xBW) →  Stronger', color: '#8b90a0' },
-            grid: { color: 'rgba(255,255,255,.06)' },
-            ticks: { color: '#8b90a0' }
+            title: {
+              display: true,
+              text: "Relative Squat (xBW) →  Stronger",
+              color: "#8b90a0",
+            },
+            grid: { color: "rgba(255,255,255,.06)" },
+            ticks: { color: "#8b90a0" },
           },
           y: {
             reverse: true,
-            title: { display: true, text: '40-yd Dash (s) ↑  Faster', color: '#8b90a0' },
-            grid: { color: 'rgba(255,255,255,.06)' },
-            ticks: { color: '#8b90a0' }
-          }
+            title: {
+              display: true,
+              text: "40-yd Dash (s) ↑  Faster",
+              color: "#8b90a0",
+            },
+            grid: { color: "rgba(255,255,255,.06)" },
+            ticks: { color: "#8b90a0" },
+          },
         },
         plugins: {
-          legend: { labels: { color: '#e4e6ed', usePointStyle: true, pointStyle: 'circle' } },
+          legend: {
+            labels: {
+              color: "#e4e6ed",
+              usePointStyle: true,
+              pointStyle: "circle",
+            },
+          },
           tooltip: {
             callbacks: {
-              label: ctx => {
+              label: (ctx) => {
                 const ds = ctx.dataset;
                 const name = ds._names ? ds._names[ctx.dataIndex] : a.name;
-                return name + ': Squat ' + ctx.raw.x + 'xBW, 40yd ' + ctx.raw.y + 's';
-              }
-            }
+                return (
+                  name + ": Squat " + ctx.raw.x + "xBW, 40yd " + ctx.raw.y + "s"
+                );
+              },
+            },
           },
-          annotation: typeof Chart.registry?.plugins?.get('annotation') !== 'undefined' ? {
-            annotations: {
-              avgStr: { type: 'line', xMin: avgStr, xMax: avgStr, borderColor: 'rgba(255,255,255,.15)', borderDash: [4,4] },
-              avgSpd: { type: 'line', yMin: avgSpd, yMax: avgSpd, borderColor: 'rgba(255,255,255,.15)', borderDash: [4,4] },
-            }
-          } : undefined
-        }
-      }
+          annotation:
+            typeof Chart.registry?.plugins?.get("annotation") !== "undefined"
+              ? {
+                  annotations: {
+                    avgStr: {
+                      type: "line",
+                      xMin: avgStr,
+                      xMax: avgStr,
+                      borderColor: "rgba(255,255,255,.15)",
+                      borderDash: [4, 4],
+                    },
+                    avgSpd: {
+                      type: "line",
+                      yMin: avgSpd,
+                      yMax: avgSpd,
+                      borderColor: "rgba(255,255,255,.15)",
+                      borderDash: [4, 4],
+                    },
+                  },
+                }
+              : undefined,
+        },
+      },
     });
   }
 
@@ -1357,26 +1578,37 @@
   function buildTeamRankingSection(a) {
     const D = window.CLUB;
     const metrics = [
-      { key: 'bench', label: 'Bench 1RM', unit: 'lb', inv: false },
-      { key: 'squat', label: 'Squat 1RM', unit: 'lb', inv: false },
-      { key: 'medball', label: 'Med Ball', unit: 'in', inv: false },
-      { key: 'vert', label: 'Vertical', unit: 'in', inv: false },
-      { key: 'broad', label: 'Broad Jump', unit: 'in', inv: false },
-      { key: 'forty', label: '40-yd Dash', unit: 's', inv: true },
-      { key: 'vMax', label: 'Max Velocity', unit: 'm/s', inv: false },
-      { key: 'peakPower', label: 'Peak Power', unit: 'W', inv: false },
+      { key: "bench", label: "Bench 1RM", unit: "lb", inv: false },
+      { key: "squat", label: "Squat 1RM", unit: "lb", inv: false },
+      { key: "medball", label: "Med Ball", unit: "in", inv: false },
+      { key: "vert", label: "Vertical", unit: "in", inv: false },
+      { key: "broad", label: "Broad Jump", unit: "in", inv: false },
+      { key: "forty", label: "40-yd Dash", unit: "s", inv: true },
+      { key: "vMax", label: "Max Velocity", unit: "m/s", inv: false },
+      { key: "peakPower", label: "Peak Power", unit: "W", inv: false },
     ];
 
-    let rows = '';
+    let rows = "";
     for (const m of metrics) {
       if (a[m.key] === null || a[m.key] === undefined) continue;
-      const vals = D.athletes.filter(t => t[m.key] !== null).map(t => t[m.key]);
+      const vals = D.athletes
+        .filter((t) => t[m.key] !== null)
+        .map((t) => t[m.key]);
       if (vals.length === 0) continue;
-      const sorted = m.inv ? [...vals].sort((a, b) => a - b) : [...vals].sort((a, b) => b - a);
+      const sorted = m.inv
+        ? [...vals].sort((a, b) => a - b)
+        : [...vals].sort((a, b) => b - a);
       const rank = sorted.indexOf(a[m.key]) + 1;
       const total = sorted.length;
       const pct = Math.round(((total - rank) / (total - 1 || 1)) * 100);
-      const col = pct >= 75 ? 'var(--purple)' : pct >= 50 ? 'var(--green)' : pct >= 25 ? 'var(--blue)' : 'var(--yellow)';
+      const col =
+        pct >= 75
+          ? "var(--purple)"
+          : pct >= 50
+            ? "var(--green)"
+            : pct >= 25
+              ? "var(--blue)"
+              : "var(--yellow)";
       rows += `<div class="rank-row">
         <span class="rank-label">${m.label}</span>
         <span class="rank-value">${a[m.key]} ${m.unit}</span>
@@ -1385,110 +1617,204 @@
       </div>`;
     }
 
-    if (!rows) return '';
+    if (!rows) return "";
     return `<div class="profile-section-title">Team Rankings</div><div class="team-ranking-grid">${rows}</div>`;
   }
 
   /* ========== TEST HISTORY — PROFILE PROGRESS SECTION ========== */
   function buildProgressSection(a) {
     const history = getAthleteHistory(a.id);
-    if (history.length === 0) return '';
+    if (history.length === 0) return "";
 
     const current = currentTestValues(a);
-    let html = '<div class="profile-section-title">Progress History <small>(' + history.length + ' previous test' + (history.length > 1 ? 's' : '') + ')</small></div>';
-    html += '<div class="progress-table-wrap"><table class="data-table progress-table"><thead><tr>';
-    html += '<th>Metric</th><th>Current</th>';
+    let html =
+      '<div class="profile-section-title">Progress History <small>(' +
+      history.length +
+      " previous test" +
+      (history.length > 1 ? "s" : "") +
+      ")</small></div>";
+    html +=
+      '<div class="progress-table-wrap"><table class="data-table progress-table"><thead><tr>';
+    html += "<th>Metric</th><th>Current</th>";
     // Show up to last 4 tests
     const shown = history.slice(0, 4);
     for (var ti = 0; ti < shown.length; ti++) {
-      html += '<th>' + esc(shown[ti].label || shown[ti].date) + '<br><small>' + shown[ti].date + '</small></th>';
+      html +=
+        "<th>" +
+        esc(shown[ti].label || shown[ti].date) +
+        "<br><small>" +
+        shown[ti].date +
+        "</small></th>";
     }
-    if (shown.length > 0) html += '<th>vs Last</th>';
-    html += '</tr></thead><tbody>';
+    if (shown.length > 0) html += "<th>vs Last</th>";
+    html += "</tr></thead><tbody>";
 
     for (var mi = 0; mi < TEST_METRIC_KEYS.length; mi++) {
       var mk = TEST_METRIC_KEYS[mi];
       var curVal = current[mk.jsonKey];
-      html += '<tr><td><strong>' + mk.label + '</strong> <small>' + mk.unit + '</small></td>';
-      html += '<td class="num">' + (curVal !== null && curVal !== undefined ? curVal : '—') + '</td>';
+      html +=
+        "<tr><td><strong>" +
+        mk.label +
+        "</strong> <small>" +
+        mk.unit +
+        "</small></td>";
+      html +=
+        '<td class="num">' +
+        (curVal !== null && curVal !== undefined ? curVal : "—") +
+        "</td>";
       for (var si = 0; si < shown.length; si++) {
         var hVal = shown[si].values[mk.jsonKey];
-        html += '<td class="num">' + (hVal !== null && hVal !== undefined ? hVal : '—') + '</td>';
+        html +=
+          '<td class="num">' +
+          (hVal !== null && hVal !== undefined ? hVal : "—") +
+          "</td>";
       }
       // Delta vs most recent
       if (shown.length > 0) {
         var lastVal = shown[0].values[mk.jsonKey];
-        if (curVal !== null && curVal !== undefined && lastVal !== null && lastVal !== undefined) {
+        if (
+          curVal !== null &&
+          curVal !== undefined &&
+          lastVal !== null &&
+          lastVal !== undefined
+        ) {
           var delta = curVal - lastVal;
-          var pctChange = lastVal !== 0 ? Math.round((delta / Math.abs(lastVal)) * 100) : 0;
+          var pctChange =
+            lastVal !== 0 ? Math.round((delta / Math.abs(lastVal)) * 100) : 0;
           var improved = mk.lower ? delta < 0 : delta > 0;
           var declined = mk.lower ? delta > 0 : delta < 0;
-          var cls = improved ? 'delta-up' : declined ? 'delta-down' : 'delta-flat';
-          var arrow = improved ? '▲' : declined ? '▼' : '—';
-          var sign = delta > 0 ? '+' : '';
-          html += '<td class="num ' + cls + '">' + arrow + ' ' + sign + (Number.isInteger(delta) ? delta : delta.toFixed(2)) + ' <small>(' + sign + pctChange + '%)</small></td>';
+          var cls = improved
+            ? "delta-up"
+            : declined
+              ? "delta-down"
+              : "delta-flat";
+          var arrow = improved ? "▲" : declined ? "▼" : "—";
+          var sign = delta > 0 ? "+" : "";
+          html +=
+            '<td class="num ' +
+            cls +
+            '">' +
+            arrow +
+            " " +
+            sign +
+            (Number.isInteger(delta) ? delta : delta.toFixed(2)) +
+            " <small>(" +
+            sign +
+            pctChange +
+            "%)</small></td>";
         } else {
           html += '<td class="na">—</td>';
         }
       }
-      html += '</tr>';
+      html += "</tr>";
     }
 
     // Forty composite row
     var curForty = a.forty;
-    html += '<tr class="progress-composite"><td><strong>40 yd Total</strong> <small>s</small></td>';
-    html += '<td class="num">' + (curForty !== null ? curForty : '—') + '</td>';
+    html +=
+      '<tr class="progress-composite"><td><strong>40 yd Total</strong> <small>s</small></td>';
+    html += '<td class="num">' + (curForty !== null ? curForty : "—") + "</td>";
     for (var fi = 0; fi < shown.length; fi++) {
       var fv = shown[fi].values;
-      var hForty = (fv.sprint_020 !== null && fv.sprint_2030 !== null && fv.sprint_3040 !== null) ? +(fv.sprint_020 + fv.sprint_2030 + fv.sprint_3040).toFixed(2) : null;
-      html += '<td class="num">' + (hForty !== null ? hForty : '—') + '</td>';
+      var hForty =
+        fv.sprint_020 !== null &&
+        fv.sprint_2030 !== null &&
+        fv.sprint_3040 !== null
+          ? +(fv.sprint_020 + fv.sprint_2030 + fv.sprint_3040).toFixed(2)
+          : null;
+      html += '<td class="num">' + (hForty !== null ? hForty : "—") + "</td>";
     }
     if (shown.length > 0) {
       var fvLast = shown[0].values;
-      var lastForty = (fvLast.sprint_020 !== null && fvLast.sprint_2030 !== null && fvLast.sprint_3040 !== null) ? +(fvLast.sprint_020 + fvLast.sprint_2030 + fvLast.sprint_3040).toFixed(2) : null;
+      var lastForty =
+        fvLast.sprint_020 !== null &&
+        fvLast.sprint_2030 !== null &&
+        fvLast.sprint_3040 !== null
+          ? +(
+              fvLast.sprint_020 +
+              fvLast.sprint_2030 +
+              fvLast.sprint_3040
+            ).toFixed(2)
+          : null;
       if (curForty !== null && lastForty !== null) {
         var fd = curForty - lastForty;
-        var fpct = lastForty !== 0 ? Math.round((fd / Math.abs(lastForty)) * 100) : 0;
+        var fpct =
+          lastForty !== 0 ? Math.round((fd / Math.abs(lastForty)) * 100) : 0;
         var fImproved = fd < 0;
         var fDeclined = fd > 0;
-        var fCls = fImproved ? 'delta-up' : fDeclined ? 'delta-down' : 'delta-flat';
-        var fArrow = fImproved ? '▲' : fDeclined ? '▼' : '—';
-        var fSign = fd > 0 ? '+' : '';
-        html += '<td class="num ' + fCls + '">' + fArrow + ' ' + fSign + fd.toFixed(2) + ' <small>(' + fSign + fpct + '%)</small></td>';
+        var fCls = fImproved
+          ? "delta-up"
+          : fDeclined
+            ? "delta-down"
+            : "delta-flat";
+        var fArrow = fImproved ? "▲" : fDeclined ? "▼" : "—";
+        var fSign = fd > 0 ? "+" : "";
+        html +=
+          '<td class="num ' +
+          fCls +
+          '">' +
+          fArrow +
+          " " +
+          fSign +
+          fd.toFixed(2) +
+          " <small>(" +
+          fSign +
+          fpct +
+          "%)</small></td>";
       } else {
         html += '<td class="na">—</td>';
       }
     }
-    html += '</tr>';
+    html += "</tr>";
 
-    html += '</tbody></table></div>';
+    html += "</tbody></table></div>";
 
     // Per-test delete buttons (small)
     html += '<div class="history-actions">';
     for (var di = 0; di < shown.length; di++) {
-      html += '<button class="btn btn-xs btn-muted" onclick="deleteHistoryEntry(\'' + esc(a.id) + '\',\'' + esc(shown[di].date) + '\',\'' + esc(shown[di].label) + '\')" title="Delete this test entry">🗑 ' + esc(shown[di].label || shown[di].date) + '</button> ';
+      html +=
+        '<button class="btn btn-xs btn-muted" onclick="deleteHistoryEntry(\'' +
+        esc(a.id) +
+        "','" +
+        esc(shown[di].date) +
+        "','" +
+        esc(shown[di].label) +
+        '\')" title="Delete this test entry">🗑 ' +
+        esc(shown[di].label || shown[di].date) +
+        "</button> ";
     }
-    html += '</div>';
+    html += "</div>";
 
     return html;
   }
 
   window.deleteHistoryEntry = function (athleteId, date, label) {
-    if (!confirm('Delete test entry "' + label + '" (' + date + ')?')) return;
+    if (!confirm('Delete test entry "' + label + '" (' + date + ")?")) return;
     deleteTestEntry(athleteId, date, label);
     renderProfile();
-    showToast('Deleted test entry: ' + label, 'info');
+    showToast("Deleted test entry: " + label, "info");
   };
 
   /* --- Save ALL athletes' current data as a test date --- */
   window.saveAllAsTestDate = function () {
     var D = window.CLUB;
-    var tested = D.athletes.filter(function (a) { return Object.keys(a.scorecard).length > 0; });
-    if (tested.length === 0) { showToast('No athletes with test data to save.', 'warn'); return; }
+    var tested = D.athletes.filter(function (a) {
+      return Object.keys(a.scorecard).length > 0;
+    });
+    if (tested.length === 0) {
+      showToast("No athletes with test data to save.", "warn");
+      return;
+    }
 
-    var dateStr = prompt('Enter test date (YYYY-MM-DD):', new Date().toISOString().slice(0, 10));
+    var dateStr = prompt(
+      "Enter test date (YYYY-MM-DD):",
+      new Date().toISOString().slice(0, 10),
+    );
     if (!dateStr) return;
-    var label = prompt('Enter a label for this test (e.g. "Pre-Season 2026", "Winter Testing"):', '');
+    var label = prompt(
+      'Enter a label for this test (e.g. "Pre-Season 2026", "Winter Testing"):',
+      "",
+    );
     if (label === null) return;
     if (!label.trim()) label = dateStr;
     label = label.trim();
@@ -1499,15 +1825,23 @@
       var vals = currentTestValues(a);
       // Only save if at least one non-null metric
       var hasData = false;
-      for (var k in vals) { if (vals[k] !== null && vals[k] !== undefined) { hasData = true; break; } }
+      for (var k in vals) {
+        if (vals[k] !== null && vals[k] !== undefined) {
+          hasData = true;
+          break;
+        }
+      }
       if (hasData) {
         saveTestEntry(a.id, dateStr, label, vals);
         count++;
       }
     }
-    showToast('Saved "' + label + '" test data for ' + count + ' athletes.', 'success');
+    showToast(
+      'Saved "' + label + '" test data for ' + count + " athletes.",
+      "success",
+    );
     // Refresh profile if one is selected
-    var id = document.getElementById('athleteSelect').value;
+    var id = document.getElementById("athleteSelect").value;
     if (id) renderProfile();
   };
 
@@ -1516,7 +1850,10 @@
     var h = getTestHistory();
     var athleteIds = Object.keys(h);
     if (athleteIds.length === 0) {
-      showToast('No saved test dates yet. Use "Save All as Test Date" to create one.', 'info');
+      showToast(
+        'No saved test dates yet. Use "Save All as Test Date" to create one.',
+        "info",
+      );
       return;
     }
 
@@ -1529,13 +1866,20 @@
       var entries = h[aid];
       for (var j = 0; j < entries.length; j++) {
         var e = entries[j];
-        var key = e.label + '|' + e.date;
+        var key = e.label + "|" + e.date;
         if (!testMap[key]) {
-          testMap[key] = { label: e.label, date: e.date, count: 0, athletes: [] };
+          testMap[key] = {
+            label: e.label,
+            date: e.date,
+            count: 0,
+            athletes: [],
+          };
         }
         testMap[key].count++;
         var aName = aid;
-        var found = D.athletes.find(function (x) { return x.id === aid; });
+        var found = D.athletes.find(function (x) {
+          return x.id === aid;
+        });
         if (found) aName = found.name;
         testMap[key].athletes.push(aName);
       }
@@ -1548,48 +1892,94 @@
     var totalEntries = 0;
     for (var t = 0; t < tests.length; t++) totalEntries += tests[t].count;
 
-    var rows = tests.map(function (t) {
-      return '<tr><td><strong>' + esc(t.label) + '</strong></td><td>' + t.date + '</td><td>' + t.count + ' athletes</td><td class="test-athletes-cell"><small>' + t.athletes.slice(0, 8).map(function (n) { return esc(n); }).join(', ') + (t.athletes.length > 8 ? ' + ' + (t.athletes.length - 8) + ' more' : '') + '</small></td><td><button class="btn btn-xs btn-muted" onclick="deleteBulkTestEntry(\'' + esc(t.date) + '\',\'' + esc(t.label) + '\')">🗑 Delete</button></td></tr>';
-    }).join('');
+    var rows = tests
+      .map(function (t) {
+        return (
+          "<tr><td><strong>" +
+          esc(t.label) +
+          "</strong></td><td>" +
+          t.date +
+          "</td><td>" +
+          t.count +
+          ' athletes</td><td class="test-athletes-cell"><small>' +
+          t.athletes
+            .slice(0, 8)
+            .map(function (n) {
+              return esc(n);
+            })
+            .join(", ") +
+          (t.athletes.length > 8
+            ? " + " + (t.athletes.length - 8) + " more"
+            : "") +
+          '</small></td><td><button class="btn btn-xs btn-muted" onclick="deleteBulkTestEntry(\'' +
+          esc(t.date) +
+          "','" +
+          esc(t.label) +
+          "')\">🗑 Delete</button></td></tr>"
+        );
+      })
+      .join("");
 
-    var bodyHTML = '<div class="print-page" style="max-width:700px;margin:0 auto">' +
+    var bodyHTML =
+      '<div class="print-page" style="max-width:700px;margin:0 auto">' +
       '<h2 style="margin-bottom:4px">\ud83d\udccb Saved Test History</h2>' +
-      '<p style="color:#888;font-size:0.85rem;margin-bottom:12px">' + tests.length + ' test date' + (tests.length !== 1 ? 's' : '') + ' · ' + totalEntries + ' total entries · ' + athleteIds.length + ' athletes with history</p>' +
+      '<p style="color:#888;font-size:0.85rem;margin-bottom:12px">' +
+      tests.length +
+      " test date" +
+      (tests.length !== 1 ? "s" : "") +
+      " · " +
+      totalEntries +
+      " total entries · " +
+      athleteIds.length +
+      " athletes with history</p>" +
       '<table style="width:100%;border-collapse:collapse;font-size:0.85rem">' +
       '<thead><tr style="border-bottom:2px solid #6c63ff"><th style="text-align:left;padding:6px">Label</th><th style="padding:6px">Date</th><th style="padding:6px">Count</th><th style="text-align:left;padding:6px">Athletes</th><th style="padding:6px"></th></tr></thead>' +
-      '<tbody>' + rows + '</tbody></table>' +
+      "<tbody>" +
+      rows +
+      "</tbody></table>" +
       '<p style="margin-top:16px;font-size:0.78rem;color:#888">This data is included when you export JSON (📦). To restore, import the JSON file.</p>' +
-      '</div>';
+      "</div>";
 
     // Show as a modal overlay
-    var overlay = document.createElement('div');
-    overlay.className = 'modal-overlay test-history-modal';
-    overlay.innerHTML = '<div class="modal-content" style="max-width:750px;max-height:80vh;overflow:auto;padding:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">' +
+    var overlay = document.createElement("div");
+    overlay.className = "modal-overlay test-history-modal";
+    overlay.innerHTML =
+      '<div class="modal-content" style="max-width:750px;max-height:80vh;overflow:auto;padding:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">' +
       '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()" style="float:right;font-size:1.2rem;background:none;border:none;color:var(--text);cursor:pointer">&times;</button>' +
-      bodyHTML + '</div>';
-    overlay.addEventListener('click', function (ev) { if (ev.target === overlay) overlay.remove(); });
+      bodyHTML +
+      "</div>";
+    overlay.addEventListener("click", function (ev) {
+      if (ev.target === overlay) overlay.remove();
+    });
     document.body.appendChild(overlay);
   };
 
   window.deleteBulkTestEntry = function (date, label) {
-    if (!confirm('Delete all "' + label + '" (' + date + ') entries for every athlete?')) return;
+    if (
+      !confirm(
+        'Delete all "' + label + '" (' + date + ") entries for every athlete?",
+      )
+    )
+      return;
     var h = getTestHistory();
     var count = 0;
     var ids = Object.keys(h);
     for (var i = 0; i < ids.length; i++) {
       var before = h[ids[i]].length;
-      h[ids[i]] = h[ids[i]].filter(function (e) { return !(e.date === date && e.label === label); });
+      h[ids[i]] = h[ids[i]].filter(function (e) {
+        return !(e.date === date && e.label === label);
+      });
       count += before - h[ids[i]].length;
       if (h[ids[i]].length === 0) delete h[ids[i]];
     }
     setTestHistory(h);
-    showToast('Deleted ' + count + ' entries for "' + label + '"', 'info');
+    showToast("Deleted " + count + ' entries for "' + label + '"', "info");
     // Close and re-open to refresh
-    var existing = document.querySelector('.test-history-modal');
+    var existing = document.querySelector(".test-history-modal");
     if (existing) existing.remove();
     viewSavedTests();
     // Refresh profile if open
-    var pid = document.getElementById('athleteSelect').value;
+    var pid = document.getElementById("athleteSelect").value;
     if (pid) renderProfile();
   };
 
@@ -1639,7 +2029,8 @@
     }
     const canvas = document.getElementById("lbChart");
     if (typeof Chart === "undefined") {
-      canvas.parentElement.innerHTML = '<p class="placeholder-text">Charts unavailable (Chart.js failed to load)</p>';
+      canvas.parentElement.innerHTML =
+        '<p class="placeholder-text">Charts unavailable (Chart.js failed to load)</p>';
       return;
     }
     const colors = top.map((_, i) =>
@@ -1799,7 +2190,8 @@
       .join("");
 
     if (list.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="14" class="placeholder-text">No strength data available.</td></tr>';
+      tbody.innerHTML =
+        '<tr><td colspan="14" class="placeholder-text">No strength data available.</td></tr>';
     }
   }
 
@@ -1814,7 +2206,8 @@
     list = list.filter((a) => Object.keys(a.scorecard).length > 0);
 
     if (list.length === 0) {
-      document.querySelector("#scorecardTable tbody").innerHTML = '<tr><td colspan="20" class="placeholder-text">No scorecard data available.</td></tr>';
+      document.querySelector("#scorecardTable tbody").innerHTML =
+        '<tr><td colspan="20" class="placeholder-text">No scorecard data available.</td></tr>';
       return;
     }
 
@@ -2218,9 +2611,15 @@
   window.printProfile = function () {
     const D = window.CLUB;
     const id = document.getElementById("athleteSelect").value;
-    if (!id) { showToast("Select an athlete first.", "warn"); return; }
+    if (!id) {
+      showToast("Select an athlete first.", "warn");
+      return;
+    }
     const a = D.athletes.find((x) => x.id === id);
-    if (!a) { showToast("Athlete not found.", "error"); return; }
+    if (!a) {
+      showToast("Athlete not found.", "error");
+      return;
+    }
 
     const og = a.overallGrade;
     const metrics = D.scorecardMetrics;
@@ -2228,22 +2627,76 @@
     // Helper: concise metric row
     function mRow(label, val, unit, grade) {
       const v = val !== null && val !== undefined ? val : "—";
-      const u = v !== "—" ? (unit || "") : "";
-      const g = grade ? '<span class="print-grade print-grade-' + grade.tier + '">' + grade.label + '</span>' : '';
-      return '<tr><td>' + label + '</td><td class="num">' + v + ' ' + u + '</td><td>' + g + '</td></tr>';
+      const u = v !== "—" ? unit || "" : "";
+      const g = grade
+        ? '<span class="print-grade print-grade-' +
+          grade.tier +
+          '">' +
+          grade.label +
+          "</span>"
+        : "";
+      return (
+        "<tr><td>" +
+        label +
+        '</td><td class="num">' +
+        v +
+        " " +
+        u +
+        "</td><td>" +
+        g +
+        "</td></tr>"
+      );
     }
 
     // Scorecard rows
-    const scRows = Object.entries(a.scorecard).map(([k, sc]) => {
-      const label = metrics.find(m => m.key === k)?.label || k;
-      return '<tr><td>' + label + '</td><td class="num">' + (typeof sc.value === "number" ? (Number.isInteger(sc.value) ? sc.value : sc.value.toFixed(2)) : sc.value) + '</td><td class="num">' + sc.percentile + 'th</td><td><span class="print-tier print-tier-' + sc.tier + '">' + sc.tier.charAt(0).toUpperCase() + sc.tier.slice(1) + '</span></td></tr>';
-    }).join("");
+    const scRows = Object.entries(a.scorecard)
+      .map(([k, sc]) => {
+        const label = metrics.find((m) => m.key === k)?.label || k;
+        return (
+          "<tr><td>" +
+          label +
+          '</td><td class="num">' +
+          (typeof sc.value === "number"
+            ? Number.isInteger(sc.value)
+              ? sc.value
+              : sc.value.toFixed(2)
+            : sc.value) +
+          '</td><td class="num">' +
+          sc.percentile +
+          'th</td><td><span class="print-tier print-tier-' +
+          sc.tier +
+          '">' +
+          sc.tier.charAt(0).toUpperCase() +
+          sc.tier.slice(1) +
+          "</span></td></tr>"
+        );
+      })
+      .join("");
 
     // Smart analysis
     const scEntries = Object.entries(a.scorecard);
-    const sorted = scEntries.slice().sort((a, b) => b[1].percentile - a[1].percentile);
-    const strengths = sorted.slice(0, 3).map(([k, sc]) => (metrics.find(m => m.key === k)?.label || k) + ' (' + sc.percentile + 'th)');
-    const weaknesses = sorted.slice(-3).reverse().map(([k, sc]) => (metrics.find(m => m.key === k)?.label || k) + ' (' + sc.percentile + 'th)');
+    const sorted = scEntries
+      .slice()
+      .sort((a, b) => b[1].percentile - a[1].percentile);
+    const strengths = sorted
+      .slice(0, 3)
+      .map(
+        ([k, sc]) =>
+          (metrics.find((m) => m.key === k)?.label || k) +
+          " (" +
+          sc.percentile +
+          "th)",
+      );
+    const weaknesses = sorted
+      .slice(-3)
+      .reverse()
+      .map(
+        ([k, sc]) =>
+          (metrics.find((m) => m.key === k)?.label || k) +
+          " (" +
+          sc.percentile +
+          "th)",
+      );
 
     const printHTML = `
     <div class="print-page print-profile-page">
@@ -2254,7 +2707,7 @@
       <div class="print-athlete-header">
         <div class="print-avatar">${a.initials}</div>
         <div class="print-athlete-info">
-          <div class="print-athlete-name">${esc(a.name)} ${og ? '<span class="print-grade print-grade-' + og.tier + '">' + og.label + ' (' + og.score + ')</span>' : ''}</div>
+          <div class="print-athlete-name">${esc(a.name)} ${og ? '<span class="print-grade print-grade-' + og.tier + '">' + og.label + " (" + og.score + ")</span>" : ""}</div>
           <div class="print-athlete-meta">
             ${esc(a.position) || "N/A"} &bull; ${esc(a.group)} &bull; ${a.height ? fmtHeight(a.height) : "—"} &bull; ${a.weight ? a.weight + " lb" : "—"}
           </div>
@@ -2295,11 +2748,11 @@
           <div class="print-analysis">
             <div class="print-analysis-block">
               <strong>Top Strengths:</strong>
-              <ul>${strengths.map(s => '<li>' + s + '</li>').join('')}</ul>
+              <ul>${strengths.map((s) => "<li>" + s + "</li>").join("")}</ul>
             </div>
             <div class="print-analysis-block">
               <strong>Areas to Develop:</strong>
-              <ul>${weaknesses.map(s => '<li>' + s + '</li>').join('')}</ul>
+              <ul>${weaknesses.map((s) => "<li>" + s + "</li>").join("")}</ul>
             </div>
           </div>
         </div>
@@ -2308,7 +2761,7 @@
       <div class="print-footer">Burke Catholic Personal Fitness Club &mdash; Confidential</div>
     </div>`;
 
-    openPrintWindow(printHTML, esc(a.name) + ' — Athlete Profile');
+    openPrintWindow(printHTML, esc(a.name) + " — Athlete Profile");
   };
 
   /* --- Print Scorecard (coach report with breakdown) --- */
@@ -2316,39 +2769,81 @@
     const D = window.CLUB;
     const filter = document.getElementById("scorecardFilter").value;
     let list = D.athletes;
-    if (filter !== "all") list = list.filter(a => a.id === filter);
-    list = list.filter(a => Object.keys(a.scorecard).length > 0);
-    if (list.length === 0) { showToast("No scorecard data to print.", "warn"); return; }
+    if (filter !== "all") list = list.filter((a) => a.id === filter);
+    list = list.filter((a) => Object.keys(a.scorecard).length > 0);
+    if (list.length === 0) {
+      showToast("No scorecard data to print.", "warn");
+      return;
+    }
 
     const metrics = D.scorecardMetrics;
     const isSingle = list.length === 1;
 
     // Build main table
-    const headerCells = '<th>Athlete</th><th>Pos</th><th>Group</th>' + metrics.map(m => '<th>' + m.label + '</th>').join('');
-    const bodyRows = list.map(a => {
-      const cells = metrics.map(m => {
-        const sc = a.scorecard[m.key];
-        if (!sc) return '<td class="na">—</td>';
-        return '<td class="print-sc-cell print-tier-bg-' + sc.tier + '">' +
-          (typeof sc.value === "number" ? (Number.isInteger(sc.value) ? sc.value : sc.value.toFixed(2)) : sc.value) +
-          '<br><small>' + sc.percentile + 'th</small></td>';
-      }).join('');
-      return '<tr><td><strong>' + esc(a.name) + '</strong></td><td>' + (esc(a.position) || "—") + '</td><td>' + esc(a.group) + '</td>' + cells + '</tr>';
-    }).join('');
+    const headerCells =
+      "<th>Athlete</th><th>Pos</th><th>Group</th>" +
+      metrics.map((m) => "<th>" + m.label + "</th>").join("");
+    const bodyRows = list
+      .map((a) => {
+        const cells = metrics
+          .map((m) => {
+            const sc = a.scorecard[m.key];
+            if (!sc) return '<td class="na">—</td>';
+            return (
+              '<td class="print-sc-cell print-tier-bg-' +
+              sc.tier +
+              '">' +
+              (typeof sc.value === "number"
+                ? Number.isInteger(sc.value)
+                  ? sc.value
+                  : sc.value.toFixed(2)
+                : sc.value) +
+              "<br><small>" +
+              sc.percentile +
+              "th</small></td>"
+            );
+          })
+          .join("");
+        return (
+          "<tr><td><strong>" +
+          esc(a.name) +
+          "</strong></td><td>" +
+          (esc(a.position) || "—") +
+          "</td><td>" +
+          esc(a.group) +
+          "</td>" +
+          cells +
+          "</tr>"
+        );
+      })
+      .join("");
 
     // Smart Breakdown
-    let analysisHTML = '';
+    let analysisHTML = "";
     if (isSingle) {
       // Individual analysis
       const a = list[0];
       const og = a.overallGrade;
       const scArr = Object.entries(a.scorecard);
-      const sorted = scArr.slice().sort((x, y) => y[1].percentile - x[1].percentile);
+      const sorted = scArr
+        .slice()
+        .sort((x, y) => y[1].percentile - x[1].percentile);
       const top3 = sorted.slice(0, 3);
       const bot3 = sorted.slice(-3).reverse();
-      const tierCounts = { elite: 0, strong: 0, solid: 0, competitive: 0, developing: 0 };
+      const tierCounts = {
+        elite: 0,
+        strong: 0,
+        solid: 0,
+        competitive: 0,
+        developing: 0,
+      };
       scArr.forEach(([, sc]) => tierCounts[sc.tier]++);
-      const avgPct = scArr.length > 0 ? Math.round(scArr.reduce((s, [, sc]) => s + sc.percentile, 0) / scArr.length) : 0;
+      const avgPct =
+        scArr.length > 0
+          ? Math.round(
+              scArr.reduce((s, [, sc]) => s + sc.percentile, 0) / scArr.length,
+            )
+          : 0;
 
       analysisHTML = `
       <div class="print-breakdown">
@@ -2356,60 +2851,109 @@
         <div class="print-bd-grid">
           <div class="print-bd-card">
             <div class="print-bd-title">Overall Grade</div>
-            <div class="print-bd-big ${og ? 'print-grade-' + og.tier : ''}">${og ? og.label + ' (' + og.score + '/5)' : 'N/A'}</div>
+            <div class="print-bd-big ${og ? "print-grade-" + og.tier : ""}">${og ? og.label + " (" + og.score + "/5)" : "N/A"}</div>
             <div class="print-bd-sub">Avg Percentile: ${avgPct}th</div>
           </div>
           <div class="print-bd-card">
             <div class="print-bd-title">Top Strengths</div>
-            <ul>${top3.map(([k, sc]) => '<li><strong>' + (metrics.find(m => m.key === k)?.label || k) + '</strong> — ' + sc.percentile + 'th (' + sc.tier + ')</li>').join('')}</ul>
+            <ul>${top3.map(([k, sc]) => "<li><strong>" + (metrics.find((m) => m.key === k)?.label || k) + "</strong> — " + sc.percentile + "th (" + sc.tier + ")</li>").join("")}</ul>
           </div>
           <div class="print-bd-card">
             <div class="print-bd-title">Priority Development</div>
-            <ul>${bot3.map(([k, sc]) => '<li><strong>' + (metrics.find(m => m.key === k)?.label || k) + '</strong> — ' + sc.percentile + 'th (' + sc.tier + ')</li>').join('')}</ul>
+            <ul>${bot3.map(([k, sc]) => "<li><strong>" + (metrics.find((m) => m.key === k)?.label || k) + "</strong> — " + sc.percentile + "th (" + sc.tier + ")</li>").join("")}</ul>
           </div>
           <div class="print-bd-card">
             <div class="print-bd-title">Tier Distribution</div>
             <table class="print-tier-dist">
-              ${Object.entries(tierCounts).filter(([,c]) => c > 0).map(([t, c]) => '<tr><td><span class="print-tier print-tier-' + t + '">' + t.charAt(0).toUpperCase() + t.slice(1) + '</span></td><td>' + c + '/' + scArr.length + '</td></tr>').join('')}
+              ${Object.entries(tierCounts)
+                .filter(([, c]) => c > 0)
+                .map(
+                  ([t, c]) =>
+                    '<tr><td><span class="print-tier print-tier-' +
+                    t +
+                    '">' +
+                    t.charAt(0).toUpperCase() +
+                    t.slice(1) +
+                    "</span></td><td>" +
+                    c +
+                    "/" +
+                    scArr.length +
+                    "</td></tr>",
+                )
+                .join("")}
             </table>
           </div>
         </div>
         <div class="print-coaching-notes">
           <strong>Coaching Notes:</strong>
           <ul>
-            ${avgPct >= 75 ? '<li>High-performing athlete across the board — focus on maintaining and leadership role.</li>' : ''}
-            ${avgPct >= 50 && avgPct < 75 ? '<li>Solid foundation — targeted work on weaker metrics can push toward elite status.</li>' : ''}
-            ${avgPct < 50 ? '<li>Developing athlete — establish baseline habits and focus on the 2-3 most impactful metrics.</li>' : ''}
-            ${tierCounts.developing > 0 ? '<li>' + tierCounts.developing + ' metric' + (tierCounts.developing > 1 ? 's' : '') + ' in Developing tier — review programming for these areas.</li>' : ''}
-            ${tierCounts.elite > 0 ? '<li>' + tierCounts.elite + ' metric' + (tierCounts.elite > 1 ? 's' : '') + ' at Elite level — athlete excels here.</li>' : ''}
+            ${avgPct >= 75 ? "<li>High-performing athlete across the board — focus on maintaining and leadership role.</li>" : ""}
+            ${avgPct >= 50 && avgPct < 75 ? "<li>Solid foundation — targeted work on weaker metrics can push toward elite status.</li>" : ""}
+            ${avgPct < 50 ? "<li>Developing athlete — establish baseline habits and focus on the 2-3 most impactful metrics.</li>" : ""}
+            ${tierCounts.developing > 0 ? "<li>" + tierCounts.developing + " metric" + (tierCounts.developing > 1 ? "s" : "") + " in Developing tier — review programming for these areas.</li>" : ""}
+            ${tierCounts.elite > 0 ? "<li>" + tierCounts.elite + " metric" + (tierCounts.elite > 1 ? "s" : "") + " at Elite level — athlete excels here.</li>" : ""}
           </ul>
         </div>
       </div>`;
     } else {
       // Team-level summary
-      const tierTotals = { elite: 0, strong: 0, solid: 0, competitive: 0, developing: 0 };
+      const tierTotals = {
+        elite: 0,
+        strong: 0,
+        solid: 0,
+        competitive: 0,
+        developing: 0,
+      };
       let totalEntries = 0;
-      list.forEach(a => {
-        Object.values(a.scorecard).forEach(sc => {
+      list.forEach((a) => {
+        Object.values(a.scorecard).forEach((sc) => {
           tierTotals[sc.tier]++;
           totalEntries++;
         });
       });
-      const teamAvgPct = totalEntries > 0 ? Math.round(list.reduce((s, a) => s + Object.values(a.scorecard).reduce((ss, sc) => ss + sc.percentile, 0), 0) / totalEntries) : 0;
+      const teamAvgPct =
+        totalEntries > 0
+          ? Math.round(
+              list.reduce(
+                (s, a) =>
+                  s +
+                  Object.values(a.scorecard).reduce(
+                    (ss, sc) => ss + sc.percentile,
+                    0,
+                  ),
+                0,
+              ) / totalEntries,
+            )
+          : 0;
 
       // Per-metric team averages
-      const metricAvgs = metrics.map(m => {
-        const vals = list.map(a => a.scorecard[m.key]?.percentile).filter(v => v !== undefined);
-        const avg = vals.length > 0 ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length) : null;
-        return { label: m.label, avg };
-      }).filter(x => x.avg !== null).sort((a, b) => b.avg - a.avg);
+      const metricAvgs = metrics
+        .map((m) => {
+          const vals = list
+            .map((a) => a.scorecard[m.key]?.percentile)
+            .filter((v) => v !== undefined);
+          const avg =
+            vals.length > 0
+              ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length)
+              : null;
+          return { label: m.label, avg };
+        })
+        .filter((x) => x.avg !== null)
+        .sort((a, b) => b.avg - a.avg);
 
       // Top performers
-      const byAvg = list.map(a => {
-        const scArr = Object.values(a.scorecard);
-        const avg = scArr.length > 0 ? Math.round(scArr.reduce((s, sc) => s + sc.percentile, 0) / scArr.length) : 0;
-        return { name: a.name, avg, og: a.overallGrade };
-      }).sort((a, b) => b.avg - a.avg);
+      const byAvg = list
+        .map((a) => {
+          const scArr = Object.values(a.scorecard);
+          const avg =
+            scArr.length > 0
+              ? Math.round(
+                  scArr.reduce((s, sc) => s + sc.percentile, 0) / scArr.length,
+                )
+              : 0;
+          return { name: a.name, avg, og: a.overallGrade };
+        })
+        .sort((a, b) => b.avg - a.avg);
 
       analysisHTML = `
       <div class="print-breakdown">
@@ -2420,20 +2964,56 @@
             <div class="print-bd-big">${teamAvgPct}th</div>
             <div class="print-bd-sub">Average Percentile</div>
             <table class="print-tier-dist">
-              ${Object.entries(tierTotals).filter(([,c]) => c > 0).map(([t, c]) => '<tr><td><span class="print-tier print-tier-' + t + '">' + t.charAt(0).toUpperCase() + t.slice(1) + '</span></td><td>' + c + '/' + totalEntries + ' (' + Math.round(c / totalEntries * 100) + '%)</td></tr>').join('')}
+              ${Object.entries(tierTotals)
+                .filter(([, c]) => c > 0)
+                .map(
+                  ([t, c]) =>
+                    '<tr><td><span class="print-tier print-tier-' +
+                    t +
+                    '">' +
+                    t.charAt(0).toUpperCase() +
+                    t.slice(1) +
+                    "</span></td><td>" +
+                    c +
+                    "/" +
+                    totalEntries +
+                    " (" +
+                    Math.round((c / totalEntries) * 100) +
+                    "%)</td></tr>",
+                )
+                .join("")}
             </table>
           </div>
           <div class="print-bd-card">
             <div class="print-bd-title">Strongest Metrics (Team)</div>
-            <ol>${metricAvgs.slice(0, 5).map(x => '<li>' + x.label + ' — avg ' + x.avg + 'th</li>').join('')}</ol>
+            <ol>${metricAvgs
+              .slice(0, 5)
+              .map((x) => "<li>" + x.label + " — avg " + x.avg + "th</li>")
+              .join("")}</ol>
           </div>
           <div class="print-bd-card">
             <div class="print-bd-title">Weakest Metrics (Team)</div>
-            <ol>${metricAvgs.slice(-5).reverse().map(x => '<li>' + x.label + ' — avg ' + x.avg + 'th</li>').join('')}</ol>
+            <ol>${metricAvgs
+              .slice(-5)
+              .reverse()
+              .map((x) => "<li>" + x.label + " — avg " + x.avg + "th</li>")
+              .join("")}</ol>
           </div>
           <div class="print-bd-card">
             <div class="print-bd-title">Top Performers</div>
-            <ol>${byAvg.slice(0, 5).map(x => '<li>' + esc(x.name) + ' — ' + x.avg + 'th avg' + (x.og ? ' (' + x.og.label + ')' : '') + '</li>').join('')}</ol>
+            <ol>${byAvg
+              .slice(0, 5)
+              .map(
+                (x) =>
+                  "<li>" +
+                  esc(x.name) +
+                  " — " +
+                  x.avg +
+                  "th avg" +
+                  (x.og ? " (" + x.og.label + ")" : "") +
+                  "</li>",
+              )
+              .join("")}</ol>
           </div>
         </div>
       </div>`;
@@ -2462,39 +3042,66 @@
       <div class="print-footer">Burke Catholic Personal Fitness Club &mdash; Confidential Coach Report</div>
     </div>`;
 
-    openPrintWindow(printHTML, 'Scorecard Report');
+    openPrintWindow(printHTML, "Scorecard Report");
   };
 
   /* --- Print progress section (for profile printout) --- */
   function buildPrintProgressSection(a) {
     var history = getAthleteHistory(a.id);
-    if (history.length === 0) return '';
+    if (history.length === 0) return "";
     var current = currentTestValues(a);
     var last = history[0]; // most recent
-    var html = '<div class="print-progress" style="margin-top:10px;page-break-inside:avoid">';
-    html += '<h3 class="print-section">Progress vs ' + esc(last.label || last.date) + ' (' + last.date + ')</h3>';
-    html += '<table class="print-metric-table" style="width:100%"><thead><tr><th>Metric</th><th>Current</th><th>Previous</th><th>Change</th></tr></thead><tbody>';
+    var html =
+      '<div class="print-progress" style="margin-top:10px;page-break-inside:avoid">';
+    html +=
+      '<h3 class="print-section">Progress vs ' +
+      esc(last.label || last.date) +
+      " (" +
+      last.date +
+      ")</h3>";
+    html +=
+      '<table class="print-metric-table" style="width:100%"><thead><tr><th>Metric</th><th>Current</th><th>Previous</th><th>Change</th></tr></thead><tbody>';
     for (var i = 0; i < TEST_METRIC_KEYS.length; i++) {
       var mk = TEST_METRIC_KEYS[i];
       var cv = current[mk.jsonKey];
       var pv = last.values[mk.jsonKey];
-      var changeStr = '—';
+      var changeStr = "—";
       if (cv !== null && cv !== undefined && pv !== null && pv !== undefined) {
         var d = cv - pv;
         var improved = mk.lower ? d < 0 : d > 0;
-        var sign = d > 0 ? '+' : '';
-        changeStr = (improved ? '▲ ' : d === 0 ? '' : '▼ ') + sign + (Number.isInteger(d) ? d : d.toFixed(2)) + ' ' + mk.unit;
+        var sign = d > 0 ? "+" : "";
+        changeStr =
+          (improved ? "▲ " : d === 0 ? "" : "▼ ") +
+          sign +
+          (Number.isInteger(d) ? d : d.toFixed(2)) +
+          " " +
+          mk.unit;
       }
-      html += '<tr><td>' + mk.label + '</td><td class="num">' + (cv !== null && cv !== undefined ? cv : '—') + '</td><td class="num">' + (pv !== null && pv !== undefined ? pv : '—') + '</td><td class="num">' + changeStr + '</td></tr>';
+      html +=
+        "<tr><td>" +
+        mk.label +
+        '</td><td class="num">' +
+        (cv !== null && cv !== undefined ? cv : "—") +
+        '</td><td class="num">' +
+        (pv !== null && pv !== undefined ? pv : "—") +
+        '</td><td class="num">' +
+        changeStr +
+        "</td></tr>";
     }
-    html += '</tbody></table></div>';
+    html += "</tbody></table></div>";
     return html;
   }
 
   /* --- Shared print window opener --- */
   function openPrintWindow(bodyHTML, title) {
-    const w = window.open('', '_blank', 'width=1000,height=800');
-    if (!w) { showToast('Pop-up blocked — please allow pop-ups for this site.', 'error'); return; }
+    const w = window.open("", "_blank", "width=1000,height=800");
+    if (!w) {
+      showToast(
+        "Pop-up blocked — please allow pop-ups for this site.",
+        "error",
+      );
+      return;
+    }
     w.document.write(`<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>${esc(title)}</title>
 <style>
@@ -2573,11 +3180,14 @@
   .na { color: #aaa; }
   @media print {
     body { padding: 0; }
-    @page { size: ${bodyHTML.includes('print-scorecard-page') ? 'landscape' : 'portrait'}; margin: 0.4in; }
+    @page { size: ${bodyHTML.includes("print-scorecard-page") ? "landscape" : "portrait"}; margin: 0.4in; }
   }
 </style></head><body>${bodyHTML}</body></html>`);
     w.document.close();
-    setTimeout(() => { w.focus(); w.print(); }, 400);
+    setTimeout(() => {
+      w.focus();
+      w.print();
+    }, 400);
   }
 
   /* ========== HEAD-TO-HEAD COMPARISON ========== */
@@ -2701,7 +3311,8 @@
       cmpChartInstance = null;
     }
     if (typeof Chart === "undefined") {
-      document.getElementById("cmpRadar").parentElement.innerHTML = '<p class="placeholder-text">Charts unavailable (Chart.js failed to load)</p>';
+      document.getElementById("cmpRadar").parentElement.innerHTML =
+        '<p class="placeholder-text">Charts unavailable (Chart.js failed to load)</p>';
       container.innerHTML = html;
       return;
     }
@@ -2989,7 +3600,9 @@
     link.href = URL.createObjectURL(blob);
     link.download = "bc_fitness_club_data.csv";
     link.click();
-    setTimeout(function () { URL.revokeObjectURL(link.href); }, 10000);
+    setTimeout(function () {
+      URL.revokeObjectURL(link.href);
+    }, 10000);
   };
 
   /* ========== SNAPSHOT MANAGEMENT ========== */
@@ -3035,9 +3648,20 @@
     const snapshots = JSON.parse(localStorage.getItem("lc_snapshots") || "[]");
 
     // Prevent duplicate snapshot names
-    if (snapshots.some(function (s) { return s.name === name; })) {
-      if (!confirm('A snapshot named "' + name + '" already exists. Overwrite it?')) return;
-      const idx = snapshots.findIndex(function (s) { return s.name === name; });
+    if (
+      snapshots.some(function (s) {
+        return s.name === name;
+      })
+    ) {
+      if (
+        !confirm(
+          'A snapshot named "' + name + '" already exists. Overwrite it?',
+        )
+      )
+        return;
+      const idx = snapshots.findIndex(function (s) {
+        return s.name === name;
+      });
       snapshots.splice(idx, 1);
     }
 
@@ -3209,7 +3833,8 @@
 
     // Also render profile if one is selected
     const id = document.getElementById("athleteSelect").value;
-    if (id && activeTab && activeTab.dataset.tab === "profiles") renderProfile();
+    if (id && activeTab && activeTab.dataset.tab === "profiles")
+      renderProfile();
   }
 
   /* ========== REBUILD DATA FROM LOCALSTORAGE ========== */
@@ -3514,8 +4139,13 @@
     if (!container) return;
     const t = document.createElement("div");
     t.className = "toast toast-" + type;
-    t.innerHTML = '<span>' + esc(msg) + '</span><button class="toast-dismiss" aria-label="Dismiss">&times;</button>';
-    t.querySelector(".toast-dismiss").addEventListener("click", function () { t.remove(); });
+    t.innerHTML =
+      "<span>" +
+      esc(msg) +
+      '</span><button class="toast-dismiss" aria-label="Dismiss">&times;</button>';
+    t.querySelector(".toast-dismiss").addEventListener("click", function () {
+      t.remove();
+    });
     container.appendChild(t);
     const dur = type === "error" ? 6000 : 3200;
     setTimeout(function () {
@@ -3529,13 +4159,12 @@
     const sel = document.getElementById("editAthleteSelect");
     if (!sel) return;
     sel.innerHTML = "";
-    sortedAthletes()
-      .forEach(function (a) {
-        const o = document.createElement("option");
-        o.value = a.id;
-        o.textContent = a.name + (a.position ? " (" + a.position + ")" : "");
-        sel.appendChild(o);
-      });
+    sortedAthletes().forEach(function (a) {
+      const o = document.createElement("option");
+      o.value = a.id;
+      o.textContent = a.name + (a.position ? " (" + a.position + ")" : "");
+      sel.appendChild(o);
+    });
   }
 
   function buildEditFields(a) {
@@ -3613,47 +4242,96 @@
 
     // Test History section in edit panel
     const history = getAthleteHistory(a.id);
-    html += '<div class="edit-section-title">Test History <small>(' + history.length + ' saved)</small></div>';
+    html +=
+      '<div class="edit-section-title">Test History <small>(' +
+      history.length +
+      " saved)</small></div>";
     html += '<div class="edit-history-actions">';
-    html += '<button class="btn btn-sm btn-primary" onclick="saveCurrentAsTest()" title="Snapshot current values as a dated test">📅 Save Current as Test Date</button> ';
-    html += '<button class="btn btn-sm" onclick="openAddPreviousTest()" title="Manually enter historical test data">📝 Add Previous Test</button>';
-    html += '</div>';
+    html +=
+      '<button class="btn btn-sm btn-primary" onclick="saveCurrentAsTest()" title="Snapshot current values as a dated test">📅 Save Current as Test Date</button> ';
+    html +=
+      '<button class="btn btn-sm" onclick="openAddPreviousTest()" title="Manually enter historical test data">📝 Add Previous Test</button>';
+    html += "</div>";
     if (history.length > 0) {
       html += '<div class="edit-history-list">';
       for (var hi = 0; hi < history.length; hi++) {
         var he = history[hi];
         var metricsWithData = 0;
         for (var tki = 0; tki < TEST_METRIC_KEYS.length; tki++) {
-          if (he.values[TEST_METRIC_KEYS[tki].jsonKey] !== null && he.values[TEST_METRIC_KEYS[tki].jsonKey] !== undefined) metricsWithData++;
+          if (
+            he.values[TEST_METRIC_KEYS[tki].jsonKey] !== null &&
+            he.values[TEST_METRIC_KEYS[tki].jsonKey] !== undefined
+          )
+            metricsWithData++;
         }
         html += '<div class="edit-history-item">';
-        html += '<div class="edit-history-info"><strong>' + esc(he.label) + '</strong> <small>' + he.date + ' · ' + metricsWithData + ' metrics</small></div>';
-        html += '<button class="btn btn-xs btn-muted" onclick="deleteHistoryEntry(\'' + esc(a.id) + '\',\'' + esc(he.date) + '\',\'' + esc(he.label) + '\')">🗑</button>';
+        html +=
+          '<div class="edit-history-info"><strong>' +
+          esc(he.label) +
+          "</strong> <small>" +
+          he.date +
+          " · " +
+          metricsWithData +
+          " metrics</small></div>";
+        html += '<div class="edit-history-btns">';
+        html +=
+          '<button class="btn btn-xs btn-muted" onclick="editHistoryEntry(\'' +
+          esc(a.id) +
+          "','" +
+          esc(he.date) +
+          "','" +
+          esc(he.label) +
+          "')\" title=\"Edit this test entry\">✏️</button> ";
+        html +=
+          '<button class="btn btn-xs btn-muted" onclick="deleteHistoryEntry(\'' +
+          esc(a.id) +
+          "','" +
+          esc(he.date) +
+          "','" +
+          esc(he.label) +
+          "')\" title=\"Delete this test entry\">🗑</button>";
         html += '</div>';
+        html += "</div>";
       }
-      html += '</div>';
+      html += "</div>";
     }
 
-    // Hidden previous test entry form
-    html += '<div id="prevTestForm" class="prev-test-form" style="display:none">';
-    html += '<div class="edit-section-title">Enter Previous Test Data</div>';
+    // Hidden previous test entry form (shared for add & edit)
+    html +=
+      '<div id="prevTestForm" class="prev-test-form" style="display:none">';
+    html += '<input type="hidden" id="prevTestEditMode" value="" />';
+    html += '<input type="hidden" id="prevTestOrigDate" value="" />';
+    html += '<input type="hidden" id="prevTestOrigLabel" value="" />';
+    html += '<div class="edit-section-title" id="prevTestFormTitle">Enter Previous Test Data</div>';
     html += '<div class="edit-grid">';
-    html += '<div class="edit-field"><label>Test Date</label><input type="date" id="prevTestDate" value="" /></div>';
-    html += '<div class="edit-field"><label>Label (e.g. "Spring 2025")</label><input type="text" id="prevTestLabel" placeholder="Spring 2025" /></div>';
-    html += '</div>';
+    html +=
+      '<div class="edit-field"><label>Test Date</label><input type="date" id="prevTestDate" value="" /></div>';
+    html +=
+      '<div class="edit-field"><label>Label (e.g. "Spring 2025")</label><input type="text" id="prevTestLabel" placeholder="Spring 2025" /></div>';
+    html += "</div>";
     html += '<div class="edit-grid">';
     for (var pti = 0; pti < TEST_METRIC_KEYS.length; pti++) {
       var ptk = TEST_METRIC_KEYS[pti];
       if (ptk.jsonKey === "weight_lb") continue; // Weight is in the fields above, skip dupe
-      html += '<div class="edit-field"><label>' + ptk.label + ' (' + ptk.unit + ')</label><input type="number" id="prevTest_' + ptk.jsonKey + '" step="any" /></div>';
+      html +=
+        '<div class="edit-field"><label>' +
+        ptk.label +
+        " (" +
+        ptk.unit +
+        ')</label><input type="number" id="prevTest_' +
+        ptk.jsonKey +
+        '" step="any" /></div>';
     }
     // Include weight
-    html += '<div class="edit-field"><label>Weight (lb)</label><input type="number" id="prevTest_weight_lb" step="1" /></div>';
-    html += '</div>';
+    html +=
+      '<div class="edit-field"><label>Weight (lb)</label><input type="number" id="prevTest_weight_lb" step="1" /></div>';
+    html += "</div>";
     html += '<div class="edit-history-actions">';
-    html += '<button class="btn btn-sm btn-primary" onclick="submitPreviousTest()">💾 Save Previous Test</button> ';
-    html += '<button class="btn btn-sm" onclick="document.getElementById(\'prevTestForm\').style.display=\'none\'">Cancel</button>';
-    html += '</div></div>';
+    html +=
+      '<button class="btn btn-sm btn-primary" onclick="submitPreviousTest()" id="prevTestSubmitBtn">💾 Save Previous Test</button> ';
+    html +=
+      '<button class="btn btn-sm" onclick="closePrevTestForm()">Cancel</button>';
+    html += "</div></div>";
 
     body.innerHTML = html;
 
@@ -3761,32 +4439,104 @@
   window.saveCurrentAsTest = function () {
     if (!editingAthleteId) return;
     const D = window.CLUB;
-    const a = D.athletes.find(function (x) { return x.id === editingAthleteId; });
+    const a = D.athletes.find(function (x) {
+      return x.id === editingAthleteId;
+    });
     if (!a) return;
 
-    var dateStr = prompt("Enter test date (YYYY-MM-DD):", new Date().toISOString().slice(0, 10));
+    var dateStr = prompt(
+      "Enter test date (YYYY-MM-DD):",
+      new Date().toISOString().slice(0, 10),
+    );
     if (!dateStr) return;
-    var label = prompt("Enter a label for this test (e.g. 'Spring 2025', 'Pre-Season'):", "");
+    var label = prompt(
+      "Enter a label for this test (e.g. 'Spring 2025', 'Pre-Season'):",
+      "",
+    );
     if (label === null) return;
     if (!label.trim()) label = dateStr;
 
     var vals = currentTestValues(a);
     saveTestEntry(a.id, dateStr, label.trim(), vals);
-    showToast("Saved test entry: " + label.trim() + " (" + dateStr + ")", "success");
+    showToast(
+      "Saved test entry: " + label.trim() + " (" + dateStr + ")",
+      "success",
+    );
     buildEditFields(a); // refresh the edit panel
     renderProfile();
   };
 
   window.openAddPreviousTest = function () {
+    // Reset form to "add" mode
     var form = document.getElementById("prevTestForm");
-    if (form) form.style.display = "block";
+    if (!form) return;
+    document.getElementById("prevTestEditMode").value = "";
+    document.getElementById("prevTestOrigDate").value = "";
+    document.getElementById("prevTestOrigLabel").value = "";
+    document.getElementById("prevTestFormTitle").textContent = "Enter Previous Test Data";
+    document.getElementById("prevTestSubmitBtn").textContent = "💾 Save Previous Test";
+    document.getElementById("prevTestDate").value = "";
+    document.getElementById("prevTestLabel").value = "";
+    for (var i = 0; i < TEST_METRIC_KEYS.length; i++) {
+      var el = document.getElementById("prevTest_" + TEST_METRIC_KEYS[i].jsonKey);
+      if (el) el.value = "";
+    }
+    form.style.display = "block";
+    form.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+
+  window.editHistoryEntry = function (athleteId, date, label) {
+    var history = getAthleteHistory(athleteId);
+    var entry = null;
+    for (var i = 0; i < history.length; i++) {
+      if (history[i].date === date && history[i].label === label) {
+        entry = history[i];
+        break;
+      }
+    }
+    if (!entry) { showToast("Test entry not found.", "error"); return; }
+
+    var form = document.getElementById("prevTestForm");
+    if (!form) return;
+
+    // Set edit mode
+    document.getElementById("prevTestEditMode").value = "edit";
+    document.getElementById("prevTestOrigDate").value = date;
+    document.getElementById("prevTestOrigLabel").value = label;
+    document.getElementById("prevTestFormTitle").textContent = "Edit Test: " + label + " (" + date + ")";
+    document.getElementById("prevTestSubmitBtn").textContent = "💾 Update Test Entry";
+
+    // Pre-fill date & label
+    document.getElementById("prevTestDate").value = entry.date;
+    document.getElementById("prevTestLabel").value = entry.label;
+
+    // Pre-fill metric values
+    for (var i = 0; i < TEST_METRIC_KEYS.length; i++) {
+      var mk = TEST_METRIC_KEYS[i];
+      var el = document.getElementById("prevTest_" + mk.jsonKey);
+      if (el) {
+        var v = entry.values[mk.jsonKey];
+        el.value = (v !== null && v !== undefined) ? v : "";
+      }
+    }
+
+    form.style.display = "block";
+    form.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+
+  window.closePrevTestForm = function () {
+    var form = document.getElementById("prevTestForm");
+    if (form) form.style.display = "none";
   };
 
   window.submitPreviousTest = function () {
     if (!editingAthleteId) return;
     var dateEl = document.getElementById("prevTestDate");
     var labelEl = document.getElementById("prevTestLabel");
-    if (!dateEl || !dateEl.value) { showToast("Please enter a test date.", "warn"); return; }
+    if (!dateEl || !dateEl.value) {
+      showToast("Please enter a test date.", "warn");
+      return;
+    }
 
     var dateStr = dateEl.value;
     var label = (labelEl && labelEl.value.trim()) || dateStr;
@@ -3802,11 +4552,26 @@
       }
     }
 
+    // If in edit mode, delete the original entry first
+    var editMode = document.getElementById("prevTestEditMode");
+    if (editMode && editMode.value === "edit") {
+      var origDate = document.getElementById("prevTestOrigDate").value;
+      var origLabel = document.getElementById("prevTestOrigLabel").value;
+      deleteTestEntry(editingAthleteId, origDate, origLabel);
+    }
+
     saveTestEntry(editingAthleteId, dateStr, label, vals);
-    showToast("Saved previous test: " + label + " (" + dateStr + ")", "success");
+
+    var isEdit = editMode && editMode.value === "edit";
+    showToast(
+      (isEdit ? "Updated" : "Saved") + " test: " + label + " (" + dateStr + ")",
+      "success",
+    );
 
     // Refresh edit panel & profile
-    var a = window.CLUB.athletes.find(function (x) { return x.id === editingAthleteId; });
+    var a = window.CLUB.athletes.find(function (x) {
+      return x.id === editingAthleteId;
+    });
     if (a) buildEditFields(a);
     renderProfile();
   };
@@ -4003,18 +4768,31 @@
     /* Include non-athlete data for full round-trip */
     if (D.testingLog && D.testingLog.length > 0) {
       exportData.testing_log = D.testingLog.map(function (e) {
-        return { date: e.date, athlete_id: e.athleteId, name: e.name, test: e.test,
-          split_020: e.sprint020, split_2030: e.sprint2030, split_3040: e.sprint3040,
-          location: e.location, vert: e.vert, broad: e.broad,
-          bench: e.bench, squat: e.squat, medball: e.medball };
+        return {
+          date: e.date,
+          athlete_id: e.athleteId,
+          name: e.name,
+          test: e.test,
+          split_020: e.sprint020,
+          split_2030: e.sprint2030,
+          split_3040: e.sprint3040,
+          location: e.location,
+          vert: e.vert,
+          broad: e.broad,
+          bench: e.bench,
+          squat: e.squat,
+          medball: e.medball,
+        };
       });
     }
     if (D.testingWeekPlan && D.testingWeekPlan.length > 0) {
       exportData.testing_week_plan = D.testingWeekPlan;
     }
     if (window._rawDataCache) {
-      if (window._rawDataCache.meta) exportData.meta = window._rawDataCache.meta;
-      if (window._rawDataCache.constants) exportData.constants = window._rawDataCache.constants;
+      if (window._rawDataCache.meta)
+        exportData.meta = window._rawDataCache.meta;
+      if (window._rawDataCache.constants)
+        exportData.constants = window._rawDataCache.constants;
     }
 
     // Include test history
@@ -4030,7 +4808,9 @@
     link.download =
       "bc_fitness_club_data_" + new Date().toISOString().slice(0, 10) + ".json";
     link.click();
-    setTimeout(function () { URL.revokeObjectURL(link.href); }, 10000);
+    setTimeout(function () {
+      URL.revokeObjectURL(link.href);
+    }, 10000);
     showToast("JSON exported — " + D.athletes.length + " athletes", "success");
   };
 
@@ -4059,14 +4839,24 @@
         const seenIds = new Set();
         for (let i = 0; i < athletes.length; i++) {
           const a = athletes[i];
-          if (!a.id) importWarnings.push("Athlete #" + (i + 1) + " missing id.");
-          if (!a.name) importWarnings.push("Athlete #" + (i + 1) + " missing name.");
-          if (a.id && seenIds.has(a.id)) importWarnings.push("Duplicate id: " + a.id);
+          if (!a.id)
+            importWarnings.push("Athlete #" + (i + 1) + " missing id.");
+          if (!a.name)
+            importWarnings.push("Athlete #" + (i + 1) + " missing name.");
+          if (a.id && seenIds.has(a.id))
+            importWarnings.push("Duplicate id: " + a.id);
           if (a.id) seenIds.add(a.id);
         }
         if (importWarnings.length > 0) {
-          const proceed = confirm("Import warnings:\n• " + importWarnings.join("\n• ") + "\n\nContinue anyway?");
-          if (!proceed) { inputEl.value = ""; return; }
+          const proceed = confirm(
+            "Import warnings:\n• " +
+              importWarnings.join("\n• ") +
+              "\n\nContinue anyway?",
+          );
+          if (!proceed) {
+            inputEl.value = "";
+            return;
+          }
         }
 
         /* --- Check if this is an exported JSON (has source field) or raw format --- */
@@ -4129,7 +4919,8 @@
         };
         /* Carry over optional top-level collections if present */
         if (data.testing_log) rawData.testing_log = data.testing_log;
-        if (data.testing_week_plan) rawData.testing_week_plan = data.testing_week_plan;
+        if (data.testing_week_plan)
+          rawData.testing_week_plan = data.testing_week_plan;
         if (data.benchmarks) rawData.benchmarks = data.benchmarks;
 
         /* --- Clear all local modifications --- */

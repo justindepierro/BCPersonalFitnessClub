@@ -733,7 +733,13 @@
       const el = document.getElementById("loadingIndicator");
       if (el) {
         const safeMsg = String(err.message).replace(/[<>&"']/g, function (c) {
-          return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" }[c];
+          return {
+            "<": "&lt;",
+            ">": "&gt;",
+            "&": "&amp;",
+            '"': "&quot;",
+            "'": "&#39;",
+          }[c];
         });
         el.innerHTML =
           '<div style="padding:2rem;text-align:center;color:#ef4444;"><h2>Error loading data</h2><p>' +
