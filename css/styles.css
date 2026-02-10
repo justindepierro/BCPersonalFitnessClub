@@ -317,6 +317,7 @@ select:focus,
   padding: 0.55rem 0.75rem;
   text-align: left;
   border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
 }
 
 .data-table thead th {
@@ -361,11 +362,28 @@ select:focus,
   background: rgba(108, 99, 255, 0.1);
 }
 
-.data-table td.num {
+.data-table td.num,
+.data-table th.num {
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-family: var(--mono);
   font-size: 0.78rem;
+}
+
+/* Right-align numeric column headers to match data cells */
+#rosterTable thead th:nth-child(n+4):not(:last-child),
+#sprintTable thead th:nth-child(n+3),
+#strengthTable thead th:nth-child(n+3),
+#lbTable thead th:first-child,
+#lbTable thead th:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Center Grade column header and scorecard metric headers */
+#rosterTable thead th:last-child,
+#scorecardTable thead th:nth-child(n+4) {
+  text-align: center;
 }
 
 .data-table td.na {
@@ -2217,6 +2235,9 @@ select:focus,
 .progress-table th,
 .progress-table td {
   white-space: nowrap;
+}
+.progress-table th:not(:first-child) {
+  text-align: right;
 }
 .progress-table .num {
   font-variant-numeric: tabular-nums;
