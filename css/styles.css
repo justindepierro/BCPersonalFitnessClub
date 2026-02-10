@@ -2154,6 +2154,89 @@ select:focus,
   margin-right: 0.3rem;
 }
 
+/* ---------- Progress History Table ---------- */
+.progress-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 0.5rem;
+}
+.progress-table th,
+.progress-table td {
+  white-space: nowrap;
+}
+.progress-table .num {
+  font-variant-numeric: tabular-nums;
+}
+.progress-composite td {
+  border-top: 2px solid var(--border);
+  font-weight: 700;
+}
+.delta-up {
+  color: var(--green) !important;
+  font-weight: 700;
+}
+.delta-down {
+  color: var(--red) !important;
+  font-weight: 700;
+}
+.delta-flat {
+  color: var(--text-muted);
+}
+.history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+.btn-xs {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-sm);
+}
+.btn-muted {
+  background: var(--surface2);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.btn-muted:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* ---------- Edit Panel Test History ---------- */
+.edit-history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+.edit-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+.edit-history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.65rem;
+  font-size: 0.78rem;
+}
+.edit-history-info small {
+  color: var(--text-muted);
+  margin-left: 0.4rem;
+}
+.prev-test-form {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  border: 1px dashed var(--accent);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
 /* ---------- Print improvements ---------- */
 @media print {
   .scroll-top-btn,

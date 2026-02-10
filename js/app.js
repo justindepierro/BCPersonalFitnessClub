@@ -51,6 +51,59 @@
     return "Below Avg";
   }
 
+  /* ---------- Test History Metric Keys ---------- */
+  const TEST_METRIC_KEYS = [
+    { key: "weight", jsonKey: "weight_lb", label: "Weight", unit: "lb" },
+    { key: "bench", jsonKey: "bench_1rm", label: "Bench 1RM", unit: "lb" },
+    { key: "squat", jsonKey: "squat_1rm", label: "Squat 1RM", unit: "lb" },
+    { key: "medball", jsonKey: "medball_in", label: "Med Ball", unit: "in" },
+    { key: "vert", jsonKey: "vert_in", label: "Vertical", unit: "in" },
+    { key: "broad", jsonKey: "broad_in", label: "Broad Jump", unit: "in" },
+    { key: "sprint020", jsonKey: "sprint_020", label: "0-20 yd", unit: "s", lower: true },
+    { key: "sprint2030", jsonKey: "sprint_2030", label: "20-30 yd", unit: "s", lower: true },
+    { key: "sprint3040", jsonKey: "sprint_3040", label: "30-40 yd", unit: "s", lower: true },
+  ];
+
+  /* ---------- Test History helpers ---------- */
+  function getTestHistory() {
+    return JSON.parse(localStorage.getItem("lc_test_history") || "{}");
+  }
+  function setTestHistory(h) {
+    safeLSSet("lc_test_history", JSON.stringify(h));
+  }
+  function getAthleteHistory(athleteId) {
+    const h = getTestHistory();
+    return (h[athleteId] || []).slice().sort(function (a, b) {
+      return a.date > b.date ? -1 : a.date < b.date ? 1 : 0;
+    });
+  }
+  function saveTestEntry(athleteId, date, label, values) {
+    const h = getTestHistory();
+    if (!h[athleteId]) h[athleteId] = [];
+    // Prevent exact same date + label duplicate
+    h[athleteId] = h[athleteId].filter(function (e) {
+      return !(e.date === date && e.label === label);
+    });
+    h[athleteId].push({ date: date, label: label, values: values });
+    setTestHistory(h);
+  }
+  function deleteTestEntry(athleteId, date, label) {
+    const h = getTestHistory();
+    if (!h[athleteId]) return;
+    h[athleteId] = h[athleteId].filter(function (e) {
+      return !(e.date === date && e.label === label);
+    });
+    if (h[athleteId].length === 0) delete h[athleteId];
+    setTestHistory(h);
+  }
+  function currentTestValues(a) {
+    var vals = {};
+    for (var i = 0; i < TEST_METRIC_KEYS.length; i++) {
+      vals[TEST_METRIC_KEYS[i].jsonKey] = a[TEST_METRIC_KEYS[i].key];
+    }
+    return vals;
+  }
+
   /* ---------- Safe localStorage (quota-aware) ---------- */
   function safeLSSet(key, value) {
     try {
@@ -856,6 +909,8 @@
           : ""
       }
 
+      ${buildProgressSection(a)}
+
       <div class="profile-section-title">Radar</div>
       <div class="profile-chart-wrap"><canvas id="profileRadar"></canvas></div>
     </div>`;
@@ -1001,6 +1056,97 @@
       },
     });
   }
+
+  /* ========== TEST HISTORY — PROFILE PROGRESS SECTION ========== */
+  function buildProgressSection(a) {
+    const history = getAthleteHistory(a.id);
+    if (history.length === 0) return '';
+
+    const current = currentTestValues(a);
+    let html = '<div class="profile-section-title">Progress History <small>(' + history.length + ' previous test' + (history.length > 1 ? 's' : '') + ')</small></div>';
+    html += '<div class="progress-table-wrap"><table class="data-table progress-table"><thead><tr>';
+    html += '<th>Metric</th><th>Current</th>';
+    // Show up to last 4 tests
+    const shown = history.slice(0, 4);
+    for (var ti = 0; ti < shown.length; ti++) {
+      html += '<th>' + esc(shown[ti].label || shown[ti].date) + '<br><small>' + shown[ti].date + '</small></th>';
+    }
+    if (shown.length > 0) html += '<th>vs Last</th>';
+    html += '</tr></thead><tbody>';
+
+    for (var mi = 0; mi < TEST_METRIC_KEYS.length; mi++) {
+      var mk = TEST_METRIC_KEYS[mi];
+      var curVal = current[mk.jsonKey];
+      html += '<tr><td><strong>' + mk.label + '</strong> <small>' + mk.unit + '</small></td>';
+      html += '<td class="num">' + (curVal !== null && curVal !== undefined ? curVal : '—') + '</td>';
+      for (var si = 0; si < shown.length; si++) {
+        var hVal = shown[si].values[mk.jsonKey];
+        html += '<td class="num">' + (hVal !== null && hVal !== undefined ? hVal : '—') + '</td>';
+      }
+      // Delta vs most recent
+      if (shown.length > 0) {
+        var lastVal = shown[0].values[mk.jsonKey];
+        if (curVal !== null && curVal !== undefined && lastVal !== null && lastVal !== undefined) {
+          var delta = curVal - lastVal;
+          var pctChange = lastVal !== 0 ? Math.round((delta / Math.abs(lastVal)) * 100) : 0;
+          var improved = mk.lower ? delta < 0 : delta > 0;
+          var declined = mk.lower ? delta > 0 : delta < 0;
+          var cls = improved ? 'delta-up' : declined ? 'delta-down' : 'delta-flat';
+          var arrow = improved ? '▲' : declined ? '▼' : '—';
+          var sign = delta > 0 ? '+' : '';
+          html += '<td class="num ' + cls + '">' + arrow + ' ' + sign + (Number.isInteger(delta) ? delta : delta.toFixed(2)) + ' <small>(' + sign + pctChange + '%)</small></td>';
+        } else {
+          html += '<td class="na">—</td>';
+        }
+      }
+      html += '</tr>';
+    }
+
+    // Forty composite row
+    var curForty = a.forty;
+    html += '<tr class="progress-composite"><td><strong>40 yd Total</strong> <small>s</small></td>';
+    html += '<td class="num">' + (curForty !== null ? curForty : '—') + '</td>';
+    for (var fi = 0; fi < shown.length; fi++) {
+      var fv = shown[fi].values;
+      var hForty = (fv.sprint_020 !== null && fv.sprint_2030 !== null && fv.sprint_3040 !== null) ? +(fv.sprint_020 + fv.sprint_2030 + fv.sprint_3040).toFixed(2) : null;
+      html += '<td class="num">' + (hForty !== null ? hForty : '—') + '</td>';
+    }
+    if (shown.length > 0) {
+      var fvLast = shown[0].values;
+      var lastForty = (fvLast.sprint_020 !== null && fvLast.sprint_2030 !== null && fvLast.sprint_3040 !== null) ? +(fvLast.sprint_020 + fvLast.sprint_2030 + fvLast.sprint_3040).toFixed(2) : null;
+      if (curForty !== null && lastForty !== null) {
+        var fd = curForty - lastForty;
+        var fpct = lastForty !== 0 ? Math.round((fd / Math.abs(lastForty)) * 100) : 0;
+        var fImproved = fd < 0;
+        var fDeclined = fd > 0;
+        var fCls = fImproved ? 'delta-up' : fDeclined ? 'delta-down' : 'delta-flat';
+        var fArrow = fImproved ? '▲' : fDeclined ? '▼' : '—';
+        var fSign = fd > 0 ? '+' : '';
+        html += '<td class="num ' + fCls + '">' + fArrow + ' ' + fSign + fd.toFixed(2) + ' <small>(' + fSign + fpct + '%)</small></td>';
+      } else {
+        html += '<td class="na">—</td>';
+      }
+    }
+    html += '</tr>';
+
+    html += '</tbody></table></div>';
+
+    // Per-test delete buttons (small)
+    html += '<div class="history-actions">';
+    for (var di = 0; di < shown.length; di++) {
+      html += '<button class="btn btn-xs btn-muted" onclick="deleteHistoryEntry(\'' + esc(a.id) + '\',\'' + esc(shown[di].date) + '\',\'' + esc(shown[di].label) + '\')" title="Delete this test entry">🗑 ' + esc(shown[di].label || shown[di].date) + '</button> ';
+    }
+    html += '</div>';
+
+    return html;
+  }
+
+  window.deleteHistoryEntry = function (athleteId, date, label) {
+    if (!confirm('Delete test entry "' + label + '" (' + date + ')?')) return;
+    deleteTestEntry(athleteId, date, label);
+    renderProfile();
+    showToast('Deleted test entry: ' + label, 'info');
+  };
 
   /* ========== LEADERBOARDS ========== */
   window.renderLeaderboards = function () {
@@ -1713,6 +1859,7 @@
           </div>
         </div>
       </div>
+      ${buildPrintProgressSection(a)}
       <div class="print-footer">Burke Catholic Personal Fitness Club &mdash; Confidential</div>
     </div>`;
 
@@ -1872,6 +2019,32 @@
 
     openPrintWindow(printHTML, 'Scorecard Report');
   };
+
+  /* --- Print progress section (for profile printout) --- */
+  function buildPrintProgressSection(a) {
+    var history = getAthleteHistory(a.id);
+    if (history.length === 0) return '';
+    var current = currentTestValues(a);
+    var last = history[0]; // most recent
+    var html = '<div class="print-progress" style="margin-top:10px;page-break-inside:avoid">';
+    html += '<h3 class="print-section">Progress vs ' + esc(last.label || last.date) + ' (' + last.date + ')</h3>';
+    html += '<table class="print-metric-table" style="width:100%"><thead><tr><th>Metric</th><th>Current</th><th>Previous</th><th>Change</th></tr></thead><tbody>';
+    for (var i = 0; i < TEST_METRIC_KEYS.length; i++) {
+      var mk = TEST_METRIC_KEYS[i];
+      var cv = current[mk.jsonKey];
+      var pv = last.values[mk.jsonKey];
+      var changeStr = '—';
+      if (cv !== null && cv !== undefined && pv !== null && pv !== undefined) {
+        var d = cv - pv;
+        var improved = mk.lower ? d < 0 : d > 0;
+        var sign = d > 0 ? '+' : '';
+        changeStr = (improved ? '▲ ' : d === 0 ? '' : '▼ ') + sign + (Number.isInteger(d) ? d : d.toFixed(2)) + ' ' + mk.unit;
+      }
+      html += '<tr><td>' + mk.label + '</td><td class="num">' + (cv !== null && cv !== undefined ? cv : '—') + '</td><td class="num">' + (pv !== null && pv !== undefined ? pv : '—') + '</td><td class="num">' + changeStr + '</td></tr>';
+    }
+    html += '</tbody></table></div>';
+    return html;
+  }
 
   /* --- Shared print window opener --- */
   function openPrintWindow(bodyHTML, title) {
@@ -2993,6 +3166,50 @@
     }
     if (currentSection !== "") html += "</div>"; // close last grid
 
+    // Test History section in edit panel
+    const history = getAthleteHistory(a.id);
+    html += '<div class="edit-section-title">Test History <small>(' + history.length + ' saved)</small></div>';
+    html += '<div class="edit-history-actions">';
+    html += '<button class="btn btn-sm btn-primary" onclick="saveCurrentAsTest()" title="Snapshot current values as a dated test">📅 Save Current as Test Date</button> ';
+    html += '<button class="btn btn-sm" onclick="openAddPreviousTest()" title="Manually enter historical test data">📝 Add Previous Test</button>';
+    html += '</div>';
+    if (history.length > 0) {
+      html += '<div class="edit-history-list">';
+      for (var hi = 0; hi < history.length; hi++) {
+        var he = history[hi];
+        var metricsWithData = 0;
+        for (var tki = 0; tki < TEST_METRIC_KEYS.length; tki++) {
+          if (he.values[TEST_METRIC_KEYS[tki].jsonKey] !== null && he.values[TEST_METRIC_KEYS[tki].jsonKey] !== undefined) metricsWithData++;
+        }
+        html += '<div class="edit-history-item">';
+        html += '<div class="edit-history-info"><strong>' + esc(he.label) + '</strong> <small>' + he.date + ' · ' + metricsWithData + ' metrics</small></div>';
+        html += '<button class="btn btn-xs btn-muted" onclick="deleteHistoryEntry(\'' + esc(a.id) + '\',\'' + esc(he.date) + '\',\'' + esc(he.label) + '\')">🗑</button>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+
+    // Hidden previous test entry form
+    html += '<div id="prevTestForm" class="prev-test-form" style="display:none">';
+    html += '<div class="edit-section-title">Enter Previous Test Data</div>';
+    html += '<div class="edit-grid">';
+    html += '<div class="edit-field"><label>Test Date</label><input type="date" id="prevTestDate" value="" /></div>';
+    html += '<div class="edit-field"><label>Label (e.g. "Spring 2025")</label><input type="text" id="prevTestLabel" placeholder="Spring 2025" /></div>';
+    html += '</div>';
+    html += '<div class="edit-grid">';
+    for (var pti = 0; pti < TEST_METRIC_KEYS.length; pti++) {
+      var ptk = TEST_METRIC_KEYS[pti];
+      if (ptk.jsonKey === "weight_lb") continue; // Weight is in the fields above, skip dupe
+      html += '<div class="edit-field"><label>' + ptk.label + ' (' + ptk.unit + ')</label><input type="number" id="prevTest_' + ptk.jsonKey + '" step="any" /></div>';
+    }
+    // Include weight
+    html += '<div class="edit-field"><label>Weight (lb)</label><input type="number" id="prevTest_weight_lb" step="1" /></div>';
+    html += '</div>';
+    html += '<div class="edit-history-actions">';
+    html += '<button class="btn btn-sm btn-primary" onclick="submitPreviousTest()">💾 Save Previous Test</button> ';
+    html += '<button class="btn btn-sm" onclick="document.getElementById(\'prevTestForm\').style.display=\'none\'">Cancel</button>';
+    html += '</div></div>';
+
     body.innerHTML = html;
 
     // Attach auto-save listeners to all fields
@@ -3094,6 +3311,60 @@
       }
     }
   }
+
+  /* ---------- Test History Actions ---------- */
+  window.saveCurrentAsTest = function () {
+    if (!editingAthleteId) return;
+    const D = window.CLUB;
+    const a = D.athletes.find(function (x) { return x.id === editingAthleteId; });
+    if (!a) return;
+
+    var dateStr = prompt("Enter test date (YYYY-MM-DD):", new Date().toISOString().slice(0, 10));
+    if (!dateStr) return;
+    var label = prompt("Enter a label for this test (e.g. 'Spring 2025', 'Pre-Season'):", "");
+    if (label === null) return;
+    if (!label.trim()) label = dateStr;
+
+    var vals = currentTestValues(a);
+    saveTestEntry(a.id, dateStr, label.trim(), vals);
+    showToast("Saved test entry: " + label.trim() + " (" + dateStr + ")", "success");
+    buildEditFields(a); // refresh the edit panel
+    renderProfile();
+  };
+
+  window.openAddPreviousTest = function () {
+    var form = document.getElementById("prevTestForm");
+    if (form) form.style.display = "block";
+  };
+
+  window.submitPreviousTest = function () {
+    if (!editingAthleteId) return;
+    var dateEl = document.getElementById("prevTestDate");
+    var labelEl = document.getElementById("prevTestLabel");
+    if (!dateEl || !dateEl.value) { showToast("Please enter a test date.", "warn"); return; }
+
+    var dateStr = dateEl.value;
+    var label = (labelEl && labelEl.value.trim()) || dateStr;
+
+    var vals = {};
+    for (var i = 0; i < TEST_METRIC_KEYS.length; i++) {
+      var mk = TEST_METRIC_KEYS[i];
+      var el = document.getElementById("prevTest_" + mk.jsonKey);
+      if (el && el.value.trim() !== "") {
+        vals[mk.jsonKey] = parseFloat(el.value);
+      } else {
+        vals[mk.jsonKey] = null;
+      }
+    }
+
+    saveTestEntry(editingAthleteId, dateStr, label, vals);
+    showToast("Saved previous test: " + label + " (" + dateStr + ")", "success");
+
+    // Refresh edit panel & profile
+    var a = window.CLUB.athletes.find(function (x) { return x.id === editingAthleteId; });
+    if (a) buildEditFields(a);
+    renderProfile();
+  };
 
   /* ---------- Panel open / close / navigate ---------- */
   window.openEditPanel = function (athleteId) {
@@ -3301,6 +3572,12 @@
       if (window._rawDataCache.constants) exportData.constants = window._rawDataCache.constants;
     }
 
+    // Include test history
+    var testHist = getTestHistory();
+    if (Object.keys(testHist).length > 0) {
+      exportData.test_history = testHist;
+    }
+
     const json = JSON.stringify(exportData, null, 2);
     const blob = new Blob([json], { type: "application/json" });
     const link = document.createElement("a");
@@ -3414,6 +3691,13 @@
         localStorage.removeItem("lc_edits");
         localStorage.removeItem("lc_added");
         localStorage.removeItem("lc_deleted");
+
+        /* --- Restore test history if present in import --- */
+        if (data.test_history && typeof data.test_history === "object") {
+          safeLSSet("lc_test_history", JSON.stringify(data.test_history));
+        } else {
+          localStorage.removeItem("lc_test_history");
+        }
 
         /* --- Set new raw cache and reprocess --- */
         window._rawDataCache = JSON.parse(JSON.stringify(rawData));
