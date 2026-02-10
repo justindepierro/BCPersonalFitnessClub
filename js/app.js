@@ -1148,6 +1148,37 @@
     showToast('Deleted test entry: ' + label, 'info');
   };
 
+  /* --- Save ALL athletes' current data as a test date --- */
+  window.saveAllAsTestDate = function () {
+    var D = window.CLUB;
+    var tested = D.athletes.filter(function (a) { return Object.keys(a.scorecard).length > 0; });
+    if (tested.length === 0) { showToast('No athletes with test data to save.', 'warn'); return; }
+
+    var dateStr = prompt('Enter test date (YYYY-MM-DD):', new Date().toISOString().slice(0, 10));
+    if (!dateStr) return;
+    var label = prompt('Enter a label for this test (e.g. "Pre-Season 2026", "Winter Testing"):', '');
+    if (label === null) return;
+    if (!label.trim()) label = dateStr;
+    label = label.trim();
+
+    var count = 0;
+    for (var i = 0; i < tested.length; i++) {
+      var a = tested[i];
+      var vals = currentTestValues(a);
+      // Only save if at least one non-null metric
+      var hasData = false;
+      for (var k in vals) { if (vals[k] !== null && vals[k] !== undefined) { hasData = true; break; } }
+      if (hasData) {
+        saveTestEntry(a.id, dateStr, label, vals);
+        count++;
+      }
+    }
+    showToast('Saved "' + label + '" test data for ' + count + ' athletes.', 'success');
+    // Refresh profile if one is selected
+    var id = document.getElementById('athleteSelect').value;
+    if (id) renderProfile();
+  };
+
   /* ========== LEADERBOARDS ========== */
   window.renderLeaderboards = function () {
     const D = window.CLUB;
