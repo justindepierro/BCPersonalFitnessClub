@@ -1179,6 +1179,88 @@
     if (id) renderProfile();
   };
 
+  /* --- View all saved test dates --- */
+  window.viewSavedTests = function () {
+    var h = getTestHistory();
+    var athleteIds = Object.keys(h);
+    if (athleteIds.length === 0) {
+      showToast('No saved test dates yet. Use "Save All as Test Date" to create one.', 'info');
+      return;
+    }
+
+    var D = window.CLUB;
+
+    // Collect unique test labels/dates across all athletes
+    var testMap = {}; // "label|date" -> { label, date, count, athletes[] }
+    for (var i = 0; i < athleteIds.length; i++) {
+      var aid = athleteIds[i];
+      var entries = h[aid];
+      for (var j = 0; j < entries.length; j++) {
+        var e = entries[j];
+        var key = e.label + '|' + e.date;
+        if (!testMap[key]) {
+          testMap[key] = { label: e.label, date: e.date, count: 0, athletes: [] };
+        }
+        testMap[key].count++;
+        var aName = aid;
+        var found = D.athletes.find(function (x) { return x.id === aid; });
+        if (found) aName = found.name;
+        testMap[key].athletes.push(aName);
+      }
+    }
+
+    var tests = Object.values(testMap).sort(function (a, b) {
+      return a.date > b.date ? -1 : a.date < b.date ? 1 : 0;
+    });
+
+    var totalEntries = 0;
+    for (var t = 0; t < tests.length; t++) totalEntries += tests[t].count;
+
+    var rows = tests.map(function (t) {
+      return '<tr><td><strong>' + esc(t.label) + '</strong></td><td>' + t.date + '</td><td>' + t.count + ' athletes</td><td class="test-athletes-cell"><small>' + t.athletes.slice(0, 8).map(function (n) { return esc(n); }).join(', ') + (t.athletes.length > 8 ? ' + ' + (t.athletes.length - 8) + ' more' : '') + '</small></td><td><button class="btn btn-xs btn-muted" onclick="deleteBulkTestEntry(\'' + esc(t.date) + '\',\'' + esc(t.label) + '\')">🗑 Delete</button></td></tr>';
+    }).join('');
+
+    var bodyHTML = '<div class="print-page" style="max-width:700px;margin:0 auto">' +
+      '<h2 style="margin-bottom:4px">\ud83d\udccb Saved Test History</h2>' +
+      '<p style="color:#888;font-size:0.85rem;margin-bottom:12px">' + tests.length + ' test date' + (tests.length !== 1 ? 's' : '') + ' · ' + totalEntries + ' total entries · ' + athleteIds.length + ' athletes with history</p>' +
+      '<table style="width:100%;border-collapse:collapse;font-size:0.85rem">' +
+      '<thead><tr style="border-bottom:2px solid #6c63ff"><th style="text-align:left;padding:6px">Label</th><th style="padding:6px">Date</th><th style="padding:6px">Count</th><th style="text-align:left;padding:6px">Athletes</th><th style="padding:6px"></th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table>' +
+      '<p style="margin-top:16px;font-size:0.78rem;color:#888">This data is included when you export JSON (📦). To restore, import the JSON file.</p>' +
+      '</div>';
+
+    // Show as a modal overlay
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay test-history-modal';
+    overlay.innerHTML = '<div class="modal-content" style="max-width:750px;max-height:80vh;overflow:auto;padding:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">' +
+      '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()" style="float:right;font-size:1.2rem;background:none;border:none;color:var(--text);cursor:pointer">&times;</button>' +
+      bodyHTML + '</div>';
+    overlay.addEventListener('click', function (ev) { if (ev.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+  };
+
+  window.deleteBulkTestEntry = function (date, label) {
+    if (!confirm('Delete all "' + label + '" (' + date + ') entries for every athlete?')) return;
+    var h = getTestHistory();
+    var count = 0;
+    var ids = Object.keys(h);
+    for (var i = 0; i < ids.length; i++) {
+      var before = h[ids[i]].length;
+      h[ids[i]] = h[ids[i]].filter(function (e) { return !(e.date === date && e.label === label); });
+      count += before - h[ids[i]].length;
+      if (h[ids[i]].length === 0) delete h[ids[i]];
+    }
+    setTestHistory(h);
+    showToast('Deleted ' + count + ' entries for "' + label + '"', 'info');
+    // Close and re-open to refresh
+    var existing = document.querySelector('.test-history-modal');
+    if (existing) existing.remove();
+    viewSavedTests();
+    // Refresh profile if open
+    var pid = document.getElementById('athleteSelect').value;
+    if (pid) renderProfile();
+  };
+
   /* ========== LEADERBOARDS ========== */
   window.renderLeaderboards = function () {
     const D = window.CLUB;
