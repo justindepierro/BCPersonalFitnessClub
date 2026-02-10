@@ -2550,6 +2550,48 @@ select:focus,
   color: var(--accent);
 }
 
+/* ---------- Inline Cell Editing ---------- */
+.ie-cell {
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+  min-width: 3rem;
+}
+.ie-cell:hover {
+  background: rgba(108, 99, 255, 0.1);
+  color: var(--accent);
+}
+.ie-cell.ie-editing {
+  padding: 0 !important;
+  background: transparent !important;
+}
+.ie-input {
+  width: 100%;
+  min-width: 3rem;
+  background: var(--surface);
+  border: 1.5px solid var(--accent);
+  border-radius: 3px;
+  color: var(--text);
+  font-size: 0.75rem;
+  padding: 0.25rem 0.35rem;
+  text-align: right;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-glow);
+  -moz-appearance: textfield;
+}
+.ie-input::-webkit-inner-spin-button,
+.ie-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.ie-cell.ie-saved {
+  animation: ieSavedPulse 0.8s ease;
+}
+@keyframes ieSavedPulse {
+  0%   { background: rgba(74, 222, 128, 0.25); }
+  100% { background: transparent; }
+}
+
 /* ---------- Profile History Actions ---------- */
 .history-actions-label {
   font-size: 0.7rem;

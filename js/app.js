@@ -1934,8 +1934,10 @@
         var ad = test.athleteDetails[ai];
         cards += '<tr><td><strong>' + esc(ad.name) + '</strong></td>';
         for (var vk = 0; vk < TEST_METRIC_KEYS.length; vk++) {
-          var val = ad.values[TEST_METRIC_KEYS[vk].jsonKey];
-          cards += '<td class="num">' + (val !== null && val !== undefined ? val : '<span class="na">—</span>') + '</td>';
+          var jsonKey = TEST_METRIC_KEYS[vk].jsonKey;
+          var val = ad.values[jsonKey];
+          var displayVal = (val !== null && val !== undefined ? val : '—');
+          cards += '<td class="num ie-cell" data-aid="' + esc(ad.id) + '" data-date="' + safeDate + '" data-label="' + safeLabel + '" data-key="' + jsonKey + '" onclick="inlineEditCell(this)" title="Click to edit">' + displayVal + '</td>';
         }
         cards += '</tr>';
       }
@@ -1984,6 +1986,79 @@
       if (ev.target === overlay) overlay.remove();
     });
     document.body.appendChild(overlay);
+  };
+
+  /* --- Inline cell editing in test history modal --- */
+  window.inlineEditCell = function (td) {
+    // Don't re-enter if already editing
+    if (td.querySelector('input')) return;
+    var current = td.textContent.trim();
+    if (current === '—') current = '';
+    td.classList.add('ie-editing');
+    var input = document.createElement('input');
+    input.type = 'number';
+    input.step = 'any';
+    input.className = 'ie-input';
+    input.value = current;
+    input.setAttribute('data-original', current);
+    td.textContent = '';
+    td.appendChild(input);
+    input.focus();
+    input.select();
+    input.addEventListener('blur', function () { commitInlineEdit(td, input); });
+    input.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+      if (ev.key === 'Escape') { ev.preventDefault(); input.value = input.getAttribute('data-original'); input.blur(); }
+      // Tab to next editable cell
+      if (ev.key === 'Tab') {
+        ev.preventDefault();
+        input.blur();
+        var cells = Array.from(td.closest('table').querySelectorAll('.ie-cell'));
+        var idx = cells.indexOf(td);
+        var next = ev.shiftKey ? cells[idx - 1] : cells[idx + 1];
+        if (next) next.click();
+      }
+    });
+  };
+
+  window.commitInlineEdit = function (td, input) {
+    var newVal = input.value.trim();
+    var original = input.getAttribute('data-original');
+    var aid = td.getAttribute('data-aid');
+    var date = td.getAttribute('data-date');
+    var label = td.getAttribute('data-label');
+    var key = td.getAttribute('data-key');
+    td.classList.remove('ie-editing');
+
+    // No change
+    if (newVal === original) {
+      td.textContent = original || '—';
+      return;
+    }
+
+    // Update localStorage
+    var h = getTestHistory();
+    if (h[aid]) {
+      for (var i = 0; i < h[aid].length; i++) {
+        if (h[aid][i].date === date && h[aid][i].label === label) {
+          if (newVal === '') {
+            h[aid][i].values[key] = null;
+          } else {
+            h[aid][i].values[key] = parseFloat(newVal);
+          }
+          break;
+        }
+      }
+      setTestHistory(h);
+    }
+
+    // Update cell display
+    td.textContent = newVal || '—';
+    td.classList.add('ie-saved');
+    setTimeout(function () { td.classList.remove('ie-saved'); }, 800);
+    // Refresh profile if visible
+    var selId = document.getElementById('athleteSelect').value;
+    if (selId) renderProfile();
   };
 
   window.toggleTestDetail = function (idx) {
