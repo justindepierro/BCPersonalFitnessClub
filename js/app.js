@@ -1769,9 +1769,19 @@
 
     html += "</tbody></table></div>";
 
-    // Per-test delete buttons (small)
+    // Per-test action buttons
     html += '<div class="history-actions">';
+    html += '<span class="history-actions-label">Manage tests:</span>';
     for (var di = 0; di < shown.length; di++) {
+      html += '<span class="history-action-group">';
+      html +=
+        '<button class="btn btn-xs btn-muted" onclick="openEditPanel(\'' + esc(a.id) + '\'); setTimeout(function(){ editHistoryEntry(\'' +
+        esc(a.id) +
+        "','" +
+        esc(shown[di].date) +
+        "','" +
+        esc(shown[di].label) +
+        "')},300)\" title=\"Edit this test\">✏️</button>";
       html +=
         '<button class="btn btn-xs btn-muted" onclick="deleteHistoryEntry(\'' +
         esc(a.id) +
@@ -1779,9 +1789,9 @@
         esc(shown[di].date) +
         "','" +
         esc(shown[di].label) +
-        '\')" title="Delete this test entry">🗑 ' +
-        esc(shown[di].label || shown[di].date) +
-        "</button> ";
+        '\')" title="Delete this test">🗑</button>';
+      html += '<small class="history-action-name">' + esc(shown[di].label || shown[di].date) + '</small>';
+      html += '</span>';
     }
     html += "</div>";
 
@@ -1849,14 +1859,6 @@
   window.viewSavedTests = function () {
     var h = getTestHistory();
     var athleteIds = Object.keys(h);
-    if (athleteIds.length === 0) {
-      showToast(
-        'No saved test dates yet. Use "Save All as Test Date" to create one.',
-        "info",
-      );
-      return;
-    }
-
     var D = window.CLUB;
 
     // Collect unique test labels/dates across all athletes
@@ -1873,15 +1875,20 @@
             date: e.date,
             count: 0,
             athletes: [],
+            athleteDetails: [],
           };
         }
         testMap[key].count++;
-        var aName = aid;
-        var found = D.athletes.find(function (x) {
-          return x.id === aid;
-        });
-        if (found) aName = found.name;
+        var found = D.athletes.find(function (x) { return x.id === aid; });
+        var aName = found ? found.name : aid;
         testMap[key].athletes.push(aName);
+        // Count non-null metrics for this athlete's entry
+        var mCount = 0;
+        for (var mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
+          var v = e.values[TEST_METRIC_KEYS[mk].jsonKey];
+          if (v !== null && v !== undefined) mCount++;
+        }
+        testMap[key].athleteDetails.push({ name: aName, id: aid, metrics: mCount, values: e.values });
       }
     }
 
@@ -1892,66 +1899,236 @@
     var totalEntries = 0;
     for (var t = 0; t < tests.length; t++) totalEntries += tests[t].count;
 
-    var rows = tests
-      .map(function (t) {
-        return (
-          "<tr><td><strong>" +
-          esc(t.label) +
-          "</strong></td><td>" +
-          t.date +
-          "</td><td>" +
-          t.count +
-          ' athletes</td><td class="test-athletes-cell"><small>' +
-          t.athletes
-            .slice(0, 8)
-            .map(function (n) {
-              return esc(n);
-            })
-            .join(", ") +
-          (t.athletes.length > 8
-            ? " + " + (t.athletes.length - 8) + " more"
-            : "") +
-          '</small></td><td><button class="btn btn-xs btn-muted" onclick="deleteBulkTestEntry(\'' +
-          esc(t.date) +
-          "','" +
-          esc(t.label) +
-          "')\">🗑 Delete</button></td></tr>"
-        );
-      })
-      .join("");
+    // Build test cards
+    var cards = '';
+    for (var ci = 0; ci < tests.length; ci++) {
+      var test = tests[ci];
+      var safeDate = esc(test.date);
+      var safeLabel = esc(test.label);
+      var escapedDate = test.date.replace(/'/g, "\\'");
+      var escapedLabel = test.label.replace(/'/g, "\\'");
+      cards += '<div class="th-card" data-idx="' + ci + '">';
+      cards += '<div class="th-card-header">';
+      cards += '<div class="th-card-title">';
+      cards += '<span class="th-label">' + safeLabel + '</span>';
+      cards += '<span class="th-date">' + safeDate + '</span>';
+      cards += '</div>';
+      cards += '<div class="th-card-stats">';
+      cards += '<span class="th-stat"><strong>' + test.count + '</strong> athlete' + (test.count !== 1 ? 's' : '') + '</span>';
+      cards += '</div>';
+      cards += '</div>';
+      cards += '<div class="th-card-actions">';
+      cards += '<button class="btn btn-xs" onclick="toggleTestDetail(' + ci + ')" title="View athlete details">👤 Details</button>';
+      cards += '<button class="btn btn-xs" onclick="renameTestDate(\'' + escapedDate + "','" + escapedLabel + '\')" title="Rename this test">✏️ Rename</button>';
+      cards += '<button class="btn btn-xs" onclick="exportSingleTest(\'' + escapedDate + "','" + escapedLabel + '\')" title="Export this test as JSON">📤 Export</button>';
+      cards += '<button class="btn btn-xs btn-muted" onclick="deleteBulkTestEntry(\'' + escapedDate + "','" + escapedLabel + '\')" title="Delete this test for all athletes">🗑 Delete</button>';
+      cards += '</div>';
+      // Expandable detail
+      cards += '<div class="th-detail" id="thDetail' + ci + '" style="display:none">';
+      cards += '<table class="th-detail-table"><thead><tr><th>Athlete</th>';
+      for (var hk = 0; hk < TEST_METRIC_KEYS.length; hk++) {
+        cards += '<th>' + TEST_METRIC_KEYS[hk].label + '</th>';
+      }
+      cards += '</tr></thead><tbody>';
+      for (var ai = 0; ai < test.athleteDetails.length; ai++) {
+        var ad = test.athleteDetails[ai];
+        cards += '<tr><td><strong>' + esc(ad.name) + '</strong></td>';
+        for (var vk = 0; vk < TEST_METRIC_KEYS.length; vk++) {
+          var val = ad.values[TEST_METRIC_KEYS[vk].jsonKey];
+          cards += '<td class="num">' + (val !== null && val !== undefined ? val : '<span class="na">—</span>') + '</td>';
+        }
+        cards += '</tr>';
+      }
+      cards += '</tbody></table></div>';
+      cards += '</div>';
+    }
+
+    var emptyState = athleteIds.length === 0
+      ? '<div class="th-empty"><div class="th-empty-icon">📊</div><h3>No Test History Yet</h3><p>Save your first test baseline to start tracking athlete progress over time.</p><button class="btn btn-primary" onclick="document.querySelector(\'.test-history-modal\').remove(); saveAllAsTestDate()">📅 Save Current Team Data</button></div>'
+      : '';
 
     var bodyHTML =
-      '<div class="print-page" style="max-width:700px;margin:0 auto">' +
-      '<h2 style="margin-bottom:4px">\ud83d\udccb Saved Test History</h2>' +
-      '<p style="color:#888;font-size:0.85rem;margin-bottom:12px">' +
-      tests.length +
-      " test date" +
-      (tests.length !== 1 ? "s" : "") +
-      " · " +
-      totalEntries +
-      " total entries · " +
-      athleteIds.length +
-      " athletes with history</p>" +
-      '<table style="width:100%;border-collapse:collapse;font-size:0.85rem">' +
-      '<thead><tr style="border-bottom:2px solid #6c63ff"><th style="text-align:left;padding:6px">Label</th><th style="padding:6px">Date</th><th style="padding:6px">Count</th><th style="text-align:left;padding:6px">Athletes</th><th style="padding:6px"></th></tr></thead>' +
-      "<tbody>" +
-      rows +
-      "</tbody></table>" +
-      '<p style="margin-top:16px;font-size:0.78rem;color:#888">This data is included when you export JSON (📦). To restore, import the JSON file.</p>' +
-      "</div>";
+      '<div class="th-modal-body">' +
+      '<div class="th-modal-header">' +
+      '<h2>📋 Test History Manager</h2>' +
+      '<p class="th-summary">' +
+      (tests.length > 0
+        ? tests.length + ' test session' + (tests.length !== 1 ? 's' : '') + ' · ' + totalEntries + ' total entries · ' + athleteIds.length + ' athlete' + (athleteIds.length !== 1 ? 's' : '') + ' tracked'
+        : '') +
+      '</p>' +
+      '</div>' +
+      (tests.length > 0
+        ? '<div class="th-toolbar">' +
+          '<button class="btn btn-sm btn-primary" onclick="document.querySelector(\'.test-history-modal\').remove(); saveAllAsTestDate()">📅 Save New Test Date</button>' +
+          '<button class="btn btn-sm" onclick="exportTestHistoryOnly()">📤 Export All Test History</button>' +
+          '<label class="btn btn-sm" style="cursor:pointer">📥 Import Test History<input type="file" accept=".json" onchange="importTestHistoryOnly(this)" style="display:none" /></label>' +
+          '</div>'
+        : '') +
+      (emptyState || '<div class="th-card-list">' + cards + '</div>') +
+      '<p class="th-footer-note">Test history is included in full JSON exports and restored on import.</p>' +
+      '</div>';
+
+    // Remove existing modal if open
+    var existing = document.querySelector(".test-history-modal");
+    if (existing) existing.remove();
 
     // Show as a modal overlay
     var overlay = document.createElement("div");
     overlay.className = "modal-overlay test-history-modal";
     overlay.innerHTML =
-      '<div class="modal-content" style="max-width:750px;max-height:80vh;overflow:auto;padding:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">' +
-      '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()" style="float:right;font-size:1.2rem;background:none;border:none;color:var(--text);cursor:pointer">&times;</button>' +
+      '<div class="modal-content th-modal-content">' +
+      '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' +
       bodyHTML +
-      "</div>";
+      '</div>';
     overlay.addEventListener("click", function (ev) {
       if (ev.target === overlay) overlay.remove();
     });
     document.body.appendChild(overlay);
+  };
+
+  window.toggleTestDetail = function (idx) {
+    var el = document.getElementById('thDetail' + idx);
+    if (!el) return;
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  };
+
+  window.renameTestDate = function (date, oldLabel) {
+    var newLabel = prompt('Rename test "' + oldLabel + '" (' + date + '):', oldLabel);
+    if (newLabel === null || !newLabel.trim() || newLabel.trim() === oldLabel) return;
+    newLabel = newLabel.trim();
+    var h = getTestHistory();
+    var ids = Object.keys(h);
+    var renamed = 0;
+    for (var i = 0; i < ids.length; i++) {
+      for (var j = 0; j < h[ids[i]].length; j++) {
+        if (h[ids[i]][j].date === date && h[ids[i]][j].label === oldLabel) {
+          h[ids[i]][j].label = newLabel;
+          renamed++;
+        }
+      }
+    }
+    setTestHistory(h);
+    showToast('Renamed to "' + newLabel + '" (' + renamed + ' entries)', 'success');
+    viewSavedTests(); // refresh modal
+    var pid = document.getElementById("athleteSelect").value;
+    if (pid) renderProfile();
+  };
+
+  window.exportSingleTest = function (date, label) {
+    var h = getTestHistory();
+    var D = window.CLUB;
+    var exportObj = { source: 'BC Personal Fitness Club — Test Export', exportDate: new Date().toISOString(), testDate: date, testLabel: label, entries: [] };
+    var ids = Object.keys(h);
+    for (var i = 0; i < ids.length; i++) {
+      for (var j = 0; j < h[ids[i]].length; j++) {
+        if (h[ids[i]][j].date === date && h[ids[i]][j].label === label) {
+          var found = D.athletes.find(function (x) { return x.id === ids[i]; });
+          exportObj.entries.push({ athleteId: ids[i], athleteName: found ? found.name : ids[i], date: date, label: label, values: h[ids[i]][j].values });
+        }
+      }
+    }
+    var json = JSON.stringify(exportObj, null, 2);
+    var blob = new Blob([json], { type: 'application/json' });
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'test_' + label.replace(/\s+/g, '_').toLowerCase() + '_' + date + '.json';
+    link.click();
+    setTimeout(function () { URL.revokeObjectURL(link.href); }, 10000);
+    showToast('Exported "' + label + '" — ' + exportObj.entries.length + ' athletes', 'success');
+  };
+
+  window.exportTestHistoryOnly = function () {
+    var h = getTestHistory();
+    if (Object.keys(h).length === 0) { showToast('No test history to export.', 'warn'); return; }
+    var D = window.CLUB;
+    // Enrich with athlete names for readability
+    var exportObj = { source: 'BC Personal Fitness Club — Full Test History', exportDate: new Date().toISOString(), test_history: h, athlete_names: {} };
+    var ids = Object.keys(h);
+    for (var i = 0; i < ids.length; i++) {
+      var found = D.athletes.find(function (x) { return x.id === ids[i]; });
+      if (found) exportObj.athlete_names[ids[i]] = found.name;
+    }
+    var json = JSON.stringify(exportObj, null, 2);
+    var blob = new Blob([json], { type: 'application/json' });
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'test_history_' + new Date().toISOString().slice(0, 10) + '.json';
+    link.click();
+    setTimeout(function () { URL.revokeObjectURL(link.href); }, 10000);
+    showToast('Exported full test history — ' + ids.length + ' athletes', 'success');
+  };
+
+  window.importTestHistoryOnly = function (inputEl) {
+    var file = inputEl.files && inputEl.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        var data = JSON.parse(e.target.result);
+        var histData = null;
+
+        // Support full export format
+        if (data.test_history && typeof data.test_history === 'object') {
+          histData = data.test_history;
+        }
+        // Support single-test export format
+        else if (data.entries && Array.isArray(data.entries)) {
+          histData = {};
+          for (var i = 0; i < data.entries.length; i++) {
+            var en = data.entries[i];
+            if (!histData[en.athleteId]) histData[en.athleteId] = [];
+            histData[en.athleteId].push({ date: en.date, label: en.label, values: en.values });
+          }
+        }
+
+        if (!histData || Object.keys(histData).length === 0) {
+          showToast('No test history found in this file.', 'error');
+          inputEl.value = '';
+          return;
+        }
+
+        var incoming = Object.keys(histData);
+        var mode = confirm(
+          'Found test data for ' + incoming.length + ' athlete(s) in "' + file.name + '".\n\n' +
+          'OK = Merge with existing history\nCancel = Replace all existing history'
+        );
+
+        if (mode) {
+          // Merge
+          var h = getTestHistory();
+          for (var ai = 0; ai < incoming.length; ai++) {
+            var aid = incoming[ai];
+            if (!h[aid]) h[aid] = [];
+            var newEntries = histData[aid];
+            for (var ni = 0; ni < newEntries.length; ni++) {
+              var ne = newEntries[ni];
+              // Skip duplicates
+              var exists = false;
+              for (var ei = 0; ei < h[aid].length; ei++) {
+                if (h[aid][ei].date === ne.date && h[aid][ei].label === ne.label) { exists = true; break; }
+              }
+              if (!exists) h[aid].push(ne);
+            }
+          }
+          setTestHistory(h);
+          showToast('Merged test history from ' + file.name, 'success');
+        } else {
+          // Replace
+          setTestHistory(histData);
+          showToast('Replaced test history from ' + file.name, 'success');
+        }
+
+        // Refresh
+        viewSavedTests();
+        var pid = document.getElementById("athleteSelect").value;
+        if (pid) renderProfile();
+      } catch (err) {
+        console.error('Import test history error:', err);
+        showToast('Import failed: ' + err.message, 'error');
+      }
+      inputEl.value = '';
+    };
+    reader.readAsText(file);
   };
 
   window.deleteBulkTestEntry = function (date, label) {
@@ -4257,12 +4434,18 @@
       for (var hi = 0; hi < history.length; hi++) {
         var he = history[hi];
         var metricsWithData = 0;
+        var metricChips = '';
         for (var tki = 0; tki < TEST_METRIC_KEYS.length; tki++) {
-          if (
-            he.values[TEST_METRIC_KEYS[tki].jsonKey] !== null &&
-            he.values[TEST_METRIC_KEYS[tki].jsonKey] !== undefined
-          )
+          var tkVal = he.values[TEST_METRIC_KEYS[tki].jsonKey];
+          if (tkVal !== null && tkVal !== undefined) {
             metricsWithData++;
+            metricChips += '<span class="th-chip">' + TEST_METRIC_KEYS[tki].label + ': <strong>' + tkVal + '</strong></span>';
+          }
+        }
+        // Compute 40yd from sprints if available
+        var s020 = he.values.sprint_020, s2030 = he.values.sprint_2030, s3040 = he.values.sprint_3040;
+        if (s020 !== null && s020 !== undefined && s2030 !== null && s2030 !== undefined && s3040 !== null && s3040 !== undefined) {
+          metricChips += '<span class="th-chip th-chip-computed">40yd: <strong>' + (s020 + s2030 + s3040).toFixed(2) + 's</strong></span>';
         }
         html += '<div class="edit-history-item">';
         html +=
@@ -4272,7 +4455,10 @@
           he.date +
           " · " +
           metricsWithData +
-          " metrics</small></div>";
+          "/" + TEST_METRIC_KEYS.length +
+          " metrics</small>" +
+          '<div class="th-chip-row">' + metricChips + '</div>' +
+          "</div>";
         html += '<div class="edit-history-btns">';
         html +=
           '<button class="btn btn-xs btn-muted" onclick="editHistoryEntry(\'' +
@@ -4294,6 +4480,8 @@
         html += "</div>";
       }
       html += "</div>";
+    } else {
+      html += '<div class="th-empty-inline"><small>No test history for this athlete. Save a test date or add historical data above.</small></div>';
     }
 
     // Hidden previous test entry form (shared for add & edit)
