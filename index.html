@@ -1874,6 +1874,21 @@
           >
             📦 JSON
           </button>
+          <span class="data-mgmt-sep">|</span>
+          <input
+            type="file"
+            id="importJsonInput"
+            accept=".json"
+            style="display: none"
+            onchange="importJSON(this)"
+          />
+          <button
+            class="btn btn-sm"
+            onclick="document.getElementById('importJsonInput').click()"
+            title="Import a previously exported JSON file to restore data"
+          >
+            📥 Import JSON
+          </button>
         </div>
         <div class="data-mgmt-right">
           <span id="dataStatus" class="data-status"></span>

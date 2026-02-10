@@ -2825,6 +2825,106 @@
     showToast("JSON exported — " + D.athletes.length + " athletes", "success");
   };
 
+  /* ========== JSON IMPORT (restore from export) ========== */
+  window.importJSON = function (inputEl) {
+    const file = inputEl.files && inputEl.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        const data = JSON.parse(e.target.result);
+
+        /* --- Validate structure --- */
+        let athletes;
+        if (data.athletes && Array.isArray(data.athletes)) {
+          athletes = data.athletes;
+        } else {
+          throw new Error("Invalid file: no athletes array found.");
+        }
+        if (athletes.length === 0) {
+          throw new Error("File contains 0 athletes.");
+        }
+
+        /* --- Check if this is an exported JSON (has source field) or raw format --- */
+        const isExport = data.source === "Lifting Club Dashboard";
+
+        /* --- Map athletes back to raw format --- */
+        const rawAthletes = athletes.map(function (a) {
+          const raw = {
+            id: a.id,
+            name: a.name,
+            position: a.position,
+            height_in: a.height_in !== undefined ? a.height_in : null,
+            weight_lb: a.weight_lb !== undefined ? a.weight_lb : null,
+            sprint_020: a.sprint_020 !== undefined ? a.sprint_020 : null,
+            sprint_2030: a.sprint_2030 !== undefined ? a.sprint_2030 : null,
+            sprint_3040: a.sprint_3040 !== undefined ? a.sprint_3040 : null,
+            sprint_notes: a.sprint_notes || null,
+            vert_in: a.vert_in !== undefined ? a.vert_in : null,
+            broad_in: a.broad_in !== undefined ? a.broad_in : null,
+            bench_1rm: a.bench_1rm !== undefined ? a.bench_1rm : null,
+            squat_1rm: a.squat_1rm !== undefined ? a.squat_1rm : null,
+            medball_in: a.medball_in !== undefined ? a.medball_in : null,
+          };
+          return raw;
+        });
+
+        if (
+          !confirm(
+            "Import " +
+              rawAthletes.length +
+              " athletes from \"" +
+              file.name +
+              "\"?\n\nThis will replace ALL current data and clear any unsaved edits."
+          )
+        ) {
+          inputEl.value = "";
+          return;
+        }
+
+        /* --- Build raw data object --- */
+        const rawData = {
+          meta: data.meta || {
+            source_workbook: "Imported from " + file.name,
+            export_date: data.exportDate || new Date().toISOString(),
+            notes: ["Imported via JSON upload"],
+          },
+          constants: data.constants || {
+            LB_TO_KG: 0.45359237,
+            IN_TO_CM: 2.54,
+            TEN_YD_M: 9.144,
+            TWENTY_YD_M: 18.288,
+            G: 9.81,
+            SAYERS_A: 60.7,
+            SAYERS_B: 45.3,
+            SAYERS_C: -2055,
+          },
+          athletes: rawAthletes,
+        };
+
+        /* --- Clear all local modifications --- */
+        localStorage.removeItem("lc_edits");
+        localStorage.removeItem("lc_added");
+        localStorage.removeItem("lc_deleted");
+
+        /* --- Set new raw cache and reprocess --- */
+        window._rawDataCache = JSON.parse(JSON.stringify(rawData));
+        window.CLUB = window._processData(rawData);
+        reRenderAll();
+        updateDataStatus();
+        showToast(
+          "Imported " + rawAthletes.length + " athletes from " + file.name,
+          "success"
+        );
+      } catch (err) {
+        console.error("Import error:", err);
+        showToast("Import failed: " + err.message, "error");
+      }
+      inputEl.value = ""; // reset so same file can be re-imported
+    };
+    reader.readAsText(file);
+  };
+
   // Legacy compat
   window.openEditModal = window.openEditPanel;
   window.closeEditModal = window.closeEditPanel;
