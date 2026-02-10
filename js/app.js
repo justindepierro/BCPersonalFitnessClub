@@ -1920,6 +1920,7 @@
       cards += '<div class="th-card-actions">';
       cards += '<button class="btn btn-xs" onclick="toggleTestDetail(' + ci + ')" title="View athlete details">👤 Details</button>';
       cards += '<button class="btn btn-xs btn-primary" onclick="openNewTestEntry(\'' + escapedDate + "','" + escapedLabel + '\')" title="Open full worksheet for editing">📝 Worksheet</button>';
+      cards += '<button class="btn btn-xs" onclick="applyTestAsCurrent(\'' + escapedDate + "','" + escapedLabel + '\')" title="Apply this test data as current athlete values">🔄 Apply as Current</button>';
       cards += '<button class="btn btn-xs" onclick="renameTestDate(\'' + escapedDate + "','" + escapedLabel + '\')" title="Rename this test">✏️ Rename</button>';
       cards += '<button class="btn btn-xs" onclick="exportSingleTest(\'' + escapedDate + "','" + escapedLabel + '\')" title="Export this test as JSON">📤 Export</button>';
       cards += '<button class="btn btn-xs btn-muted" onclick="deleteBulkTestEntry(\'' + escapedDate + "','" + escapedLabel + '\')" title="Delete this test for all athletes">🗑 Delete</button>';
@@ -2328,6 +2329,7 @@
     bodyHTML += '<span class="te-footer-stat">' + filledCount + '/' + athletes.length + ' athletes have data</span>';
     bodyHTML += '<div class="te-footer-actions">';
     bodyHTML += '<button class="btn btn-sm" onclick="document.querySelector(\'.te-modal\').remove(); viewSavedTests()">← Back to Test History</button>';
+    bodyHTML += '<button class="btn btn-sm" onclick="applyTestAsCurrent(\'' + esc(dateStr).replace(/'/g, "\\'") + "','" + esc(label).replace(/'/g, "\\'") + '\')" title="Update all athlete current values from this test">🔄 Apply as Current Data</button>';
     bodyHTML += '<button class="btn btn-sm btn-primary" onclick="document.querySelector(\'.te-modal\').remove(); viewSavedTests()">✅ Done</button>';
     bodyHTML += '</div></div></div>';
 
@@ -2342,6 +2344,51 @@
       if (ev.target === overlay) overlay.remove();
     });
     document.body.appendChild(overlay);
+  };
+
+  /* --- Apply a test session's data as current athlete values --- */
+  window.applyTestAsCurrent = function (date, label) {
+    var h = getTestHistory();
+    var ids = Object.keys(h);
+    var edits = JSON.parse(localStorage.getItem('lc_edits') || '[]');
+    var count = 0;
+
+    for (var i = 0; i < ids.length; i++) {
+      var aid = ids[i];
+      for (var j = 0; j < h[aid].length; j++) {
+        if (h[aid][j].date === date && h[aid][j].label === label) {
+          var vals = h[aid][j].values;
+          var changes = {};
+          var hasData = false;
+          for (var k in vals) {
+            if (vals[k] !== null && vals[k] !== undefined) {
+              changes[k] = vals[k];
+              hasData = true;
+            }
+          }
+          if (hasData) {
+            var existing = edits.find(function (e) { return e.id === aid; });
+            if (existing) {
+              Object.assign(existing.changes, changes);
+            } else {
+              edits.push({ id: aid, changes: changes });
+            }
+            count++;
+          }
+          break;
+        }
+      }
+    }
+
+    safeLSSet('lc_edits', JSON.stringify(edits));
+    rebuildFromStorage();
+    markTabsDirty();
+    var activeTab = document.querySelector('.tab.active');
+    if (activeTab) renderIfDirty(activeTab.dataset.tab);
+    updateDataStatus();
+    var pid = document.getElementById('athleteSelect').value;
+    if (pid) renderProfile();
+    showToast('Applied "' + label + '" data to ' + count + ' athletes as current values.', 'success');
   };
 
   window.deleteBulkTestEntry = function (date, label) {
