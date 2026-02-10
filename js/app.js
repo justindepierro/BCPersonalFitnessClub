@@ -4541,6 +4541,32 @@
       if (athlete) Object.assign(athlete, edit.changes);
     }
 
+    // Apply latest test data as current values for each athlete
+    var testH = getTestHistory();
+    var testIds = Object.keys(testH);
+    for (var ti = 0; ti < testIds.length; ti++) {
+      var tAid = testIds[ti];
+      var tEntries = testH[tAid];
+      if (!tEntries || tEntries.length === 0) continue;
+      // Find the most recent date
+      var latestDate = tEntries[0].date;
+      for (var tj = 1; tj < tEntries.length; tj++) {
+        if (tEntries[tj].date > latestDate) latestDate = tEntries[tj].date;
+      }
+      // Merge all entries from that date (in case of multiple labels)
+      var tAthlete = rawCopy.athletes.find(function (a) { return a.id === tAid; });
+      if (!tAthlete) continue;
+      for (var tk = 0; tk < tEntries.length; tk++) {
+        if (tEntries[tk].date !== latestDate) continue;
+        var vals = tEntries[tk].values;
+        for (var vk in vals) {
+          if (vals[vk] !== null && vals[vk] !== undefined && vals[vk] !== '') {
+            tAthlete[vk] = vals[vk];
+          }
+        }
+      }
+    }
+
     window.CLUB = window._processData(rawCopy);
   }
 
