@@ -1622,25 +1622,345 @@
   }
 
   /* ========== PRINT ========== */
+
+  /* --- Print Profile (compact single-page layout) --- */
   window.printProfile = function () {
+    const D = window.CLUB;
     const id = document.getElementById("athleteSelect").value;
-    if (!id) {
-      showToast("Select an athlete first.", "warn");
-      return;
+    if (!id) { showToast("Select an athlete first.", "warn"); return; }
+    const a = D.athletes.find((x) => x.id === id);
+    if (!a) { showToast("Athlete not found.", "error"); return; }
+
+    const og = a.overallGrade;
+    const metrics = D.scorecardMetrics;
+
+    // Helper: concise metric row
+    function mRow(label, val, unit, grade) {
+      const v = val !== null && val !== undefined ? val : "—";
+      const u = v !== "—" ? (unit || "") : "";
+      const g = grade ? '<span class="print-grade print-grade-' + grade.tier + '">' + grade.label + '</span>' : '';
+      return '<tr><td>' + label + '</td><td class="num">' + v + ' ' + u + '</td><td>' + g + '</td></tr>';
     }
-    document
-      .querySelectorAll(".tab-panel")
-      .forEach((p) => p.classList.remove("print-active"));
-    document.getElementById("tab-profiles").classList.add("print-active");
-    window.print();
-    setTimeout(
-      () =>
-        document
-          .getElementById("tab-profiles")
-          .classList.remove("print-active"),
-      500,
-    );
+
+    // Scorecard rows
+    const scRows = Object.entries(a.scorecard).map(([k, sc]) => {
+      const label = metrics.find(m => m.key === k)?.label || k;
+      return '<tr><td>' + label + '</td><td class="num">' + (typeof sc.value === "number" ? (Number.isInteger(sc.value) ? sc.value : sc.value.toFixed(2)) : sc.value) + '</td><td class="num">' + sc.percentile + 'th</td><td><span class="print-tier print-tier-' + sc.tier + '">' + sc.tier.charAt(0).toUpperCase() + sc.tier.slice(1) + '</span></td></tr>';
+    }).join("");
+
+    // Smart analysis
+    const scEntries = Object.entries(a.scorecard);
+    const sorted = scEntries.slice().sort((a, b) => b[1].percentile - a[1].percentile);
+    const strengths = sorted.slice(0, 3).map(([k, sc]) => (metrics.find(m => m.key === k)?.label || k) + ' (' + sc.percentile + 'th)');
+    const weaknesses = sorted.slice(-3).reverse().map(([k, sc]) => (metrics.find(m => m.key === k)?.label || k) + ' (' + sc.percentile + 'th)');
+
+    const printHTML = `
+    <div class="print-page print-profile-page">
+      <div class="print-header-bar">
+        <div class="print-logo">Burke Catholic Personal Fitness Club</div>
+        <div class="print-date">Generated: ${new Date().toLocaleDateString()}</div>
+      </div>
+      <div class="print-athlete-header">
+        <div class="print-avatar">${a.initials}</div>
+        <div class="print-athlete-info">
+          <div class="print-athlete-name">${esc(a.name)} ${og ? '<span class="print-grade print-grade-' + og.tier + '">' + og.label + ' (' + og.score + ')</span>' : ''}</div>
+          <div class="print-athlete-meta">
+            ${esc(a.position) || "N/A"} &bull; ${esc(a.group)} &bull; ${a.height ? fmtHeight(a.height) : "—"} &bull; ${a.weight ? a.weight + " lb" : "—"}
+          </div>
+        </div>
+      </div>
+
+      <div class="print-columns">
+        <div class="print-col">
+          <h3 class="print-section">Strength</h3>
+          <table class="print-metric-table">
+            ${mRow("Bench 1RM", a.bench, "lb", a.grades.bench)}
+            ${mRow("Squat 1RM", a.squat, "lb", a.grades.squat)}
+            ${mRow("Rel Bench", a.relBench, "xBW", a.grades.relBench)}
+            ${mRow("Rel Squat", a.relSquat, "xBW", a.grades.relSquat)}
+          </table>
+          <h3 class="print-section">Explosiveness</h3>
+          <table class="print-metric-table">
+            ${mRow("Med Ball", a.medball, "in", a.grades.medball)}
+            ${mRow("Vertical", a.vert, "in", a.grades.vert)}
+            ${mRow("Broad Jump", a.broad, "in", a.grades.broad)}
+            ${mRow("Peak Power", a.peakPower, "W", a.grades.peakPower)}
+          </table>
+          <h3 class="print-section">Speed</h3>
+          <table class="print-metric-table">
+            ${mRow("40 yd", a.forty, "s", a.grades.forty)}
+            ${mRow("Max Vel", a.vMax, "m/s", a.grades.vMax)}
+            ${mRow("Sprint Force", a.F1, "N", a.grades.F1)}
+            ${mRow("Peak Momentum", a.momMax, "kg·m/s", a.grades.momMax)}
+          </table>
+        </div>
+        <div class="print-col">
+          <h3 class="print-section">Percentile Scorecard</h3>
+          <table class="print-metric-table print-sc-table">
+            <thead><tr><th>Metric</th><th>Value</th><th>%ile</th><th>Tier</th></tr></thead>
+            <tbody>${scRows || '<tr><td colspan="4">No scorecard data</td></tr>'}</tbody>
+          </table>
+          <h3 class="print-section">Analysis</h3>
+          <div class="print-analysis">
+            <div class="print-analysis-block">
+              <strong>Top Strengths:</strong>
+              <ul>${strengths.map(s => '<li>' + s + '</li>').join('')}</ul>
+            </div>
+            <div class="print-analysis-block">
+              <strong>Areas to Develop:</strong>
+              <ul>${weaknesses.map(s => '<li>' + s + '</li>').join('')}</ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="print-footer">Burke Catholic Personal Fitness Club &mdash; Confidential</div>
+    </div>`;
+
+    openPrintWindow(printHTML, esc(a.name) + ' — Athlete Profile');
   };
+
+  /* --- Print Scorecard (coach report with breakdown) --- */
+  window.printScorecard = function () {
+    const D = window.CLUB;
+    const filter = document.getElementById("scorecardFilter").value;
+    let list = D.athletes;
+    if (filter !== "all") list = list.filter(a => a.id === filter);
+    list = list.filter(a => Object.keys(a.scorecard).length > 0);
+    if (list.length === 0) { showToast("No scorecard data to print.", "warn"); return; }
+
+    const metrics = D.scorecardMetrics;
+    const isSingle = list.length === 1;
+
+    // Build main table
+    const headerCells = '<th>Athlete</th><th>Pos</th><th>Group</th>' + metrics.map(m => '<th>' + m.label + '</th>').join('');
+    const bodyRows = list.map(a => {
+      const cells = metrics.map(m => {
+        const sc = a.scorecard[m.key];
+        if (!sc) return '<td class="na">—</td>';
+        return '<td class="print-sc-cell print-tier-bg-' + sc.tier + '">' +
+          (typeof sc.value === "number" ? (Number.isInteger(sc.value) ? sc.value : sc.value.toFixed(2)) : sc.value) +
+          '<br><small>' + sc.percentile + 'th</small></td>';
+      }).join('');
+      return '<tr><td><strong>' + esc(a.name) + '</strong></td><td>' + (esc(a.position) || "—") + '</td><td>' + esc(a.group) + '</td>' + cells + '</tr>';
+    }).join('');
+
+    // Smart Breakdown
+    let analysisHTML = '';
+    if (isSingle) {
+      // Individual analysis
+      const a = list[0];
+      const og = a.overallGrade;
+      const scArr = Object.entries(a.scorecard);
+      const sorted = scArr.slice().sort((x, y) => y[1].percentile - x[1].percentile);
+      const top3 = sorted.slice(0, 3);
+      const bot3 = sorted.slice(-3).reverse();
+      const tierCounts = { elite: 0, strong: 0, solid: 0, competitive: 0, developing: 0 };
+      scArr.forEach(([, sc]) => tierCounts[sc.tier]++);
+      const avgPct = scArr.length > 0 ? Math.round(scArr.reduce((s, [, sc]) => s + sc.percentile, 0) / scArr.length) : 0;
+
+      analysisHTML = `
+      <div class="print-breakdown">
+        <h3>Smart Breakdown: ${esc(a.name)}</h3>
+        <div class="print-bd-grid">
+          <div class="print-bd-card">
+            <div class="print-bd-title">Overall Grade</div>
+            <div class="print-bd-big ${og ? 'print-grade-' + og.tier : ''}">${og ? og.label + ' (' + og.score + '/5)' : 'N/A'}</div>
+            <div class="print-bd-sub">Avg Percentile: ${avgPct}th</div>
+          </div>
+          <div class="print-bd-card">
+            <div class="print-bd-title">Top Strengths</div>
+            <ul>${top3.map(([k, sc]) => '<li><strong>' + (metrics.find(m => m.key === k)?.label || k) + '</strong> — ' + sc.percentile + 'th (' + sc.tier + ')</li>').join('')}</ul>
+          </div>
+          <div class="print-bd-card">
+            <div class="print-bd-title">Priority Development</div>
+            <ul>${bot3.map(([k, sc]) => '<li><strong>' + (metrics.find(m => m.key === k)?.label || k) + '</strong> — ' + sc.percentile + 'th (' + sc.tier + ')</li>').join('')}</ul>
+          </div>
+          <div class="print-bd-card">
+            <div class="print-bd-title">Tier Distribution</div>
+            <table class="print-tier-dist">
+              ${Object.entries(tierCounts).filter(([,c]) => c > 0).map(([t, c]) => '<tr><td><span class="print-tier print-tier-' + t + '">' + t.charAt(0).toUpperCase() + t.slice(1) + '</span></td><td>' + c + '/' + scArr.length + '</td></tr>').join('')}
+            </table>
+          </div>
+        </div>
+        <div class="print-coaching-notes">
+          <strong>Coaching Notes:</strong>
+          <ul>
+            ${avgPct >= 75 ? '<li>High-performing athlete across the board — focus on maintaining and leadership role.</li>' : ''}
+            ${avgPct >= 50 && avgPct < 75 ? '<li>Solid foundation — targeted work on weaker metrics can push toward elite status.</li>' : ''}
+            ${avgPct < 50 ? '<li>Developing athlete — establish baseline habits and focus on the 2-3 most impactful metrics.</li>' : ''}
+            ${tierCounts.developing > 0 ? '<li>' + tierCounts.developing + ' metric' + (tierCounts.developing > 1 ? 's' : '') + ' in Developing tier — review programming for these areas.</li>' : ''}
+            ${tierCounts.elite > 0 ? '<li>' + tierCounts.elite + ' metric' + (tierCounts.elite > 1 ? 's' : '') + ' at Elite level — athlete excels here.</li>' : ''}
+          </ul>
+        </div>
+      </div>`;
+    } else {
+      // Team-level summary
+      const tierTotals = { elite: 0, strong: 0, solid: 0, competitive: 0, developing: 0 };
+      let totalEntries = 0;
+      list.forEach(a => {
+        Object.values(a.scorecard).forEach(sc => {
+          tierTotals[sc.tier]++;
+          totalEntries++;
+        });
+      });
+      const teamAvgPct = totalEntries > 0 ? Math.round(list.reduce((s, a) => s + Object.values(a.scorecard).reduce((ss, sc) => ss + sc.percentile, 0), 0) / totalEntries) : 0;
+
+      // Per-metric team averages
+      const metricAvgs = metrics.map(m => {
+        const vals = list.map(a => a.scorecard[m.key]?.percentile).filter(v => v !== undefined);
+        const avg = vals.length > 0 ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length) : null;
+        return { label: m.label, avg };
+      }).filter(x => x.avg !== null).sort((a, b) => b.avg - a.avg);
+
+      // Top performers
+      const byAvg = list.map(a => {
+        const scArr = Object.values(a.scorecard);
+        const avg = scArr.length > 0 ? Math.round(scArr.reduce((s, sc) => s + sc.percentile, 0) / scArr.length) : 0;
+        return { name: a.name, avg, og: a.overallGrade };
+      }).sort((a, b) => b.avg - a.avg);
+
+      analysisHTML = `
+      <div class="print-breakdown">
+        <h3>Team Scorecard Analysis (n=${list.length})</h3>
+        <div class="print-bd-grid">
+          <div class="print-bd-card">
+            <div class="print-bd-title">Team Overview</div>
+            <div class="print-bd-big">${teamAvgPct}th</div>
+            <div class="print-bd-sub">Average Percentile</div>
+            <table class="print-tier-dist">
+              ${Object.entries(tierTotals).filter(([,c]) => c > 0).map(([t, c]) => '<tr><td><span class="print-tier print-tier-' + t + '">' + t.charAt(0).toUpperCase() + t.slice(1) + '</span></td><td>' + c + '/' + totalEntries + ' (' + Math.round(c / totalEntries * 100) + '%)</td></tr>').join('')}
+            </table>
+          </div>
+          <div class="print-bd-card">
+            <div class="print-bd-title">Strongest Metrics (Team)</div>
+            <ol>${metricAvgs.slice(0, 5).map(x => '<li>' + x.label + ' — avg ' + x.avg + 'th</li>').join('')}</ol>
+          </div>
+          <div class="print-bd-card">
+            <div class="print-bd-title">Weakest Metrics (Team)</div>
+            <ol>${metricAvgs.slice(-5).reverse().map(x => '<li>' + x.label + ' — avg ' + x.avg + 'th</li>').join('')}</ol>
+          </div>
+          <div class="print-bd-card">
+            <div class="print-bd-title">Top Performers</div>
+            <ol>${byAvg.slice(0, 5).map(x => '<li>' + esc(x.name) + ' — ' + x.avg + 'th avg' + (x.og ? ' (' + x.og.label + ')' : '') + '</li>').join('')}</ol>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    const printHTML = `
+    <div class="print-page print-scorecard-page">
+      <div class="print-header-bar">
+        <div class="print-logo">Burke Catholic Personal Fitness Club</div>
+        <div class="print-date">Scorecard Report &mdash; ${new Date().toLocaleDateString()}</div>
+      </div>
+      <div class="print-tier-legend">
+        <span class="print-tier print-tier-elite">Elite ≥90th</span>
+        <span class="print-tier print-tier-strong">Strong 75–90th</span>
+        <span class="print-tier print-tier-solid">Solid 50–75th</span>
+        <span class="print-tier print-tier-competitive">Competitive 25–50th</span>
+        <span class="print-tier print-tier-developing">Developing &lt;25th</span>
+      </div>
+      <div class="print-table-wrap">
+        <table class="print-data-table">
+          <thead><tr>${headerCells}</tr></thead>
+          <tbody>${bodyRows}</tbody>
+        </table>
+      </div>
+      ${analysisHTML}
+      <div class="print-footer">Burke Catholic Personal Fitness Club &mdash; Confidential Coach Report</div>
+    </div>`;
+
+    openPrintWindow(printHTML, 'Scorecard Report');
+  };
+
+  /* --- Shared print window opener --- */
+  function openPrintWindow(bodyHTML, title) {
+    const w = window.open('', '_blank', 'width=1000,height=800');
+    if (!w) { showToast('Pop-up blocked — please allow pop-ups for this site.', 'error'); return; }
+    w.document.write(`<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>${esc(title)}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #111; padding: 0.5in; font-size: 9pt; line-height: 1.35; }
+  .print-page { max-width: 7.5in; margin: 0 auto; }
+  .print-header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #6c63ff; padding-bottom: 6px; margin-bottom: 10px; }
+  .print-logo { font-weight: 800; font-size: 11pt; color: #6c63ff; }
+  .print-date { font-size: 8pt; color: #666; }
+  .print-footer { text-align: center; font-size: 7pt; color: #999; margin-top: 12px; padding-top: 6px; border-top: 1px solid #ddd; }
+
+  /* Profile print */
+  .print-athlete-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .print-avatar { width: 44px; height: 44px; border-radius: 50%; background: #6c63ff; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14pt; flex-shrink: 0; }
+  .print-athlete-name { font-size: 13pt; font-weight: 800; }
+  .print-athlete-meta { font-size: 8pt; color: #555; margin-top: 2px; }
+  .print-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .print-section { font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #ccc; padding-bottom: 2px; margin: 8px 0 4px; }
+  .print-metric-table { width: 100%; border-collapse: collapse; font-size: 8pt; }
+  .print-metric-table td, .print-metric-table th { padding: 2px 5px; border-bottom: 1px solid #eee; }
+  .print-metric-table th { text-align: left; font-size: 7pt; text-transform: uppercase; color: #666; }
+  .print-metric-table .num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .print-sc-table thead th { font-size: 7pt; text-transform: uppercase; color: #666; border-bottom: 1px solid #bbb; }
+  .print-analysis { font-size: 8pt; }
+  .print-analysis-block { margin-bottom: 6px; }
+  .print-analysis-block ul { margin-left: 14px; }
+  .print-analysis-block li { margin-bottom: 1px; }
+
+  /* Scorecard print */
+  .print-tier-legend { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; font-size: 7pt; }
+  .print-table-wrap { overflow: visible; }
+  .print-data-table { width: 100%; border-collapse: collapse; font-size: 7.5pt; }
+  .print-data-table th, .print-data-table td { padding: 3px 4px; border: 1px solid #ccc; text-align: center; }
+  .print-data-table th { background: #f0f0f0; font-size: 7pt; text-transform: uppercase; font-weight: 700; }
+  .print-data-table td:first-child, .print-data-table td:nth-child(2), .print-data-table td:nth-child(3) { text-align: left; white-space: nowrap; }
+  .print-data-table small { display: block; font-size: 6.5pt; color: #777; }
+  .print-sc-cell { font-weight: 600; }
+
+  /* Tier coloring */
+  .print-tier { display: inline-block; padding: 1px 5px; border-radius: 3px; font-size: 7pt; font-weight: 700; }
+  .print-tier-elite { background: #d4edda; color: #155724; }
+  .print-tier-strong { background: #cce5ff; color: #004085; }
+  .print-tier-solid { background: #fff3cd; color: #856404; }
+  .print-tier-competitive { background: #ffe0cc; color: #8a4500; }
+  .print-tier-developing { background: #f8d7da; color: #721c24; }
+  .print-tier-bg-elite { background: #d4edda; }
+  .print-tier-bg-strong { background: #cce5ff; }
+  .print-tier-bg-solid { background: #fff3cd; }
+  .print-tier-bg-competitive { background: #ffe0cc; }
+  .print-tier-bg-developing { background: #f8d7da; }
+
+  /* Grade badges */
+  .print-grade { display: inline-block; padding: 1px 5px; border-radius: 3px; font-size: 7pt; font-weight: 700; vertical-align: middle; margin-left: 4px; }
+  .print-grade-elite { background: #d4edda; color: #155724; }
+  .print-grade-excellent { background: #cce5ff; color: #004085; }
+  .print-grade-good { background: #fff3cd; color: #856404; }
+  .print-grade-average { background: #ffe0cc; color: #8a4500; }
+  .print-grade-below { background: #f8d7da; color: #721c24; }
+
+  /* Breakdown cards */
+  .print-breakdown { margin-top: 12px; page-break-inside: avoid; }
+  .print-breakdown h3 { font-size: 10pt; margin-bottom: 8px; border-bottom: 1px solid #6c63ff; padding-bottom: 3px; color: #6c63ff; }
+  .print-bd-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .print-bd-card { border: 1px solid #ddd; border-radius: 4px; padding: 8px; }
+  .print-bd-title { font-size: 8pt; font-weight: 700; text-transform: uppercase; color: #555; margin-bottom: 4px; }
+  .print-bd-big { font-size: 18pt; font-weight: 800; margin-bottom: 2px; }
+  .print-bd-sub { font-size: 7.5pt; color: #777; }
+  .print-bd-card ul, .print-bd-card ol { margin-left: 14px; font-size: 8pt; }
+  .print-bd-card li { margin-bottom: 2px; }
+  .print-tier-dist { width: 100%; font-size: 8pt; margin-top: 6px; }
+  .print-tier-dist td { padding: 1px 4px; }
+  .print-coaching-notes { margin-top: 10px; border: 1px solid #e0d6ff; background: #f8f6ff; border-radius: 4px; padding: 8px; font-size: 8pt; }
+  .print-coaching-notes ul { margin-left: 14px; margin-top: 4px; }
+  .print-coaching-notes li { margin-bottom: 3px; }
+
+  .na { color: #aaa; }
+  @media print {
+    body { padding: 0; }
+    @page { size: ${bodyHTML.includes('print-scorecard-page') ? 'landscape' : 'portrait'}; margin: 0.4in; }
+  }
+</style></head><body>${bodyHTML}</body></html>`);
+    w.document.close();
+    setTimeout(() => { w.focus(); w.print(); }, 400);
+  }
 
   /* ========== HEAD-TO-HEAD COMPARISON ========== */
   let cmpChartInstance = null;
