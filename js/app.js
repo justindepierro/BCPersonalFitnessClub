@@ -1966,9 +1966,14 @@
           '<button class="btn btn-sm btn-primary" onclick="document.querySelector(\'.test-history-modal\').remove(); saveAllAsTestDate()">📅 Save New Test Date</button>' +
           '<button class="btn btn-sm" onclick="exportTestHistoryOnly()">📤 Export All Test History</button>' +
           '<label class="btn btn-sm" style="cursor:pointer">📥 Import Test History<input type="file" accept=".json" onchange="importTestHistoryOnly(this)" style="display:none" /></label>' +
+          '<div class="th-view-toggle">' +
+          '<button class="btn btn-sm th-view-btn active" data-view="list" onclick="switchThView(\'list\')">☰ List</button>' +
+          '<button class="btn btn-sm th-view-btn" data-view="calendar" onclick="switchThView(\'calendar\')">📅 Calendar</button>' +
+          '</div>' +
           '</div>'
         : '') +
-      (emptyState || '<div class="th-card-list">' + cards + '</div>') +
+      (emptyState || '<div id="thListView" class="th-card-list">' + cards + '</div>') +
+      '<div id="thCalendarView" class="th-calendar-wrap" style="display:none"></div>' +
       '<div class="th-new-test-bar"><button class="btn btn-primary" onclick="openNewTestEntry()">➕ Start New Test Session</button></div>' +
       '<p class="th-footer-note">Test history is included in full JSON exports and restored on import.</p>' +
       '</div>';
@@ -1989,6 +1994,153 @@
       if (ev.target === overlay) overlay.remove();
     });
     document.body.appendChild(overlay);
+
+    // Store tests for calendar view
+    window._thTestsCache = tests;
+    // Build calendar content
+    if (tests.length > 0) buildTestCalendar(tests);
+  };
+
+  /* --- View toggle (List / Calendar) --- */
+  window.switchThView = function (view) {
+    var listEl = document.getElementById('thListView');
+    var calEl = document.getElementById('thCalendarView');
+    if (!listEl || !calEl) return;
+    var btns = document.querySelectorAll('.th-view-btn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('active', btns[i].getAttribute('data-view') === view);
+    }
+    listEl.style.display = view === 'list' ? '' : 'none';
+    calEl.style.display = view === 'calendar' ? '' : 'none';
+  };
+
+  /* --- Calendar view builder --- */
+  function buildTestCalendar(tests) {
+    var wrap = document.getElementById('thCalendarView');
+    if (!wrap) return;
+
+    // Group tests by YYYY-MM
+    var byMonth = {};
+    var allDates = [];
+    for (var i = 0; i < tests.length; i++) {
+      var d = tests[i].date;
+      var ym = d.substring(0, 7); // "YYYY-MM"
+      if (!byMonth[ym]) byMonth[ym] = {};
+      var day = parseInt(d.substring(8, 10), 10);
+      if (!byMonth[ym][day]) byMonth[ym][day] = [];
+      byMonth[ym][day].push(tests[i]);
+      if (allDates.indexOf(d) === -1) allDates.push(d);
+    }
+
+    // Sort months chronologically (newest first)
+    var months = Object.keys(byMonth).sort(function (a, b) {
+      return a > b ? -1 : a < b ? 1 : 0;
+    });
+
+    var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
+    var DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    var html = '';
+    for (var mi = 0; mi < months.length; mi++) {
+      var ym = months[mi];
+      var parts = ym.split('-');
+      var year = parseInt(parts[0], 10);
+      var month = parseInt(parts[1], 10) - 1; // 0-indexed
+      var monthName = MONTH_NAMES[month];
+      var daysInMonth = new Date(year, month + 1, 0).getDate();
+      var firstDow = new Date(year, month, 1).getDay(); // 0=Sun
+
+      // Count total sessions this month
+      var monthTests = byMonth[ym];
+      var sessionCount = 0;
+      for (var dk in monthTests) sessionCount += monthTests[dk].length;
+
+      html += '<div class="cal-month">';
+      html += '<div class="cal-month-header"><span class="cal-month-name">' + monthName + ' ' + year + '</span><span class="cal-month-count">' + sessionCount + ' session' + (sessionCount !== 1 ? 's' : '') + '</span></div>';
+      html += '<div class="cal-grid">';
+      // Day-of-week headers
+      for (var dh = 0; dh < 7; dh++) {
+        html += '<div class="cal-dow">' + DAY_NAMES[dh] + '</div>';
+      }
+      // Leading blanks
+      for (var lb = 0; lb < firstDow; lb++) {
+        html += '<div class="cal-day cal-blank"></div>';
+      }
+      // Days
+      for (var day = 1; day <= daysInMonth; day++) {
+        var dayTests = monthTests[day] || [];
+        var hasTests = dayTests.length > 0;
+        var dayClass = 'cal-day' + (hasTests ? ' cal-has-test' : '');
+        if (hasTests) {
+          html += '<div class="' + dayClass + '" onclick="calDayClick(this)">';
+          html += '<span class="cal-day-num">' + day + '</span>';
+          html += '<div class="cal-dots">';
+          for (var dt = 0; dt < dayTests.length; dt++) {
+            html += '<span class="cal-dot" title="' + esc(dayTests[dt].label) + ' (' + dayTests[dt].count + ' athletes)"></span>';
+          }
+          html += '</div>';
+          // Hidden detail panel
+          html += '<div class="cal-day-detail" style="display:none">';
+          for (var dt2 = 0; dt2 < dayTests.length; dt2++) {
+            var t = dayTests[dt2];
+            var eDate = t.date.replace(/'/g, "\\'");
+            var eLabel = t.label.replace(/'/g, "\\'");
+            html += '<div class="cal-test-item">';
+            html += '<span class="cal-test-label">' + esc(t.label) + '</span>';
+            html += '<span class="cal-test-count">' + t.count + ' athlete' + (t.count !== 1 ? 's' : '') + '</span>';
+            html += '<div class="cal-test-actions">';
+            html += '<button class="btn btn-xs btn-primary" onclick="event.stopPropagation(); openNewTestEntry(\'' + eDate + "','" + eLabel + '\')" title="Open worksheet">📝</button>';
+            html += '<button class="btn btn-xs" onclick="event.stopPropagation(); applyTestAsCurrent(\'' + eDate + "','" + eLabel + '\')" title="Apply as current">🔄</button>';
+            html += '<button class="btn btn-xs btn-muted" onclick="event.stopPropagation(); deleteBulkTestEntry(\'' + eDate + "','" + eLabel + '\')" title="Delete">🗑</button>';
+            html += '</div></div>';
+          }
+          html += '</div>';
+          html += '</div>';
+        } else {
+          html += '<div class="' + dayClass + '"><span class="cal-day-num">' + day + '</span></div>';
+        }
+      }
+      html += '</div></div>';
+    }
+
+    // Timeline below the calendar
+    html += '<div class="cal-timeline">';
+    html += '<div class="cal-timeline-title">📅 Chronological Timeline</div>';
+    // Sort tests oldest to newest for timeline
+    var sorted = tests.slice().sort(function (a, b) {
+      return a.date > b.date ? 1 : a.date < b.date ? -1 : 0;
+    });
+    for (var ti = 0; ti < sorted.length; ti++) {
+      var st = sorted[ti];
+      var eDate2 = st.date.replace(/'/g, "\\'");
+      var eLabel2 = st.label.replace(/'/g, "\\'");
+      html += '<div class="cal-tl-item">';
+      html += '<div class="cal-tl-dot"></div>';
+      html += '<div class="cal-tl-content">';
+      html += '<div class="cal-tl-date">' + esc(st.date) + '</div>';
+      html += '<div class="cal-tl-label">' + esc(st.label) + '</div>';
+      html += '<div class="cal-tl-meta">' + st.count + ' athlete' + (st.count !== 1 ? 's' : '') + '</div>';
+      html += '<div class="cal-tl-actions">';
+      html += '<button class="btn btn-xs btn-primary" onclick="openNewTestEntry(\'' + eDate2 + "','" + eLabel2 + '\')">📝 Worksheet</button>';
+      html += '<button class="btn btn-xs" onclick="applyTestAsCurrent(\'' + eDate2 + "','" + eLabel2 + '\')">🔄 Apply</button>';
+      html += '</div>';
+      html += '</div></div>';
+    }
+    html += '</div>';
+
+    wrap.innerHTML = html;
+  }
+
+  window.calDayClick = function (el) {
+    var detail = el.querySelector('.cal-day-detail');
+    if (!detail) return;
+    // Close any other open details
+    var allOpen = document.querySelectorAll('.cal-day-detail[style*="block"]');
+    for (var i = 0; i < allOpen.length; i++) {
+      if (allOpen[i] !== detail) allOpen[i].style.display = 'none';
+    }
+    detail.style.display = detail.style.display === 'none' ? 'block' : 'none';
   };
 
   /* --- Inline cell editing in test history modal --- */
