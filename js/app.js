@@ -1919,6 +1919,7 @@
       cards += '</div>';
       cards += '<div class="th-card-actions">';
       cards += '<button class="btn btn-xs" onclick="toggleTestDetail(' + ci + ')" title="View athlete details">👤 Details</button>';
+      cards += '<button class="btn btn-xs btn-primary" onclick="openNewTestEntry(\'' + escapedDate + "','" + escapedLabel + '\')" title="Open full worksheet for editing">📝 Worksheet</button>';
       cards += '<button class="btn btn-xs" onclick="renameTestDate(\'' + escapedDate + "','" + escapedLabel + '\')" title="Rename this test">✏️ Rename</button>';
       cards += '<button class="btn btn-xs" onclick="exportSingleTest(\'' + escapedDate + "','" + escapedLabel + '\')" title="Export this test as JSON">📤 Export</button>';
       cards += '<button class="btn btn-xs btn-muted" onclick="deleteBulkTestEntry(\'' + escapedDate + "','" + escapedLabel + '\')" title="Delete this test for all athletes">🗑 Delete</button>';
@@ -1967,6 +1968,7 @@
           '</div>'
         : '') +
       (emptyState || '<div class="th-card-list">' + cards + '</div>') +
+      '<div class="th-new-test-bar"><button class="btn btn-primary" onclick="openNewTestEntry()">➕ Start New Test Session</button></div>' +
       '<p class="th-footer-note">Test history is included in full JSON exports and restored on import.</p>' +
       '</div>';
 
@@ -2038,24 +2040,48 @@
 
     // Update localStorage
     var h = getTestHistory();
-    if (h[aid]) {
-      for (var i = 0; i < h[aid].length; i++) {
-        if (h[aid][i].date === date && h[aid][i].label === label) {
-          if (newVal === '') {
-            h[aid][i].values[key] = null;
-          } else {
-            h[aid][i].values[key] = parseFloat(newVal);
-          }
-          break;
+    if (!h[aid]) h[aid] = [];
+    var found = false;
+    for (var i = 0; i < h[aid].length; i++) {
+      if (h[aid][i].date === date && h[aid][i].label === label) {
+        if (newVal === '') {
+          h[aid][i].values[key] = null;
+        } else {
+          h[aid][i].values[key] = parseFloat(newVal);
         }
+        found = true;
+        break;
       }
-      setTestHistory(h);
     }
+    if (!found) {
+      var newEntry = { date: date, label: label, values: {} };
+      newEntry.values[key] = newVal === '' ? null : parseFloat(newVal);
+      h[aid].push(newEntry);
+    }
+    setTestHistory(h);
 
     // Update cell display
     td.textContent = newVal || '—';
     td.classList.add('ie-saved');
     setTimeout(function () { td.classList.remove('ie-saved'); }, 800);
+
+    // Update progress column if in test entry worksheet
+    var row = td.closest('tr');
+    if (row) {
+      var progressCell = row.querySelector('.te-progress');
+      if (progressCell) {
+        var cells = row.querySelectorAll('.ie-cell');
+        var filled = 0;
+        cells.forEach(function (c) {
+          var t = c.textContent.trim();
+          if (t && t !== '—') filled++;
+        });
+        var pct = Math.round((filled / TEST_METRIC_KEYS.length) * 100);
+        progressCell.textContent = pct + '%';
+        progressCell.className = 'te-progress ' + (pct === 100 ? 'te-complete' : pct > 0 ? 'te-partial' : 'te-none');
+      }
+    }
+
     // Refresh profile if visible
     var selId = document.getElementById('athleteSelect').value;
     if (selId) renderProfile();
@@ -2204,6 +2230,118 @@
       inputEl.value = '';
     };
     reader.readAsText(file);
+  };
+
+  /* --- Open a blank test entry worksheet for all athletes --- */
+  window.openNewTestEntry = function (prefillDate, prefillLabel) {
+    // Close test history modal if open
+    var existing = document.querySelector('.test-history-modal');
+    if (existing) existing.remove();
+
+    var today = new Date().toISOString().slice(0, 10);
+    var dateStr = prefillDate || null;
+    var label = prefillLabel || null;
+
+    if (!dateStr) {
+      dateStr = prompt('Test date (YYYY-MM-DD):', today);
+      if (!dateStr || !dateStr.trim()) return;
+      dateStr = dateStr.trim();
+    }
+    if (!label) {
+      label = prompt('Test name / label:', 'Test ' + dateStr);
+      if (!label || !label.trim()) return;
+      label = label.trim();
+    }
+
+    var D = window.CLUB;
+    var athletes = D.athletes.slice().sort(function (a, b) {
+      return a.name.localeCompare(b.name);
+    });
+    var h = getTestHistory();
+
+    // Ensure every athlete has an entry for this date+label (even if empty)
+    for (var i = 0; i < athletes.length; i++) {
+      var aid = athletes[i].id;
+      if (!h[aid]) h[aid] = [];
+      var exists = h[aid].some(function (e) { return e.date === dateStr && e.label === label; });
+      if (!exists) {
+        h[aid].push({ date: dateStr, label: label, values: {} });
+      }
+    }
+    setTestHistory(h);
+
+    // Re-read after creating entries
+    h = getTestHistory();
+
+    // Build the worksheet table
+    var safeDate = esc(dateStr);
+    var safeLabel = esc(label);
+    var rows = '';
+    var filledCount = 0;
+    for (var ai = 0; ai < athletes.length; ai++) {
+      var a = athletes[ai];
+      var entry = null;
+      if (h[a.id]) {
+        for (var ei = 0; ei < h[a.id].length; ei++) {
+          if (h[a.id][ei].date === dateStr && h[a.id][ei].label === label) {
+            entry = h[a.id][ei];
+            break;
+          }
+        }
+      }
+      var vals = entry ? entry.values : {};
+      var metricCount = 0;
+      rows += '<tr>';
+      rows += '<td class="te-athlete-name">' + esc(a.name) + '</td>';
+      for (var mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
+        var key = TEST_METRIC_KEYS[mk].jsonKey;
+        var val = vals[key];
+        var display = (val !== null && val !== undefined) ? val : '';
+        if (display !== '') metricCount++;
+        rows += '<td class="ie-cell" data-aid="' + esc(a.id) + '" data-date="' + safeDate + '" data-label="' + safeLabel + '" data-key="' + key + '" onclick="inlineEditCell(this)" title="Click to enter ' + TEST_METRIC_KEYS[mk].label + '">' + (display !== '' ? display : '<span class="te-empty-cell">—</span>') + '</td>';
+      }
+      if (metricCount > 0) filledCount++;
+      var pct = Math.round((metricCount / TEST_METRIC_KEYS.length) * 100);
+      var pctClass = pct === 100 ? 'te-complete' : pct > 0 ? 'te-partial' : 'te-none';
+      rows += '<td class="te-progress ' + pctClass + '">' + pct + '%</td>';
+      rows += '</tr>';
+    }
+
+    var bodyHTML =
+      '<div class="th-modal-body">' +
+      '<div class="th-modal-header">' +
+      '<h2>📝 ' + safeLabel + '</h2>' +
+      '<p class="th-summary">' + safeDate + ' · ' + athletes.length + ' athletes · Click any cell to enter data</p>' +
+      '</div>' +
+      '<div class="te-instructions">' +
+      '<span>💡 Click a cell to enter a value. <strong>Tab</strong> moves to the next cell. <strong>Enter</strong> saves. <strong>Esc</strong> cancels. Data saves automatically.</span>' +
+      '</div>' +
+      '<div class="te-table-wrap">' +
+      '<table class="th-detail-table te-table">' +
+      '<thead><tr><th class="te-athlete-col">Athlete</th>';
+    for (var hk = 0; hk < TEST_METRIC_KEYS.length; hk++) {
+      bodyHTML += '<th>' + TEST_METRIC_KEYS[hk].label + ' <small class="te-unit">(' + TEST_METRIC_KEYS[hk].unit + ')</small></th>';
+    }
+    bodyHTML += '<th>Done</th></tr></thead>';
+    bodyHTML += '<tbody>' + rows + '</tbody></table></div>';
+    bodyHTML += '<div class="te-footer">';
+    bodyHTML += '<span class="te-footer-stat">' + filledCount + '/' + athletes.length + ' athletes have data</span>';
+    bodyHTML += '<div class="te-footer-actions">';
+    bodyHTML += '<button class="btn btn-sm" onclick="document.querySelector(\'.te-modal\').remove(); viewSavedTests()">← Back to Test History</button>';
+    bodyHTML += '<button class="btn btn-sm btn-primary" onclick="document.querySelector(\'.te-modal\').remove(); viewSavedTests()">✅ Done</button>';
+    bodyHTML += '</div></div></div>';
+
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay te-modal';
+    overlay.innerHTML =
+      '<div class="modal-content th-modal-content te-content">' +
+      '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' +
+      bodyHTML +
+      '</div>';
+    overlay.addEventListener('click', function (ev) {
+      if (ev.target === overlay) overlay.remove();
+    });
+    document.body.appendChild(overlay);
   };
 
   window.deleteBulkTestEntry = function (date, label) {

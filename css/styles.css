@@ -2550,6 +2550,94 @@ select:focus,
   color: var(--accent);
 }
 
+/* ---------- New Test Bar (bottom of card list) ---------- */
+.th-new-test-bar {
+  display: flex;
+  justify-content: center;
+  padding: 1.25rem 0 0.5rem;
+}
+
+/* ---------- Test Entry Worksheet ---------- */
+.te-content {
+  max-width: 1050px;
+}
+.te-instructions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(108, 99, 255, 0.08);
+  border: 1px solid rgba(108, 99, 255, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.85rem;
+  margin-bottom: 1rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.te-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.te-table {
+  min-width: 750px;
+}
+.te-athlete-col {
+  min-width: 120px;
+  position: sticky;
+  left: 0;
+  background: var(--surface2);
+  z-index: 1;
+}
+.te-athlete-name {
+  font-weight: 600;
+  white-space: nowrap;
+  position: sticky;
+  left: 0;
+  background: var(--bg);
+  z-index: 1;
+}
+.te-unit {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 0.62rem;
+}
+.te-empty-cell {
+  color: var(--border);
+}
+.te-progress {
+  text-align: center !important;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.te-complete {
+  color: #4ade80;
+}
+.te-partial {
+  color: #facc15;
+}
+.te-none {
+  color: var(--text-muted);
+}
+.te-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+.te-footer-stat {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.te-footer-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 /* ---------- Inline Cell Editing ---------- */
 .ie-cell {
   cursor: pointer;
