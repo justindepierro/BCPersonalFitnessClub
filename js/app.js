@@ -1,5 +1,5 @@
 /* ===================================================
-   app.js — Lifting Club Dashboard
+   app.js — BC Personal Fitness Club Dashboard
    Renders all tabs: Overview, Profiles, Leaderboards,
    Sprint Analysis, Strength & Power, Scorecard,
    Benchmarks, Testing Log, Testing Week Plan.
@@ -1948,7 +1948,7 @@
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "lifting_club_data.csv";
+    link.download = "bc_fitness_club_data.csv";
     link.click();
     URL.revokeObjectURL(link.href);
   };
@@ -2783,7 +2783,7 @@
     const D = window.CLUB;
     const exportData = {
       exportDate: new Date().toISOString(),
-      source: "Lifting Club Dashboard",
+      source: "BC Personal Fitness Club Dashboard",
       athleteCount: D.athletes.length,
       athletes: D.athletes.map(function (a) {
         return {
@@ -2820,7 +2820,7 @@
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download =
-      "lifting_club_data_" + new Date().toISOString().slice(0, 10) + ".json";
+      "bc_fitness_club_data_" + new Date().toISOString().slice(0, 10) + ".json";
     link.click();
     URL.revokeObjectURL(link.href);
     showToast("JSON exported — " + D.athletes.length + " athletes", "success");
@@ -2847,7 +2847,7 @@
         }
 
         /* --- Check if this is an exported JSON (has source field) or raw format --- */
-        const isExport = data.source === "Lifting Club Dashboard";
+        const isExport = data.source === "BC Personal Fitness Club Dashboard" || data.source === "Lifting Club Dashboard";
 
         /* --- Map athletes back to raw format --- */
         const rawAthletes = athletes.map(function (a) {
