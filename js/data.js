@@ -38,12 +38,47 @@
     return String(v).trim() || null;
   }
 
-  function posGroup(pos) {
+  /* Sport → position → group mapping */
+  const SPORT_POSITIONS = {
+    Football: {
+      positions: ["RB", "WR", "DB", "QB", "TE", "LB", "OL", "DL"],
+      groups: {
+        Skill: ["RB", "WR", "DB"],
+        "Big Skill": ["QB", "TE", "LB"],
+        Linemen: ["OL", "DL"],
+      },
+    },
+    Soccer: {
+      positions: ["GK", "MF", "ATK", "DEF"],
+      groups: {
+        Speed: ["ATK", "MF"],
+        Physical: ["DEF", "GK"],
+      },
+    },
+    Baseball: {
+      positions: ["IF", "OF", "P", "C"],
+      groups: {
+        "Position Player": ["IF", "OF"],
+        Battery: ["P", "C"],
+      },
+    },
+    Basketball: {
+      positions: ["Guard", "Big"],
+      groups: {
+        Guard: ["Guard"],
+        Big: ["Big"],
+      },
+    },
+  };
+
+  function posGroup(pos, sport) {
     if (!pos) return "Other";
     const p = pos.toUpperCase();
-    if (["RB", "WR", "DB"].includes(p)) return "Skill";
-    if (["QB", "TE", "LB"].includes(p)) return "Big Skill";
-    if (["OL", "DL"].includes(p)) return "Linemen";
+    const sp = SPORT_POSITIONS[sport || "Football"];
+    if (!sp) return "Other";
+    for (const g in sp.groups) {
+      if (sp.groups[g].map((x) => x.toUpperCase()).includes(p)) return g;
+    }
     return "Other";
   }
 
@@ -109,9 +144,10 @@
   }
 
   /* ---------- HS Performance Standards (absolute thresholds) ---------- */
-  /* Based on NSCA HS football norms, state combine data, and published S&C literature.
+  /* Based on NSCA HS norms, state combine data, and published S&C literature.
      Each array = [Elite, Excellent, Good, Average] thresholds.
-     Values at/above threshold earn that tier (at/below for inverted metrics like 40yd). */
+     Values at/above threshold earn that tier (at/below for inverted metrics like 40yd).
+     Nested by Sport → Position Group. */
   const HS_STANDARDS = {
     _tiers: ["elite", "excellent", "good", "average", "below"],
     _labels: ["Elite", "Excellent", "Good", "Average", "Below Avg"],
@@ -133,67 +169,207 @@
       { key: "F1", label: "Sprint Force", unit: "N" },
       { key: "momMax", label: "Peak Momentum", unit: "kg\u00B7m/s" },
     ],
-    Skill: {
-      forty: [4.75, 4.95, 5.15, 5.35],
-      bench: [205, 175, 145, 115],
-      squat: [335, 285, 235, 185],
-      vert: [33, 29, 25, 21],
-      broad: [106, 98, 90, 82],
-      medball: [185, 165, 148, 130],
-      relBench: [1.3, 1.1, 0.9, 0.7],
-      relSquat: [1.9, 1.65, 1.4, 1.15],
-      mbRel: [1.1, 0.95, 0.8, 0.65],
-      vMax: [9.0, 8.5, 8.0, 7.5],
-      v10Max: [9.0, 8.5, 8.0, 7.5],
-      peakPower: [5200, 4600, 4000, 3500],
-      relPeakPower: [70, 62, 55, 48],
-      F1: [120, 100, 85, 70],
-      momMax: [680, 600, 520, 440],
+    /* --- Grade-based age-adjustment factors (grade 6–12) --- */
+    _ageFactors: {
+      12: 1.0,
+      11: 0.93,
+      10: 0.87,
+      9: 0.80,
+      8: 0.72,
+      7: 0.65,
+      6: 0.58,
     },
-    "Big Skill": {
-      forty: [4.95, 5.15, 5.35, 5.6],
-      bench: [255, 215, 175, 140],
-      squat: [350, 300, 250, 200],
-      vert: [31, 27, 23, 19],
-      broad: [103, 95, 87, 79],
-      medball: [200, 178, 158, 138],
-      relBench: [1.4, 1.2, 1.0, 0.8],
-      relSquat: [1.85, 1.6, 1.35, 1.1],
-      mbRel: [1.05, 0.9, 0.78, 0.65],
-      vMax: [8.8, 8.3, 7.8, 7.3],
-      v10Max: [8.8, 8.3, 7.8, 7.3],
-      peakPower: [5800, 5100, 4400, 3800],
-      relPeakPower: [68, 60, 53, 46],
-      F1: [130, 110, 92, 75],
-      momMax: [770, 680, 590, 500],
+    /* ===== Football ===== */
+    Football: {
+      Skill: {
+        forty: [4.75, 4.95, 5.15, 5.35],
+        bench: [205, 175, 145, 115],
+        squat: [335, 285, 235, 185],
+        vert: [33, 29, 25, 21],
+        broad: [106, 98, 90, 82],
+        medball: [185, 165, 148, 130],
+        relBench: [1.3, 1.1, 0.9, 0.7],
+        relSquat: [1.9, 1.65, 1.4, 1.15],
+        mbRel: [1.1, 0.95, 0.8, 0.65],
+        vMax: [9.0, 8.5, 8.0, 7.5],
+        v10Max: [9.0, 8.5, 8.0, 7.5],
+        peakPower: [5200, 4600, 4000, 3500],
+        relPeakPower: [70, 62, 55, 48],
+        F1: [120, 100, 85, 70],
+        momMax: [680, 600, 520, 440],
+      },
+      "Big Skill": {
+        forty: [4.95, 5.15, 5.35, 5.6],
+        bench: [255, 215, 175, 140],
+        squat: [350, 300, 250, 200],
+        vert: [31, 27, 23, 19],
+        broad: [103, 95, 87, 79],
+        medball: [200, 178, 158, 138],
+        relBench: [1.4, 1.2, 1.0, 0.8],
+        relSquat: [1.85, 1.6, 1.35, 1.1],
+        mbRel: [1.05, 0.9, 0.78, 0.65],
+        vMax: [8.8, 8.3, 7.8, 7.3],
+        v10Max: [8.8, 8.3, 7.8, 7.3],
+        peakPower: [5800, 5100, 4400, 3800],
+        relPeakPower: [68, 60, 53, 46],
+        F1: [130, 110, 92, 75],
+        momMax: [770, 680, 590, 500],
+      },
+      Linemen: {
+        forty: [5.25, 5.5, 5.75, 6.0],
+        bench: [290, 250, 210, 170],
+        squat: [375, 325, 275, 225],
+        vert: [29, 25, 21, 17],
+        broad: [98, 90, 82, 74],
+        medball: [210, 188, 168, 148],
+        relBench: [1.35, 1.15, 0.95, 0.75],
+        relSquat: [1.7, 1.45, 1.25, 1.05],
+        mbRel: [0.95, 0.82, 0.72, 0.6],
+        vMax: [8.4, 7.9, 7.4, 6.9],
+        v10Max: [8.4, 7.9, 7.4, 6.9],
+        peakPower: [6300, 5500, 4800, 4100],
+        relPeakPower: [58, 52, 46, 40],
+        F1: [140, 120, 100, 82],
+        momMax: [880, 780, 680, 580],
+      },
     },
-    Linemen: {
-      forty: [5.25, 5.5, 5.75, 6.0],
-      bench: [290, 250, 210, 170],
-      squat: [375, 325, 275, 225],
-      vert: [29, 25, 21, 17],
-      broad: [98, 90, 82, 74],
-      medball: [210, 188, 168, 148],
-      relBench: [1.35, 1.15, 0.95, 0.75],
-      relSquat: [1.7, 1.45, 1.25, 1.05],
-      mbRel: [0.95, 0.82, 0.72, 0.6],
-      vMax: [8.4, 7.9, 7.4, 6.9],
-      v10Max: [8.4, 7.9, 7.4, 6.9],
-      peakPower: [6300, 5500, 4800, 4100],
-      relPeakPower: [58, 52, 46, 40],
-      F1: [140, 120, 100, 82],
-      momMax: [880, 780, 680, 580],
+    /* ===== Soccer ===== */
+    Soccer: {
+      Speed: {
+        forty: [4.85, 5.05, 5.25, 5.45],
+        bench: [155, 135, 115, 95],
+        squat: [275, 235, 200, 165],
+        vert: [30, 26, 22, 18],
+        broad: [102, 94, 86, 78],
+        medball: [170, 152, 136, 120],
+        relBench: [1.05, 0.9, 0.75, 0.6],
+        relSquat: [1.7, 1.45, 1.2, 1.0],
+        mbRel: [1.1, 0.95, 0.8, 0.65],
+        vMax: [8.9, 8.4, 7.9, 7.4],
+        v10Max: [8.9, 8.4, 7.9, 7.4],
+        peakPower: [4600, 4050, 3500, 3000],
+        relPeakPower: [68, 60, 53, 46],
+        F1: [110, 92, 78, 64],
+        momMax: [600, 530, 460, 390],
+      },
+      Physical: {
+        forty: [5.0, 5.2, 5.4, 5.65],
+        bench: [175, 150, 125, 100],
+        squat: [295, 255, 215, 175],
+        vert: [28, 24, 20, 16],
+        broad: [98, 90, 82, 74],
+        medball: [180, 162, 145, 128],
+        relBench: [1.1, 0.95, 0.8, 0.65],
+        relSquat: [1.65, 1.4, 1.2, 1.0],
+        mbRel: [1.0, 0.87, 0.75, 0.62],
+        vMax: [8.6, 8.1, 7.6, 7.1],
+        v10Max: [8.6, 8.1, 7.6, 7.1],
+        peakPower: [5000, 4400, 3800, 3300],
+        relPeakPower: [64, 57, 50, 43],
+        F1: [118, 100, 84, 68],
+        momMax: [660, 580, 500, 420],
+      },
+    },
+    /* ===== Baseball ===== */
+    Baseball: {
+      "Position Player": {
+        forty: [4.85, 5.05, 5.25, 5.45],
+        bench: [185, 160, 135, 110],
+        squat: [295, 255, 215, 175],
+        vert: [30, 26, 22, 18],
+        broad: [102, 94, 86, 78],
+        medball: [185, 166, 148, 130],
+        relBench: [1.15, 1.0, 0.85, 0.7],
+        relSquat: [1.75, 1.5, 1.25, 1.05],
+        mbRel: [1.1, 0.95, 0.8, 0.65],
+        vMax: [8.8, 8.3, 7.8, 7.3],
+        v10Max: [8.8, 8.3, 7.8, 7.3],
+        peakPower: [4800, 4250, 3700, 3200],
+        relPeakPower: [67, 59, 52, 45],
+        F1: [112, 95, 80, 65],
+        momMax: [620, 545, 470, 400],
+      },
+      Battery: {
+        forty: [5.1, 5.3, 5.5, 5.75],
+        bench: [200, 170, 145, 120],
+        squat: [310, 268, 225, 185],
+        vert: [28, 24, 20, 16],
+        broad: [98, 90, 82, 74],
+        medball: [195, 175, 155, 138],
+        relBench: [1.2, 1.05, 0.88, 0.72],
+        relSquat: [1.65, 1.4, 1.2, 1.0],
+        mbRel: [1.0, 0.87, 0.75, 0.62],
+        vMax: [8.4, 7.9, 7.4, 6.9],
+        v10Max: [8.4, 7.9, 7.4, 6.9],
+        peakPower: [5200, 4580, 3960, 3400],
+        relPeakPower: [62, 55, 48, 42],
+        F1: [122, 103, 87, 72],
+        momMax: [700, 618, 535, 455],
+      },
+    },
+    /* ===== Basketball ===== */
+    Basketball: {
+      Guard: {
+        forty: [4.7, 4.9, 5.1, 5.3],
+        bench: [165, 140, 118, 95],
+        squat: [275, 238, 200, 165],
+        vert: [34, 30, 26, 22],
+        broad: [106, 98, 90, 82],
+        medball: [168, 150, 134, 118],
+        relBench: [1.1, 0.95, 0.8, 0.65],
+        relSquat: [1.7, 1.45, 1.2, 1.0],
+        mbRel: [1.1, 0.95, 0.8, 0.65],
+        vMax: [9.0, 8.5, 8.0, 7.5],
+        v10Max: [9.0, 8.5, 8.0, 7.5],
+        peakPower: [4400, 3900, 3400, 2950],
+        relPeakPower: [70, 62, 55, 48],
+        F1: [108, 90, 76, 62],
+        momMax: [580, 510, 440, 375],
+      },
+      Big: {
+        forty: [5.05, 5.25, 5.5, 5.75],
+        bench: [215, 185, 155, 125],
+        squat: [325, 280, 235, 190],
+        vert: [30, 26, 22, 18],
+        broad: [100, 92, 84, 76],
+        medball: [195, 175, 155, 138],
+        relBench: [1.2, 1.05, 0.88, 0.72],
+        relSquat: [1.65, 1.4, 1.2, 1.0],
+        mbRel: [0.95, 0.82, 0.72, 0.6],
+        vMax: [8.5, 8.0, 7.5, 7.0],
+        v10Max: [8.5, 8.0, 7.5, 7.0],
+        peakPower: [5600, 4950, 4300, 3700],
+        relPeakPower: [60, 54, 48, 42],
+        F1: [132, 112, 95, 78],
+        momMax: [780, 690, 600, 510],
+      },
     },
   };
 
-  /* Grade a single value against absolute HS standards */
-  function gradeValue(val, metricKey, group) {
-    const gs = HS_STANDARDS[group];
+  /* Grade a single value against absolute HS standards.
+     sport = "Football"|"Soccer"|"Baseball"|"Basketball"
+     grade = 6–12 (null = no adjustment)
+     ageAdj = true to apply grade-based scaling */
+  function gradeValue(val, metricKey, sport, group, grade, ageAdj) {
+    const sportStds = HS_STANDARDS[sport || "Football"];
+    if (!sportStds) return null;
+    const gs = sportStds[group];
     if (!gs || !gs[metricKey] || val === null || val === undefined) return null;
-    const thresholds = gs[metricKey];
+    let thresholds = gs[metricKey];
     const inverted = HS_STANDARDS._meta.find(
       (m) => m.key === metricKey,
     )?.invert;
+
+    // Apply age-adjustment: scale thresholds down for younger grades
+    if (ageAdj && grade !== null && grade !== undefined) {
+      const factor = HS_STANDARDS._ageFactors[grade];
+      if (factor !== undefined && factor !== 1.0) {
+        thresholds = thresholds.map((t) =>
+          inverted ? rd(t / factor, 2) : rd(t * factor, 2),
+        );
+      }
+    }
+
     for (let i = 0; i < thresholds.length; i++) {
       if (inverted ? val <= thresholds[i] : val >= thresholds[i]) {
         return {
@@ -226,6 +402,9 @@
   function processData(raw) {
     if (raw.constants) Object.assign(C, raw.constants);
 
+    // Check for age-adjusted standards toggle
+    const ageAdj = localStorage.getItem("lc_age_adjusted") === "true";
+
     const athletes = [];
     const positions = new Set();
 
@@ -234,7 +413,10 @@
       if (!name) continue;
 
       const pos = txt(a.position);
-      const group = posGroup(pos);
+      const sport = txt(a.sport) || "Football";
+      const grade = num(a.grade);
+      const trainingAge = grade !== null ? Math.max(0, grade - 8) : null;
+      const group = posGroup(pos, sport);
       const wt = num(a.weight_lb);
       const ht = num(a.height_in);
       if (pos) positions.add(pos);
@@ -340,6 +522,9 @@
         name,
         initials: initials(name),
         position: pos,
+        sport,
+        grade,
+        trainingAge,
         group,
         height: ht,
         heightCm: htCm,
@@ -536,7 +721,7 @@
       const scores = [];
       for (const mk of gradeableKeys) {
         if (a[mk] !== null && a[mk] !== undefined) {
-          const g = gradeValue(a[mk], mk, a.group);
+          const g = gradeValue(a[mk], mk, a.sport, a.group, a.grade, ageAdj);
           if (g) {
             a.grades[mk] = g;
             scores.push(g.score);
@@ -557,6 +742,7 @@
     }
 
     // Group standards
+    // Collect all active groups dynamically from athletes
     const groupStandards = {};
     const stdMetricKeys = [
       "medball",
@@ -566,7 +752,8 @@
       "broad",
       "forty",
     ];
-    for (const grp of ["Skill", "Big Skill", "Linemen", "Other"]) {
+    const allGroups = new Set(athletes.map((a) => a.group));
+    for (const grp of allGroups) {
       const ga = athletes.filter((a) => a.group === grp);
       if (ga.length === 0) continue;
       const stds = {};
@@ -659,6 +846,8 @@
       constants: C,
       athletes,
       hsStandards: HS_STANDARDS,
+      sportPositions: SPORT_POSITIONS,
+      ageAdjusted: ageAdj,
       positions: [...positions].sort(),
       groupStandards,
       stats: statsSummary,

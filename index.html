@@ -195,10 +195,6 @@
             </select>
             <select id="overviewGroupFilter" onchange="renderOverview()">
               <option value="all">All Groups</option>
-              <option value="Skill">Skill</option>
-              <option value="Big Skill">Big Skill</option>
-              <option value="Linemen">Linemen</option>
-              <option value="Other">Other</option>
             </select>
             <select id="overviewGradeFilter" onchange="renderOverview()">
               <option value="all">All Grades</option>
@@ -230,6 +226,9 @@
                   title="Position group: Skill, Big Skill, Linemen, or Other"
                 >
                   Group
+                </th>
+                <th data-sort="grade" title="Current grade level (6th–12th)">
+                  Grade
                 </th>
                 <th
                   data-sort="height"
@@ -287,9 +286,9 @@
                 </th>
                 <th
                   data-sort="overallGrade"
-                  title="Overall grade based on absolute HS performance standards. Average of all available metric grades."
+                  title="Overall rating based on HS performance standards. Average of all available metric grades."
                 >
-                  Grade
+                  Rating
                 </th>
               </tr>
             </thead>
@@ -381,10 +380,6 @@
             </select>
             <select id="lbGroupFilter" onchange="renderLeaderboards()">
               <option value="all">All Groups</option>
-              <option value="Skill">Skill</option>
-              <option value="Big Skill">Big Skill</option>
-              <option value="Linemen">Linemen</option>
-              <option value="Other">Other</option>
             </select>
           </div>
         </div>
@@ -1827,10 +1822,6 @@
           <div class="filters">
             <select id="grpDash" onchange="renderGroupDashboard()">
               <option value="all">All Groups</option>
-              <option value="Skill">Skill</option>
-              <option value="Big Skill">Big Skill</option>
-              <option value="Linemen">Linemen</option>
-              <option value="Other">Other</option>
             </select>
           </div>
         </div>
@@ -1848,17 +1839,20 @@
           <h2>Performance Standards</h2>
         </div>
         <p class="section-desc">
-          Absolute HS football performance standards by position group. Grades
-          are based on published norms (NSCA, state combine data) with 5 tiers:
-          Elite, Excellent, Good, Average, Below Avg. Filter by group and metric
+          Absolute HS performance standards by sport and position group. Grades
+          are based on published norms (NSCA, state combine data, S&amp;C literature) with 5 tiers:
+          Elite, Excellent, Good, Average, Below Avg. Filter by sport, group, and metric
           to drill down.
         </p>
         <div class="filters">
+          <select id="bmSport" onchange="updateBmGroupOptions(); renderBenchmarks()">
+            <option value="Football">Football</option>
+            <option value="Soccer">Soccer</option>
+            <option value="Baseball">Baseball</option>
+            <option value="Basketball">Basketball</option>
+          </select>
           <select id="bmGroup" onchange="renderBenchmarks()">
             <option value="all">All Groups</option>
-            <option value="Skill">Skill (RB/WR/DB)</option>
-            <option value="Big Skill">Big Skill (QB/TE/LB)</option>
-            <option value="Linemen">Linemen (OL/DL)</option>
           </select>
           <select id="bmMetric" onchange="renderBenchmarks()">
             <option value="all">All Metrics</option>
@@ -2018,6 +2012,18 @@
           >
             📥 Import JSON
           </button>
+          <span class="data-mgmt-sep">|</span>
+          <label
+            class="toggle-label"
+            title="Adjust performance standards based on each athlete's grade level (training age)"
+          >
+            <input
+              type="checkbox"
+              id="ageAdjToggle"
+              onchange="toggleAgeAdjusted(this.checked)"
+            />
+            <span>Age-Adjusted Standards</span>
+          </label>
         </div>
         <div class="data-mgmt-right">
           <span id="dataStatus" class="data-status"></span>

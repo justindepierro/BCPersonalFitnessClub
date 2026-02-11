@@ -900,6 +900,36 @@ select:focus,
   color: var(--text-muted);
 }
 
+/* Soccer groups */
+.group-Speed {
+  background: var(--green-bg);
+  color: var(--green);
+}
+.group-Physical {
+  background: var(--blue-bg);
+  color: var(--blue);
+}
+
+/* Baseball groups */
+.group-PositionPlayer {
+  background: var(--green-bg);
+  color: var(--green);
+}
+.group-Battery {
+  background: var(--orange-bg);
+  color: var(--orange);
+}
+
+/* Basketball groups */
+.group-Guard {
+  background: var(--green-bg);
+  color: var(--green);
+}
+.group-Big {
+  background: var(--blue-bg);
+  color: var(--blue);
+}
+
 /* ---------- Info Banner ---------- */
 .info-banner {
   background: var(--surface);
@@ -2085,6 +2115,25 @@ select:focus,
 .data-status.has-edits {
   color: var(--yellow);
   font-weight: 600;
+}
+
+/* ---------- Toggle label ---------- */
+.toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-label input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  cursor: pointer;
 }
 
 /* ---------- Loading indicator ---------- */

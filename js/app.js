@@ -54,6 +54,14 @@
     return ft + "'" + (Number.isInteger(ins) ? ins : ins.toFixed(1)) + '"';
   }
 
+  /* ---------- Format grade as ordinal (6th, 7th, … 12th) ---------- */
+  function ordGrade(g) {
+    if (g === null || g === undefined) return "N/A";
+    const s = ["th", "st", "nd", "rd"];
+    const v = g % 100;
+    return g + (s[(v - 20) % 10] || s[v] || s[0]);
+  }
+
   /* ---------- Tier label from average score ---------- */
   function tierLabelFromAvg(avg) {
     if (avg >= 4.5) return "Elite";
@@ -593,6 +601,12 @@
     const D = window.CLUB;
     document.getElementById("exportDate").textContent = D.exportDate;
 
+    // Restore age-adjusted toggle state
+    const ageToggle = document.getElementById("ageAdjToggle");
+    if (ageToggle) {
+      ageToggle.checked = localStorage.getItem("lc_age_adjusted") === "true";
+    }
+
     // Populate position filter
     const posSel = document.getElementById("overviewPosFilter");
     const lbPosSel = document.getElementById("lbPosFilter");
@@ -606,6 +620,23 @@
       o2.textContent = p;
       lbPosSel.appendChild(o2);
     });
+
+    // Populate dynamic group filters from actual athlete groups
+    const activeGroups = [...new Set(D.athletes.map((a) => a.group))].sort();
+    const groupSelects = [
+      document.getElementById("overviewGroupFilter"),
+      document.getElementById("lbGroupFilter"),
+      document.getElementById("grpDash"),
+    ];
+    for (const gs of groupSelects) {
+      if (!gs) continue;
+      for (const g of activeGroups) {
+        const o = document.createElement("option");
+        o.value = g;
+        o.textContent = g;
+        gs.appendChild(o);
+      }
+    }
 
     // Populate athlete selector + scorecard filter + comparison selects
     const athSel = document.getElementById("athleteSelect");
@@ -909,6 +940,7 @@
         <td><strong>${esc(a.name)}</strong>${!isTested ? ' <span class="untested-badge">Untested</span>' : ""}</td>
         <td>${esc(a.position) || "—"}</td>
         <td><span class="group-tag group-${a.group.replace(/\s/g, "")}">${esc(a.group)}</span></td>
+        <td class="num">${a.grade ? ordGrade(a.grade) : "—"}</td>
         ${tdNum(a.height, 0)}
         ${tdNum(a.weight)}
         ${tdGraded(a.bench, 0, a.grades.bench)}
@@ -965,11 +997,15 @@
         <div>
           <div class="profile-name">${esc(a.name)} ${a.overallGrade ? `<span class="grade-badge grade-bg-${a.overallGrade.tier}" style="font-size:.7rem;vertical-align:middle;margin-left:.5rem">${a.overallGrade.label} (${a.overallGrade.score})</span>` : ""}</div>
           <div class="profile-meta">
+            <span class="meta-item"><strong>Sport:</strong> ${esc(a.sport) || "Football"}</span>
             <span class="meta-item"><strong>Position:</strong> ${esc(a.position) || "N/A"}</span>
             <span class="meta-item"><strong>Group:</strong> <span class="group-tag group-${a.group.replace(/\s/g, "")}">${a.group}</span></span>
+            <span class="meta-item"><strong>Grade:</strong> ${a.grade ? ordGrade(a.grade) : "N/A"}</span>
+            <span class="meta-item"><strong>Training Age:</strong> ${a.trainingAge !== null ? a.trainingAge + " yr" + (a.trainingAge !== 1 ? "s" : "") : "N/A"}</span>
             <span class="meta-item"><strong>Height:</strong> ${a.height ? fmtHeight(a.height) + " (" + a.height + " in)" : "N/A"}</span>
             <span class="meta-item"><strong>Weight:</strong> ${a.weight ? a.weight + " lb (" + a.massKg + " kg)" : "N/A"}</span>
             <span class="meta-item"><strong>ID:</strong> ${a.id}</span>
+            ${D.ageAdjusted ? '<span class="meta-item"><span class="grade-badge grade-bg-good" style="font-size:.65rem">Age-Adjusted</span></span>' : ""}
           </div>
         </div>
       </div>
@@ -3859,15 +3895,40 @@
   };
 
   /* ========== PERFORMANCE STANDARDS ========== */
+  window.updateBmGroupOptions = function () {
+    const sport = document.getElementById("bmSport")?.value || "Football";
+    const sel = document.getElementById("bmGroup");
+    if (!sel) return;
+    const STD = window.CLUB?.hsStandards;
+    if (!STD || !STD[sport]) return;
+    const sp = window.CLUB.sportPositions[sport];
+    sel.innerHTML = '<option value="all">All Groups</option>';
+    for (const g of Object.keys(STD[sport])) {
+      const posInGroup = sp?.groups[g] || [];
+      const lbl = g + (posInGroup.length ? " (" + posInGroup.join("/") + ")" : "");
+      sel.innerHTML += '<option value="' + g + '">' + lbl + "</option>";
+    }
+  };
+
   window.renderBenchmarks = function () {
     const D = window.CLUB;
+    const sFilter = document.getElementById("bmSport")?.value || "Football";
+    // Ensure group options match selected sport
+    window.updateBmGroupOptions();
     const gFilter = document.getElementById("bmGroup").value;
     const mFilter = document.getElementById("bmMetric").value;
     const container = document.getElementById("benchmarksContent");
     const STD = D.hsStandards;
 
+    const sportStds = STD[sFilter];
+    if (!sportStds) {
+      container.innerHTML =
+        '<p class="placeholder-text">No standards defined for ' + sFilter + ".</p>";
+      return;
+    }
+    const allGroups = Object.keys(sportStds);
     const groups =
-      gFilter === "all" ? ["Skill", "Big Skill", "Linemen"] : [gFilter];
+      gFilter === "all" ? allGroups : [gFilter];
     const metricMeta = STD._meta;
     const shownMetrics =
       mFilter === "all"
@@ -3886,15 +3947,13 @@
     </div>`;
 
     for (const g of groups) {
-      const gs = STD[g];
+      const gs = sportStds[g];
       if (!gs) continue;
-      const groupAthletes = D.athletes.filter((a) => a.group === g);
-      const groupLabel =
-        g === "Skill"
-          ? "Skill (RB/WR/DB)"
-          : g === "Big Skill"
-            ? "Big Skill (QB/TE/LB)"
-            : "Linemen (OL/DL)";
+      const groupAthletes = D.athletes.filter((a) => a.group === g && a.sport === sFilter);
+      // Build label showing positions in this group
+      const sp = D.sportPositions[sFilter];
+      const posInGroup = sp?.groups[g] || [];
+      const groupLabel = g + (posInGroup.length ? " (" + posInGroup.join("/") + ")" : "");
 
       html += `<div class="standards-group"><h3>${groupLabel} <small>(n=${groupAthletes.length})</small></h3>`;
 
@@ -4992,7 +5051,7 @@
     const gFilter = document.getElementById("grpDash").value;
     const groups =
       gFilter === "all"
-        ? ["Skill", "Big Skill", "Linemen", "Other"]
+        ? [...new Set(D.athletes.map((a) => a.group))].sort()
         : [gFilter];
 
     const summaryMetrics = [
@@ -5338,6 +5397,22 @@
     updateDataStatus();
   };
 
+  /* ---------- Age-Adjusted Standards Toggle ---------- */
+  window.toggleAgeAdjusted = function (on) {
+    localStorage.setItem("lc_age_adjusted", on ? "true" : "false");
+    rebuildFromStorage();
+    markTabsDirty();
+    const activeTab = document.querySelector(".tab.active");
+    if (activeTab) renderIfDirty(activeTab.dataset.tab);
+    renderProfile();
+    showToast(
+      on
+        ? "Age-adjusted standards enabled — grades scaled by training age"
+        : "Age-adjusted standards disabled — using senior (12th grade) standards",
+      "info",
+    );
+  };
+
   window.resetToOriginal = function () {
     if (
       !confirm(
@@ -5676,11 +5751,28 @@
       section: "Bio",
     },
     {
+      key: "sport",
+      jsonKey: "sport",
+      label: "Sport",
+      type: "select",
+      options: ["Football", "Soccer", "Baseball", "Basketball"],
+      section: "Bio",
+    },
+    {
       key: "position",
       jsonKey: "position",
       label: "Position",
       type: "select",
       options: ["RB", "WR", "DB", "QB", "TE", "LB", "OL", "DL"],
+      dynamicOptions: true,
+      section: "Bio",
+    },
+    {
+      key: "grade",
+      jsonKey: "grade",
+      label: "Grade",
+      type: "select",
+      options: ["", "6", "7", "8", "9", "10", "11", "12"],
       section: "Bio",
     },
     {
@@ -5850,6 +5942,13 @@
       const changedCls = isChanged ? " field-changed" : "";
 
       if (f.type === "select") {
+        // For position field, get sport-specific options
+        let opts = f.options;
+        if (f.dynamicOptions && f.key === "position") {
+          const sp = window.CLUB?.sportPositions;
+          const curSport = a.sport || "Football";
+          if (sp && sp[curSport]) opts = sp[curSport].positions;
+        }
         html += '<div class="edit-field"><label>' + f.label + "</label>";
         html +=
           '<select id="edit_' +
@@ -5860,14 +5959,16 @@
           changedCls.trim() +
           '">';
         html += '<option value="">— None —</option>';
-        for (let oi = 0; oi < f.options.length; oi++) {
+        for (let oi = 0; oi < opts.length; oi++) {
+          if (opts[oi] === "") continue;
+          const dispLabel = f.key === "grade" ? ordGrade(parseInt(opts[oi], 10)) + " Grade" : opts[oi];
           html +=
             '<option value="' +
-            f.options[oi] +
+            opts[oi] +
             '"' +
-            (val === f.options[oi] ? " selected" : "") +
+            (val === opts[oi] || (f.key === "grade" && String(val) === opts[oi]) ? " selected" : "") +
             ">" +
-            f.options[oi] +
+            dispLabel +
             "</option>";
         }
         html += "</select></div>";
@@ -6026,6 +6127,22 @@
       el.addEventListener("input", scheduleAutoSave);
       el.addEventListener("change", scheduleAutoSave);
     });
+
+    // When sport changes, rebuild position options
+    const sportSel = document.getElementById("edit_sport");
+    const posSel = document.getElementById("edit_position");
+    if (sportSel && posSel) {
+      sportSel.addEventListener("change", function () {
+        const sp = window.CLUB?.sportPositions;
+        const newSport = sportSel.value || "Football";
+        const opts = sp && sp[newSport] ? sp[newSport].positions : [];
+        posSel.innerHTML = '<option value="">— None —</option>';
+        for (let pi = 0; pi < opts.length; pi++) {
+          posSel.innerHTML +=
+            '<option value="' + opts[pi] + '">' + opts[pi] + "</option>";
+        }
+      });
+    }
   }
 
   /* ---------- Auto-save ---------- */
@@ -6053,6 +6170,8 @@
       const rawVal = el.value.trim();
       if (f.type === "number") {
         changes[f.jsonKey] = rawVal === "" ? null : parseFloat(rawVal);
+      } else if (f.key === "grade") {
+        changes[f.jsonKey] = rawVal === "" ? null : parseInt(rawVal, 10);
       } else {
         changes[f.jsonKey] = rawVal || null;
       }
