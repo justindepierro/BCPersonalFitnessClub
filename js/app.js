@@ -101,11 +101,15 @@
     var stats = {};
     for (var mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
       var key = TEST_METRIC_KEYS[mk].jsonKey;
-      var sum = 0, count = 0, min = Infinity, max = -Infinity;
+      var sum = 0,
+        count = 0,
+        min = Infinity,
+        max = -Infinity;
       for (var ai = 0; ai < athleteDetails.length; ai++) {
         var v = athleteDetails[ai].values[key];
         if (v !== null && v !== undefined && !isNaN(v)) {
-          sum += v; count++;
+          sum += v;
+          count++;
           if (v < min) min = v;
           if (v > max) max = v;
         }
@@ -114,7 +118,7 @@
         avg: count > 0 ? +(sum / count).toFixed(1) : null,
         min: count > 0 ? min : null,
         max: count > 0 ? max : null,
-        count: count
+        count: count,
       };
     }
     return stats;
@@ -128,33 +132,49 @@
       var key = TEST_METRIC_KEYS[mk].jsonKey;
       var s = stats[key];
       if (s.avg !== null) {
-        html += '<span class="ta-chip"><span class="ta-chip-label">' + TEST_METRIC_KEYS[mk].label + '</span><strong>' + s.avg + '</strong><small>' + TEST_METRIC_KEYS[mk].unit + '</small></span>';
+        html +=
+          '<span class="ta-chip"><span class="ta-chip-label">' +
+          TEST_METRIC_KEYS[mk].label +
+          "</span><strong>" +
+          s.avg +
+          "</strong><small>" +
+          TEST_METRIC_KEYS[mk].unit +
+          "</small></span>";
       }
     }
-    html += '</div>';
+    html += "</div>";
     return html;
   }
 
   /* Build avg/best/worst footer rows for a detail table */
   function buildAvgTableRows(stats, showBestWorst, extraCol) {
-    var extra = extraCol ? '<td></td>' : '';
-    var avgRow = '<tr class="ta-row ta-avg-row"><td><strong>Team Avg</strong></td>';
+    var extra = extraCol ? "<td></td>" : "";
+    var avgRow =
+      '<tr class="ta-row ta-avg-row"><td><strong>Team Avg</strong></td>';
     for (var mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
       var s = stats[TEST_METRIC_KEYS[mk].jsonKey];
-      avgRow += '<td class="num">' + (s.avg !== null ? s.avg : '—') + '</td>';
+      avgRow += '<td class="num">' + (s.avg !== null ? s.avg : "—") + "</td>";
     }
-    avgRow += extra + '</tr>';
+    avgRow += extra + "</tr>";
     if (!showBestWorst) return avgRow;
-    var bestRow = '<tr class="ta-row ta-best-row"><td><strong>Best</strong></td>';
-    var worstRow = '<tr class="ta-row ta-worst-row"><td><strong>Worst</strong></td>';
+    var bestRow =
+      '<tr class="ta-row ta-best-row"><td><strong>Best</strong></td>';
+    var worstRow =
+      '<tr class="ta-row ta-worst-row"><td><strong>Worst</strong></td>';
     for (var mk2 = 0; mk2 < TEST_METRIC_KEYS.length; mk2++) {
       var s2 = stats[TEST_METRIC_KEYS[mk2].jsonKey];
       var lower = TEST_METRIC_KEYS[mk2].lower;
-      bestRow += '<td class="num">' + (s2.avg !== null ? (lower ? s2.min : s2.max) : '—') + '</td>';
-      worstRow += '<td class="num">' + (s2.avg !== null ? (lower ? s2.max : s2.min) : '—') + '</td>';
+      bestRow +=
+        '<td class="num">' +
+        (s2.avg !== null ? (lower ? s2.min : s2.max) : "—") +
+        "</td>";
+      worstRow +=
+        '<td class="num">' +
+        (s2.avg !== null ? (lower ? s2.max : s2.min) : "—") +
+        "</td>";
     }
-    bestRow += extra + '</tr>';
-    worstRow += extra + '</tr>';
+    bestRow += extra + "</tr>";
+    worstRow += extra + "</tr>";
     return avgRow + bestRow + worstRow;
   }
 
@@ -1926,13 +1946,15 @@
     for (var di = 0; di < shown.length; di++) {
       html += '<span class="history-action-group">';
       html +=
-        '<button class="btn btn-xs btn-muted" onclick="openEditPanel(\'' + esc(a.id) + '\'); setTimeout(function(){ editHistoryEntry(\'' +
+        '<button class="btn btn-xs btn-muted" onclick="openEditPanel(\'' +
+        esc(a.id) +
+        "'); setTimeout(function(){ editHistoryEntry('" +
         esc(a.id) +
         "','" +
         esc(shown[di].date) +
         "','" +
         esc(shown[di].label) +
-        "')},300)\" title=\"Edit this test\">✏️</button>";
+        '\')},300)" title="Edit this test">✏️</button>';
       html +=
         '<button class="btn btn-xs btn-muted" onclick="deleteHistoryEntry(\'' +
         esc(a.id) +
@@ -1941,8 +1963,11 @@
         "','" +
         esc(shown[di].label) +
         '\')" title="Delete this test">🗑</button>';
-      html += '<small class="history-action-name">' + esc(shown[di].label || shown[di].date) + '</small>';
-      html += '</span>';
+      html +=
+        '<small class="history-action-name">' +
+        esc(shown[di].label || shown[di].date) +
+        "</small>";
+      html += "</span>";
     }
     html += "</div>";
 
@@ -2008,12 +2033,14 @@
 
   /* --- helpers for test notes --- */
   function getTestNotes() {
-    return JSON.parse(localStorage.getItem('lc_test_notes') || '{}');
+    return JSON.parse(localStorage.getItem("lc_test_notes") || "{}");
   }
   function setTestNotes(n) {
-    safeLSSet('lc_test_notes', JSON.stringify(n));
+    safeLSSet("lc_test_notes", JSON.stringify(n));
   }
-  function noteKey(date, label) { return date + '|' + label; }
+  function noteKey(date, label) {
+    return date + "|" + label;
+  }
 
   /* --- Collect testMap from history --- */
   function buildTestMap() {
@@ -2027,13 +2054,22 @@
       var entries = h[aid];
       for (var j = 0; j < entries.length; j++) {
         var e = entries[j];
-        var key = e.label + '|' + e.date;
+        var key = e.label + "|" + e.date;
         if (!testMap[key]) {
           var nk = noteKey(e.date, e.label);
-          testMap[key] = { label: e.label, date: e.date, count: 0, athletes: [], athleteDetails: [], note: notes[nk] || '' };
+          testMap[key] = {
+            label: e.label,
+            date: e.date,
+            count: 0,
+            athletes: [],
+            athleteDetails: [],
+            note: notes[nk] || "",
+          };
         }
         testMap[key].count++;
-        var found = D.athletes.find(function (x) { return x.id === aid; });
+        var found = D.athletes.find(function (x) {
+          return x.id === aid;
+        });
         var aName = found ? found.name : aid;
         testMap[key].athletes.push(aName);
         var mCount = 0;
@@ -2041,7 +2077,12 @@
           var v = e.values[TEST_METRIC_KEYS[mk].jsonKey];
           if (v !== null && v !== undefined) mCount++;
         }
-        testMap[key].athleteDetails.push({ name: aName, id: aid, metrics: mCount, values: e.values });
+        testMap[key].athleteDetails.push({
+          name: aName,
+          id: aid,
+          metrics: mCount,
+          values: e.values,
+        });
       }
     }
     return { testMap: testMap, athleteIds: athleteIds };
@@ -2070,7 +2111,7 @@
     }
 
     // Build test cards
-    var cards = '';
+    var cards = "";
     for (var ci = 0; ci < tests.length; ci++) {
       var test = tests[ci];
       var safeDate = esc(test.date);
@@ -2079,93 +2120,214 @@
       var escapedLabel = test.label.replace(/'/g, "\\'");
 
       // Data completeness
-      var totalMetricSlots = test.athleteDetails.length * TEST_METRIC_KEYS.length;
+      var totalMetricSlots =
+        test.athleteDetails.length * TEST_METRIC_KEYS.length;
       var filledMetricSlots = 0;
       for (var fmi = 0; fmi < test.athleteDetails.length; fmi++) {
         filledMetricSlots += test.athleteDetails[fmi].metrics;
       }
-      var completePct = totalMetricSlots > 0 ? Math.round((filledMetricSlots / totalMetricSlots) * 100) : 0;
+      var completePct =
+        totalMetricSlots > 0
+          ? Math.round((filledMetricSlots / totalMetricSlots) * 100)
+          : 0;
 
       // Is this the most recent test?
       var isLatest = ci === 0;
 
-      cards += '<div class="th-card' + (isLatest ? ' th-card-latest' : '') + '" data-idx="' + ci + '" data-date="' + safeDate + '" data-label="' + safeLabel.toLowerCase() + '">';
+      cards +=
+        '<div class="th-card' +
+        (isLatest ? " th-card-latest" : "") +
+        '" data-idx="' +
+        ci +
+        '" data-date="' +
+        safeDate +
+        '" data-label="' +
+        safeLabel.toLowerCase() +
+        '">';
       cards += '<div class="th-card-header">';
       cards += '<div class="th-card-title">';
-      cards += '<span class="th-label">' + safeLabel + (isLatest ? ' <span class="th-badge-latest">CURRENT</span>' : '') + '</span>';
-      cards += '<span class="th-date">' + safeDate + '</span>';
+      cards +=
+        '<span class="th-label">' +
+        safeLabel +
+        (isLatest ? ' <span class="th-badge-latest">CURRENT</span>' : "") +
+        "</span>";
+      cards += '<span class="th-date">' + safeDate + "</span>";
       if (test.note) {
-        cards += '<span class="th-note-preview">📝 ' + esc(test.note.length > 60 ? test.note.substring(0, 60) + '…' : test.note) + '</span>';
+        cards +=
+          '<span class="th-note-preview">📝 ' +
+          esc(
+            test.note.length > 60
+              ? test.note.substring(0, 60) + "…"
+              : test.note,
+          ) +
+          "</span>";
       }
-      cards += '</div>';
+      cards += "</div>";
       cards += '<div class="th-card-stats">';
-      cards += '<span class="th-stat"><strong>' + test.count + '</strong> athlete' + (test.count !== 1 ? 's' : '') + '</span>';
-      cards += '<span class="th-stat th-completeness"><span class="th-bar"><span class="th-bar-fill" style="width:' + completePct + '%;background:' + (completePct === 100 ? '#4ade80' : completePct > 50 ? '#facc15' : '#f87171') + '"></span></span>' + completePct + '%</span>';
-      cards += '</div>';
-      cards += '</div>';
+      cards +=
+        '<span class="th-stat"><strong>' +
+        test.count +
+        "</strong> athlete" +
+        (test.count !== 1 ? "s" : "") +
+        "</span>";
+      cards +=
+        '<span class="th-stat th-completeness"><span class="th-bar"><span class="th-bar-fill" style="width:' +
+        completePct +
+        "%;background:" +
+        (completePct === 100
+          ? "#4ade80"
+          : completePct > 50
+            ? "#facc15"
+            : "#f87171") +
+        '"></span></span>' +
+        completePct +
+        "%</span>";
+      cards += "</div>";
+      cards += "</div>";
       // Primary action buttons
       cards += '<div class="th-card-actions">';
-      cards += '<button class="btn btn-xs" onclick="toggleTestDetail(' + ci + ')" title="View athlete details">👤 Details</button>';
-      cards += '<button class="btn btn-xs btn-primary" onclick="openNewTestEntry(\'' + escapedDate + "','" + escapedLabel + '\')" title="Open full worksheet for editing">📝 Worksheet</button>';
-      cards += '<button class="btn btn-xs" onclick="applyTestAsCurrent(\'' + escapedDate + "','" + escapedLabel + '\')" title="Apply this test data as current athlete values">🔄 Apply as Current</button>';
+      cards +=
+        '<button class="btn btn-xs" onclick="toggleTestDetail(' +
+        ci +
+        ')" title="View athlete details">👤 Details</button>';
+      cards +=
+        '<button class="btn btn-xs btn-primary" onclick="openNewTestEntry(\'' +
+        escapedDate +
+        "','" +
+        escapedLabel +
+        '\')" title="Open full worksheet for editing">📝 Worksheet</button>';
+      cards +=
+        '<button class="btn btn-xs" onclick="applyTestAsCurrent(\'' +
+        escapedDate +
+        "','" +
+        escapedLabel +
+        '\')" title="Apply this test data as current athlete values">🔄 Apply as Current</button>';
       // More actions dropdown
       cards += '<div class="th-more-wrap">';
-      cards += '<button class="btn btn-xs" onclick="toggleThMore(this)" title="More actions">⋯ More</button>';
+      cards +=
+        '<button class="btn btn-xs" onclick="toggleThMore(this)" title="More actions">⋯ More</button>';
       cards += '<div class="th-more-menu">';
-      cards += '<button onclick="renameTestDate(\'' + escapedDate + "','" + escapedLabel + '\')">✏️ Rename</button>';
-      cards += '<button onclick="changeTestDate(\'' + escapedDate + "','" + escapedLabel + '\')">📅 Change Date</button>';
-      cards += '<button onclick="duplicateTest(\'' + escapedDate + "','" + escapedLabel + '\')">📋 Duplicate</button>';
-      cards += '<button onclick="editTestNote(\'' + escapedDate + "','" + escapedLabel + '\')">📝 Notes</button>';
-      cards += '<button onclick="addAthletesToTest(\'' + escapedDate + "','" + escapedLabel + '\')">➕ Add Athletes</button>';
-      cards += '<button onclick="removeAthleteFromTest(\'' + escapedDate + "','" + escapedLabel + '\')">➖ Remove Athlete</button>';
-      cards += '<button onclick="exportSingleTest(\'' + escapedDate + "','" + escapedLabel + '\')">📤 Export</button>';
-      cards += '<button class="th-more-danger" onclick="deleteBulkTestEntry(\'' + escapedDate + "','" + escapedLabel + '\')">🗑 Delete</button>';
-      cards += '</div></div>';
-      cards += '</div>';
+      cards +=
+        "<button onclick=\"renameTestDate('" +
+        escapedDate +
+        "','" +
+        escapedLabel +
+        "')\">✏️ Rename</button>";
+      cards +=
+        "<button onclick=\"changeTestDate('" +
+        escapedDate +
+        "','" +
+        escapedLabel +
+        "')\">📅 Change Date</button>";
+      cards +=
+        "<button onclick=\"duplicateTest('" +
+        escapedDate +
+        "','" +
+        escapedLabel +
+        "')\">📋 Duplicate</button>";
+      cards +=
+        "<button onclick=\"editTestNote('" +
+        escapedDate +
+        "','" +
+        escapedLabel +
+        "')\">📝 Notes</button>";
+      cards +=
+        "<button onclick=\"addAthletesToTest('" +
+        escapedDate +
+        "','" +
+        escapedLabel +
+        "')\">➕ Add Athletes</button>";
+      cards +=
+        "<button onclick=\"removeAthleteFromTest('" +
+        escapedDate +
+        "','" +
+        escapedLabel +
+        "')\">➖ Remove Athlete</button>";
+      cards +=
+        "<button onclick=\"exportSingleTest('" +
+        escapedDate +
+        "','" +
+        escapedLabel +
+        "')\">📤 Export</button>";
+      cards +=
+        '<button class="th-more-danger" onclick="deleteBulkTestEntry(\'' +
+        escapedDate +
+        "','" +
+        escapedLabel +
+        "')\">🗑 Delete</button>";
+      cards += "</div></div>";
+      cards += "</div>";
       // Expandable detail
-      cards += '<div class="th-detail" id="thDetail' + ci + '" style="display:none">';
+      cards +=
+        '<div class="th-detail" id="thDetail' + ci + '" style="display:none">';
       cards += '<table class="th-detail-table"><thead><tr><th>Athlete</th>';
       for (var hk = 0; hk < TEST_METRIC_KEYS.length; hk++) {
-        cards += '<th>' + TEST_METRIC_KEYS[hk].label + '</th>';
+        cards += "<th>" + TEST_METRIC_KEYS[hk].label + "</th>";
       }
-      cards += '</tr></thead><tbody>';
+      cards += "</tr></thead><tbody>";
       for (var ai = 0; ai < test.athleteDetails.length; ai++) {
         var ad = test.athleteDetails[ai];
-        cards += '<tr><td><strong>' + esc(ad.name) + '</strong></td>';
+        cards += "<tr><td><strong>" + esc(ad.name) + "</strong></td>";
         for (var vk = 0; vk < TEST_METRIC_KEYS.length; vk++) {
           var jsonKey = TEST_METRIC_KEYS[vk].jsonKey;
           var val = ad.values[jsonKey];
-          var displayVal = (val !== null && val !== undefined ? val : '—');
-          cards += '<td class="num ie-cell" data-aid="' + esc(ad.id) + '" data-date="' + safeDate + '" data-label="' + safeLabel + '" data-key="' + jsonKey + '" onclick="inlineEditCell(this)" title="Click to edit">' + displayVal + '</td>';
+          var displayVal = val !== null && val !== undefined ? val : "—";
+          cards +=
+            '<td class="num ie-cell" data-aid="' +
+            esc(ad.id) +
+            '" data-date="' +
+            safeDate +
+            '" data-label="' +
+            safeLabel +
+            '" data-key="' +
+            jsonKey +
+            '" onclick="inlineEditCell(this)" title="Click to edit">' +
+            displayVal +
+            "</td>";
         }
-        cards += '</tr>';
+        cards += "</tr>";
       }
-      cards += '</tbody><tfoot>' + buildAvgTableRows(computeTestAverages(test.athleteDetails), true) + '</tfoot></table>';
+      cards +=
+        "</tbody><tfoot>" +
+        buildAvgTableRows(computeTestAverages(test.athleteDetails), true) +
+        "</tfoot></table>";
       cards += buildAvgSummaryHTML(computeTestAverages(test.athleteDetails));
-      cards += '</div>';
-      cards += '</div>';
+      cards += "</div>";
+      cards += "</div>";
     }
 
-    var emptyState = athleteIds.length === 0
-      ? '<div class="th-empty"><div class="th-empty-icon">📊</div><h3>No Test History Yet</h3><p>Save your first test baseline to start tracking athlete progress over time.</p><button class="btn btn-primary" onclick="document.querySelector(\'.test-history-modal\').remove(); saveAllAsTestDate()">📅 Save Current Team Data</button></div>'
-      : '';
+    var emptyState =
+      athleteIds.length === 0
+        ? '<div class="th-empty"><div class="th-empty-icon">📊</div><h3>No Test History Yet</h3><p>Save your first test baseline to start tracking athlete progress over time.</p><button class="btn btn-primary" onclick="document.querySelector(\'.test-history-modal\').remove(); saveAllAsTestDate()">📅 Save Current Team Data</button></div>'
+        : "";
 
     var bodyHTML =
       '<div class="th-modal-body">' +
       '<div class="th-modal-header">' +
-      '<h2>📋 Test History Manager</h2>' +
+      "<h2>📋 Test History Manager</h2>" +
       '<p class="th-summary">' +
       (tests.length > 0
-        ? tests.length + ' test session' + (tests.length !== 1 ? 's' : '') + ' · ' + totalEntries + ' total entries · ' + athleteIds.length + ' athlete' + (athleteIds.length !== 1 ? 's' : '') + ' tracked'
-        : '') +
-      '</p>' +
-      '</div>' +
+        ? tests.length +
+          " test session" +
+          (tests.length !== 1 ? "s" : "") +
+          " · " +
+          totalEntries +
+          " total entries · " +
+          athleteIds.length +
+          " athlete" +
+          (athleteIds.length !== 1 ? "s" : "") +
+          " tracked"
+        : "") +
+      "</p>" +
+      "</div>" +
       (tests.length > 0
         ? '<div class="th-toolbar">' +
           '<button class="btn btn-sm btn-primary" onclick="document.querySelector(\'.test-history-modal\').remove(); saveAllAsTestDate()">📅 Save New Test Date</button>' +
           '<button class="btn btn-sm" onclick="exportTestHistoryOnly()">📤 Export All</button>' +
           '<label class="btn btn-sm" style="cursor:pointer">📥 Import<input type="file" accept=".json" onchange="importTestHistoryOnly(this)" style="display:none" /></label>' +
-          (tests.length >= 2 ? '<button class="btn btn-sm" onclick="compareTests()">🔀 Compare Tests</button>' : '') +
+          (tests.length >= 2
+            ? '<button class="btn btn-sm" onclick="compareTests()">🔀 Compare Tests</button>'
+            : "") +
           '<div style="flex:1"></div>' +
           '<div class="th-search-wrap"><input type="text" class="th-search" id="thSearchInput" placeholder="Search tests…" oninput="filterTestCards(this.value)" /></div>' +
           '<select class="th-sort-select" id="thSortSelect" onchange="sortTestCards(this.value)">' +
@@ -2174,18 +2336,19 @@
           '<option value="name-asc">Name A–Z</option>' +
           '<option value="name-desc">Name Z–A</option>' +
           '<option value="athletes-desc">Most Athletes</option>' +
-          '</select>' +
+          "</select>" +
           '<div class="th-view-toggle">' +
           '<button class="btn btn-sm th-view-btn active" data-view="list" onclick="switchThView(\'list\')">☰ List</button>' +
           '<button class="btn btn-sm th-view-btn" data-view="calendar" onclick="switchThView(\'calendar\')">📅 Calendar</button>' +
-          '</div>' +
-          '</div>'
-        : '') +
-      (emptyState || '<div id="thListView" class="th-card-list">' + cards + '</div>') +
+          "</div>" +
+          "</div>"
+        : "") +
+      (emptyState ||
+        '<div id="thListView" class="th-card-list">' + cards + "</div>") +
       '<div id="thCalendarView" class="th-calendar-wrap" style="display:none"></div>' +
       '<div class="th-new-test-bar"><button class="btn btn-primary" onclick="openNewTestEntry()">➕ Start New Test Session</button></div>' +
       '<p class="th-footer-note">Test history is included in full JSON exports and restored on import.</p>' +
-      '</div>';
+      "</div>";
 
     // Remove existing modal if open
     var existing = document.querySelector(".test-history-modal");
@@ -2198,7 +2361,7 @@
       '<div class="modal-content th-modal-content">' +
       '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' +
       bodyHTML +
-      '</div>';
+      "</div>";
     overlay.addEventListener("click", function (ev) {
       if (ev.target === overlay) overlay.remove();
     });
@@ -2212,20 +2375,23 @@
 
   /* --- View toggle (List / Calendar) --- */
   window.switchThView = function (view) {
-    var listEl = document.getElementById('thListView');
-    var calEl = document.getElementById('thCalendarView');
+    var listEl = document.getElementById("thListView");
+    var calEl = document.getElementById("thCalendarView");
     if (!listEl || !calEl) return;
-    var btns = document.querySelectorAll('.th-view-btn');
+    var btns = document.querySelectorAll(".th-view-btn");
     for (var i = 0; i < btns.length; i++) {
-      btns[i].classList.toggle('active', btns[i].getAttribute('data-view') === view);
+      btns[i].classList.toggle(
+        "active",
+        btns[i].getAttribute("data-view") === view,
+      );
     }
-    listEl.style.display = view === 'list' ? '' : 'none';
-    calEl.style.display = view === 'calendar' ? '' : 'none';
+    listEl.style.display = view === "list" ? "" : "none";
+    calEl.style.display = view === "calendar" ? "" : "none";
   };
 
   /* --- Calendar view builder --- */
   function buildTestCalendar(tests) {
-    var wrap = document.getElementById('thCalendarView');
+    var wrap = document.getElementById("thCalendarView");
     if (!wrap) return;
 
     // Group tests by YYYY-MM
@@ -2246,14 +2412,26 @@
       return a > b ? -1 : a < b ? 1 : 0;
     });
 
-    var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'];
-    var DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    var MONTH_NAMES = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    var DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-    var html = '';
+    var html = "";
     for (var mi = 0; mi < months.length; mi++) {
       var ym = months[mi];
-      var parts = ym.split('-');
+      var parts = ym.split("-");
       var year = parseInt(parts[0], 10);
       var month = parseInt(parts[1], 10) - 1; // 0-indexed
       var monthName = MONTH_NAMES[month];
@@ -2266,11 +2444,20 @@
       for (var dk in monthTests) sessionCount += monthTests[dk].length;
 
       html += '<div class="cal-month">';
-      html += '<div class="cal-month-header"><span class="cal-month-name">' + monthName + ' ' + year + '</span><span class="cal-month-count">' + sessionCount + ' session' + (sessionCount !== 1 ? 's' : '') + '</span></div>';
+      html +=
+        '<div class="cal-month-header"><span class="cal-month-name">' +
+        monthName +
+        " " +
+        year +
+        '</span><span class="cal-month-count">' +
+        sessionCount +
+        " session" +
+        (sessionCount !== 1 ? "s" : "") +
+        "</span></div>";
       html += '<div class="cal-grid">';
       // Day-of-week headers
       for (var dh = 0; dh < 7; dh++) {
-        html += '<div class="cal-dow">' + DAY_NAMES[dh] + '</div>';
+        html += '<div class="cal-dow">' + DAY_NAMES[dh] + "</div>";
       }
       // Leading blanks
       for (var lb = 0; lb < firstDow; lb++) {
@@ -2280,15 +2467,20 @@
       for (var day = 1; day <= daysInMonth; day++) {
         var dayTests = monthTests[day] || [];
         var hasTests = dayTests.length > 0;
-        var dayClass = 'cal-day' + (hasTests ? ' cal-has-test' : '');
+        var dayClass = "cal-day" + (hasTests ? " cal-has-test" : "");
         if (hasTests) {
           html += '<div class="' + dayClass + '" onclick="calDayClick(this)">';
-          html += '<span class="cal-day-num">' + day + '</span>';
+          html += '<span class="cal-day-num">' + day + "</span>";
           html += '<div class="cal-dots">';
           for (var dt = 0; dt < dayTests.length; dt++) {
-            html += '<span class="cal-dot" title="' + esc(dayTests[dt].label) + ' (' + dayTests[dt].count + ' athletes)"></span>';
+            html +=
+              '<span class="cal-dot" title="' +
+              esc(dayTests[dt].label) +
+              " (" +
+              dayTests[dt].count +
+              ' athletes)"></span>';
           }
-          html += '</div>';
+          html += "</div>";
           // Hidden detail panel
           html += '<div class="cal-day-detail" style="display:none">';
           for (var dt2 = 0; dt2 < dayTests.length; dt2++) {
@@ -2296,21 +2488,46 @@
             var eDate = t.date.replace(/'/g, "\\'");
             var eLabel = t.label.replace(/'/g, "\\'");
             html += '<div class="cal-test-item">';
-            html += '<span class="cal-test-label">' + esc(t.label) + '</span>';
-            html += '<span class="cal-test-count">' + t.count + ' athlete' + (t.count !== 1 ? 's' : '') + '</span>';
+            html += '<span class="cal-test-label">' + esc(t.label) + "</span>";
+            html +=
+              '<span class="cal-test-count">' +
+              t.count +
+              " athlete" +
+              (t.count !== 1 ? "s" : "") +
+              "</span>";
             html += '<div class="cal-test-actions">';
-            html += '<button class="btn btn-xs btn-primary" onclick="event.stopPropagation(); openNewTestEntry(\'' + eDate + "','" + eLabel + '\')" title="Open worksheet">📝</button>';
-            html += '<button class="btn btn-xs" onclick="event.stopPropagation(); applyTestAsCurrent(\'' + eDate + "','" + eLabel + '\')" title="Apply as current">🔄</button>';
-            html += '<button class="btn btn-xs btn-muted" onclick="event.stopPropagation(); deleteBulkTestEntry(\'' + eDate + "','" + eLabel + '\')" title="Delete">🗑</button>';
-            html += '</div></div>';
+            html +=
+              '<button class="btn btn-xs btn-primary" onclick="event.stopPropagation(); openNewTestEntry(\'' +
+              eDate +
+              "','" +
+              eLabel +
+              '\')" title="Open worksheet">📝</button>';
+            html +=
+              '<button class="btn btn-xs" onclick="event.stopPropagation(); applyTestAsCurrent(\'' +
+              eDate +
+              "','" +
+              eLabel +
+              '\')" title="Apply as current">🔄</button>';
+            html +=
+              '<button class="btn btn-xs btn-muted" onclick="event.stopPropagation(); deleteBulkTestEntry(\'' +
+              eDate +
+              "','" +
+              eLabel +
+              '\')" title="Delete">🗑</button>';
+            html += "</div></div>";
           }
-          html += '</div>';
-          html += '</div>';
+          html += "</div>";
+          html += "</div>";
         } else {
-          html += '<div class="' + dayClass + '"><span class="cal-day-num">' + day + '</span></div>';
+          html +=
+            '<div class="' +
+            dayClass +
+            '"><span class="cal-day-num">' +
+            day +
+            "</span></div>";
         }
       }
-      html += '</div></div>';
+      html += "</div></div>";
     }
 
     // Timeline below the calendar
@@ -2327,57 +2544,83 @@
       html += '<div class="cal-tl-item">';
       html += '<div class="cal-tl-dot"></div>';
       html += '<div class="cal-tl-content">';
-      html += '<div class="cal-tl-date">' + esc(st.date) + '</div>';
-      html += '<div class="cal-tl-label">' + esc(st.label) + '</div>';
-      html += '<div class="cal-tl-meta">' + st.count + ' athlete' + (st.count !== 1 ? 's' : '') + '</div>';
+      html += '<div class="cal-tl-date">' + esc(st.date) + "</div>";
+      html += '<div class="cal-tl-label">' + esc(st.label) + "</div>";
+      html +=
+        '<div class="cal-tl-meta">' +
+        st.count +
+        " athlete" +
+        (st.count !== 1 ? "s" : "") +
+        "</div>";
       html += '<div class="cal-tl-actions">';
-      html += '<button class="btn btn-xs btn-primary" onclick="openNewTestEntry(\'' + eDate2 + "','" + eLabel2 + '\')">📝 Worksheet</button>';
-      html += '<button class="btn btn-xs" onclick="applyTestAsCurrent(\'' + eDate2 + "','" + eLabel2 + '\')">🔄 Apply</button>';
-      html += '</div>';
-      html += '</div></div>';
+      html +=
+        '<button class="btn btn-xs btn-primary" onclick="openNewTestEntry(\'' +
+        eDate2 +
+        "','" +
+        eLabel2 +
+        "')\">📝 Worksheet</button>";
+      html +=
+        '<button class="btn btn-xs" onclick="applyTestAsCurrent(\'' +
+        eDate2 +
+        "','" +
+        eLabel2 +
+        "')\">🔄 Apply</button>";
+      html += "</div>";
+      html += "</div></div>";
     }
-    html += '</div>';
+    html += "</div>";
 
     wrap.innerHTML = html;
   }
 
   window.calDayClick = function (el) {
-    var detail = el.querySelector('.cal-day-detail');
+    var detail = el.querySelector(".cal-day-detail");
     if (!detail) return;
     // Close any other open details
     var allOpen = document.querySelectorAll('.cal-day-detail[style*="block"]');
     for (var i = 0; i < allOpen.length; i++) {
-      if (allOpen[i] !== detail) allOpen[i].style.display = 'none';
+      if (allOpen[i] !== detail) allOpen[i].style.display = "none";
     }
-    detail.style.display = detail.style.display === 'none' ? 'block' : 'none';
+    detail.style.display = detail.style.display === "none" ? "block" : "none";
   };
 
   /* --- Inline cell editing in test history modal --- */
   window.inlineEditCell = function (td) {
     // Don't re-enter if already editing
-    if (td.querySelector('input')) return;
+    if (td.querySelector("input")) return;
     var current = td.textContent.trim();
-    if (current === '—') current = '';
-    td.classList.add('ie-editing');
-    var input = document.createElement('input');
-    input.type = 'number';
-    input.step = 'any';
-    input.className = 'ie-input';
+    if (current === "—") current = "";
+    td.classList.add("ie-editing");
+    var input = document.createElement("input");
+    input.type = "number";
+    input.step = "any";
+    input.className = "ie-input";
     input.value = current;
-    input.setAttribute('data-original', current);
-    td.textContent = '';
+    input.setAttribute("data-original", current);
+    td.textContent = "";
     td.appendChild(input);
     input.focus();
     input.select();
-    input.addEventListener('blur', function () { commitInlineEdit(td, input); });
-    input.addEventListener('keydown', function (ev) {
-      if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
-      if (ev.key === 'Escape') { ev.preventDefault(); input.value = input.getAttribute('data-original'); input.blur(); }
-      // Tab to next editable cell
-      if (ev.key === 'Tab') {
+    input.addEventListener("blur", function () {
+      commitInlineEdit(td, input);
+    });
+    input.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter") {
         ev.preventDefault();
         input.blur();
-        var cells = Array.from(td.closest('table').querySelectorAll('.ie-cell'));
+      }
+      if (ev.key === "Escape") {
+        ev.preventDefault();
+        input.value = input.getAttribute("data-original");
+        input.blur();
+      }
+      // Tab to next editable cell
+      if (ev.key === "Tab") {
+        ev.preventDefault();
+        input.blur();
+        var cells = Array.from(
+          td.closest("table").querySelectorAll(".ie-cell"),
+        );
         var idx = cells.indexOf(td);
         var next = ev.shiftKey ? cells[idx - 1] : cells[idx + 1];
         if (next) next.click();
@@ -2387,16 +2630,16 @@
 
   window.commitInlineEdit = function (td, input) {
     var newVal = input.value.trim();
-    var original = input.getAttribute('data-original');
-    var aid = td.getAttribute('data-aid');
-    var date = td.getAttribute('data-date');
-    var label = td.getAttribute('data-label');
-    var key = td.getAttribute('data-key');
-    td.classList.remove('ie-editing');
+    var original = input.getAttribute("data-original");
+    var aid = td.getAttribute("data-aid");
+    var date = td.getAttribute("data-date");
+    var label = td.getAttribute("data-label");
+    var key = td.getAttribute("data-key");
+    td.classList.remove("ie-editing");
 
     // No change
     if (newVal === original) {
-      td.textContent = original || '—';
+      td.textContent = original || "—";
       return;
     }
 
@@ -2406,7 +2649,7 @@
     var found = false;
     for (var i = 0; i < h[aid].length; i++) {
       if (h[aid][i].date === date && h[aid][i].label === label) {
-        if (newVal === '') {
+        if (newVal === "") {
           h[aid][i].values[key] = null;
         } else {
           h[aid][i].values[key] = parseFloat(newVal);
@@ -2417,47 +2660,55 @@
     }
     if (!found) {
       var newEntry = { date: date, label: label, values: {} };
-      newEntry.values[key] = newVal === '' ? null : parseFloat(newVal);
+      newEntry.values[key] = newVal === "" ? null : parseFloat(newVal);
       h[aid].push(newEntry);
     }
     setTestHistory(h);
 
     // Update cell display
-    td.textContent = newVal || '—';
-    td.classList.add('ie-saved');
-    setTimeout(function () { td.classList.remove('ie-saved'); }, 800);
+    td.textContent = newVal || "—";
+    td.classList.add("ie-saved");
+    setTimeout(function () {
+      td.classList.remove("ie-saved");
+    }, 800);
 
     // Update progress column if in test entry worksheet
-    var row = td.closest('tr');
+    var row = td.closest("tr");
     if (row) {
-      var progressCell = row.querySelector('.te-progress');
+      var progressCell = row.querySelector(".te-progress");
       if (progressCell) {
-        var cells = row.querySelectorAll('.ie-cell');
+        var cells = row.querySelectorAll(".ie-cell");
         var filled = 0;
         cells.forEach(function (c) {
           var t = c.textContent.trim();
-          if (t && t !== '—') filled++;
+          if (t && t !== "—") filled++;
         });
         var pct = Math.round((filled / TEST_METRIC_KEYS.length) * 100);
-        progressCell.textContent = pct + '%';
-        progressCell.className = 'te-progress ' + (pct === 100 ? 'te-complete' : pct > 0 ? 'te-partial' : 'te-none');
+        progressCell.textContent = pct + "%";
+        progressCell.className =
+          "te-progress " +
+          (pct === 100 ? "te-complete" : pct > 0 ? "te-partial" : "te-none");
       }
     }
 
     // Refresh profile if visible
-    var selId = document.getElementById('athleteSelect').value;
+    var selId = document.getElementById("athleteSelect").value;
     if (selId) renderProfile();
   };
 
   window.toggleTestDetail = function (idx) {
-    var el = document.getElementById('thDetail' + idx);
+    var el = document.getElementById("thDetail" + idx);
     if (!el) return;
-    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    el.style.display = el.style.display === "none" ? "block" : "none";
   };
 
   window.renameTestDate = function (date, oldLabel) {
-    var newLabel = prompt('Rename test "' + oldLabel + '" (' + date + '):', oldLabel);
-    if (newLabel === null || !newLabel.trim() || newLabel.trim() === oldLabel) return;
+    var newLabel = prompt(
+      'Rename test "' + oldLabel + '" (' + date + "):",
+      oldLabel,
+    );
+    if (newLabel === null || !newLabel.trim() || newLabel.trim() === oldLabel)
+      return;
     newLabel = newLabel.trim();
     var h = getTestHistory();
     var ids = Object.keys(h);
@@ -2471,7 +2722,10 @@
       }
     }
     setTestHistory(h);
-    showToast('Renamed to "' + newLabel + '" (' + renamed + ' entries)', 'success');
+    showToast(
+      'Renamed to "' + newLabel + '" (' + renamed + " entries)",
+      "success",
+    );
     viewSavedTests(); // refresh modal
     var pid = document.getElementById("athleteSelect").value;
     if (pid) renderProfile();
@@ -2480,45 +2734,81 @@
   window.exportSingleTest = function (date, label) {
     var h = getTestHistory();
     var D = window.CLUB;
-    var exportObj = { source: 'BC Personal Fitness Club — Test Export', exportDate: new Date().toISOString(), testDate: date, testLabel: label, entries: [] };
+    var exportObj = {
+      source: "BC Personal Fitness Club — Test Export",
+      exportDate: new Date().toISOString(),
+      testDate: date,
+      testLabel: label,
+      entries: [],
+    };
     var ids = Object.keys(h);
     for (var i = 0; i < ids.length; i++) {
       for (var j = 0; j < h[ids[i]].length; j++) {
         if (h[ids[i]][j].date === date && h[ids[i]][j].label === label) {
-          var found = D.athletes.find(function (x) { return x.id === ids[i]; });
-          exportObj.entries.push({ athleteId: ids[i], athleteName: found ? found.name : ids[i], date: date, label: label, values: h[ids[i]][j].values });
+          var found = D.athletes.find(function (x) {
+            return x.id === ids[i];
+          });
+          exportObj.entries.push({
+            athleteId: ids[i],
+            athleteName: found ? found.name : ids[i],
+            date: date,
+            label: label,
+            values: h[ids[i]][j].values,
+          });
         }
       }
     }
     var json = JSON.stringify(exportObj, null, 2);
-    var blob = new Blob([json], { type: 'application/json' });
-    var link = document.createElement('a');
+    var blob = new Blob([json], { type: "application/json" });
+    var link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = 'test_' + label.replace(/\s+/g, '_').toLowerCase() + '_' + date + '.json';
+    link.download =
+      "test_" + label.replace(/\s+/g, "_").toLowerCase() + "_" + date + ".json";
     link.click();
-    setTimeout(function () { URL.revokeObjectURL(link.href); }, 10000);
-    showToast('Exported "' + label + '" — ' + exportObj.entries.length + ' athletes', 'success');
+    setTimeout(function () {
+      URL.revokeObjectURL(link.href);
+    }, 10000);
+    showToast(
+      'Exported "' + label + '" — ' + exportObj.entries.length + " athletes",
+      "success",
+    );
   };
 
   window.exportTestHistoryOnly = function () {
     var h = getTestHistory();
-    if (Object.keys(h).length === 0) { showToast('No test history to export.', 'warn'); return; }
+    if (Object.keys(h).length === 0) {
+      showToast("No test history to export.", "warn");
+      return;
+    }
     var D = window.CLUB;
     // Enrich with athlete names for readability
-    var exportObj = { source: 'BC Personal Fitness Club — Full Test History', exportDate: new Date().toISOString(), test_history: h, athlete_names: {} };
+    var exportObj = {
+      source: "BC Personal Fitness Club — Full Test History",
+      exportDate: new Date().toISOString(),
+      test_history: h,
+      athlete_names: {},
+    };
     var ids = Object.keys(h);
     for (var i = 0; i < ids.length; i++) {
-      var found = D.athletes.find(function (x) { return x.id === ids[i]; });
+      var found = D.athletes.find(function (x) {
+        return x.id === ids[i];
+      });
       if (found) exportObj.athlete_names[ids[i]] = found.name;
     }
     var json = JSON.stringify(exportObj, null, 2);
-    var blob = new Blob([json], { type: 'application/json' });
-    var link = document.createElement('a');
+    var blob = new Blob([json], { type: "application/json" });
+    var link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = 'test_history_' + new Date().toISOString().slice(0, 10) + '.json';
+    link.download =
+      "test_history_" + new Date().toISOString().slice(0, 10) + ".json";
     link.click();
-    setTimeout(function () { URL.revokeObjectURL(link.href); }, 10000);
-    showToast('Exported full test history — ' + ids.length + ' athletes', 'success');
+    setTimeout(function () {
+      URL.revokeObjectURL(link.href);
+    }, 10000);
+    showToast(
+      "Exported full test history — " + ids.length + " athletes",
+      "success",
+    );
   };
 
   window.importTestHistoryOnly = function (inputEl) {
@@ -2531,7 +2821,7 @@
         var histData = null;
 
         // Support full export format
-        if (data.test_history && typeof data.test_history === 'object') {
+        if (data.test_history && typeof data.test_history === "object") {
           histData = data.test_history;
         }
         // Support single-test export format
@@ -2540,20 +2830,28 @@
           for (var i = 0; i < data.entries.length; i++) {
             var en = data.entries[i];
             if (!histData[en.athleteId]) histData[en.athleteId] = [];
-            histData[en.athleteId].push({ date: en.date, label: en.label, values: en.values });
+            histData[en.athleteId].push({
+              date: en.date,
+              label: en.label,
+              values: en.values,
+            });
           }
         }
 
         if (!histData || Object.keys(histData).length === 0) {
-          showToast('No test history found in this file.', 'error');
-          inputEl.value = '';
+          showToast("No test history found in this file.", "error");
+          inputEl.value = "";
           return;
         }
 
         var incoming = Object.keys(histData);
         var mode = confirm(
-          'Found test data for ' + incoming.length + ' athlete(s) in "' + file.name + '".\n\n' +
-          'OK = Merge with existing history\nCancel = Replace all existing history'
+          "Found test data for " +
+            incoming.length +
+            ' athlete(s) in "' +
+            file.name +
+            '".\n\n' +
+            "OK = Merge with existing history\nCancel = Replace all existing history",
         );
 
         if (mode) {
@@ -2568,17 +2866,23 @@
               // Skip duplicates
               var exists = false;
               for (var ei = 0; ei < h[aid].length; ei++) {
-                if (h[aid][ei].date === ne.date && h[aid][ei].label === ne.label) { exists = true; break; }
+                if (
+                  h[aid][ei].date === ne.date &&
+                  h[aid][ei].label === ne.label
+                ) {
+                  exists = true;
+                  break;
+                }
               }
               if (!exists) h[aid].push(ne);
             }
           }
           setTestHistory(h);
-          showToast('Merged test history from ' + file.name, 'success');
+          showToast("Merged test history from " + file.name, "success");
         } else {
           // Replace
           setTestHistory(histData);
-          showToast('Replaced test history from ' + file.name, 'success');
+          showToast("Replaced test history from " + file.name, "success");
         }
 
         // Refresh
@@ -2586,10 +2890,10 @@
         var pid = document.getElementById("athleteSelect").value;
         if (pid) renderProfile();
       } catch (err) {
-        console.error('Import test history error:', err);
-        showToast('Import failed: ' + err.message, 'error');
+        console.error("Import test history error:", err);
+        showToast("Import failed: " + err.message, "error");
       }
-      inputEl.value = '';
+      inputEl.value = "";
     };
     reader.readAsText(file);
   };
@@ -2597,7 +2901,7 @@
   /* --- Open a blank test entry worksheet for all athletes --- */
   window.openNewTestEntry = function (prefillDate, prefillLabel) {
     // Close test history modal if open
-    var existing = document.querySelector('.test-history-modal');
+    var existing = document.querySelector(".test-history-modal");
     if (existing) existing.remove();
 
     var today = new Date().toISOString().slice(0, 10);
@@ -2605,12 +2909,12 @@
     var label = prefillLabel || null;
 
     if (!dateStr) {
-      dateStr = prompt('Test date (YYYY-MM-DD):', today);
+      dateStr = prompt("Test date (YYYY-MM-DD):", today);
       if (!dateStr || !dateStr.trim()) return;
       dateStr = dateStr.trim();
     }
     if (!label) {
-      label = prompt('Test name / label:', 'Test ' + dateStr);
+      label = prompt("Test name / label:", "Test " + dateStr);
       if (!label || !label.trim()) return;
       label = label.trim();
     }
@@ -2625,7 +2929,9 @@
     for (var i = 0; i < athletes.length; i++) {
       var aid = athletes[i].id;
       if (!h[aid]) h[aid] = [];
-      var exists = h[aid].some(function (e) { return e.date === dateStr && e.label === label; });
+      var exists = h[aid].some(function (e) {
+        return e.date === dateStr && e.label === label;
+      });
       if (!exists) {
         h[aid].push({ date: dateStr, label: label, values: {} });
       }
@@ -2638,7 +2944,7 @@
     // Build the worksheet table
     var safeDate = esc(dateStr);
     var safeLabel = esc(label);
-    var rows = '';
+    var rows = "";
     var filledCount = 0;
     for (var ai = 0; ai < athletes.length; ai++) {
       var a = athletes[ai];
@@ -2653,71 +2959,111 @@
       }
       var vals = entry ? entry.values : {};
       var metricCount = 0;
-      rows += '<tr>';
-      rows += '<td class="te-athlete-name">' + esc(a.name) + '</td>';
+      rows += "<tr>";
+      rows += '<td class="te-athlete-name">' + esc(a.name) + "</td>";
       for (var mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
         var key = TEST_METRIC_KEYS[mk].jsonKey;
         var val = vals[key];
-        var display = (val !== null && val !== undefined) ? val : '';
-        if (display !== '') metricCount++;
-        rows += '<td class="ie-cell" data-aid="' + esc(a.id) + '" data-date="' + safeDate + '" data-label="' + safeLabel + '" data-key="' + key + '" onclick="inlineEditCell(this)" title="Click to enter ' + TEST_METRIC_KEYS[mk].label + '">' + (display !== '' ? display : '<span class="te-empty-cell">—</span>') + '</td>';
+        var display = val !== null && val !== undefined ? val : "";
+        if (display !== "") metricCount++;
+        rows +=
+          '<td class="ie-cell" data-aid="' +
+          esc(a.id) +
+          '" data-date="' +
+          safeDate +
+          '" data-label="' +
+          safeLabel +
+          '" data-key="' +
+          key +
+          '" onclick="inlineEditCell(this)" title="Click to enter ' +
+          TEST_METRIC_KEYS[mk].label +
+          '">' +
+          (display !== "" ? display : '<span class="te-empty-cell">—</span>') +
+          "</td>";
       }
       if (metricCount > 0) filledCount++;
       var pct = Math.round((metricCount / TEST_METRIC_KEYS.length) * 100);
-      var pctClass = pct === 100 ? 'te-complete' : pct > 0 ? 'te-partial' : 'te-none';
-      rows += '<td class="te-progress ' + pctClass + '">' + pct + '%</td>';
-      rows += '</tr>';
+      var pctClass =
+        pct === 100 ? "te-complete" : pct > 0 ? "te-partial" : "te-none";
+      rows += '<td class="te-progress ' + pctClass + '">' + pct + "%</td>";
+      rows += "</tr>";
     }
 
     var bodyHTML =
       '<div class="th-modal-body">' +
       '<div class="th-modal-header">' +
-      '<h2>📝 ' + safeLabel + '</h2>' +
-      '<p class="th-summary">' + safeDate + ' · ' + athletes.length + ' athletes · Click any cell to enter data</p>' +
-      '</div>' +
+      "<h2>📝 " +
+      safeLabel +
+      "</h2>" +
+      '<p class="th-summary">' +
+      safeDate +
+      " · " +
+      athletes.length +
+      " athletes · Click any cell to enter data</p>" +
+      "</div>" +
       '<div class="te-instructions">' +
-      '<span>💡 Click a cell to enter a value. <strong>Tab</strong> moves to the next cell. <strong>Enter</strong> saves. <strong>Esc</strong> cancels. Data saves automatically.</span>' +
-      '</div>' +
+      "<span>💡 Click a cell to enter a value. <strong>Tab</strong> moves to the next cell. <strong>Enter</strong> saves. <strong>Esc</strong> cancels. Data saves automatically.</span>" +
+      "</div>" +
       '<div class="te-table-wrap">' +
       '<table class="th-detail-table te-table">' +
       '<thead><tr><th class="te-athlete-col">Athlete</th>';
     for (var hk = 0; hk < TEST_METRIC_KEYS.length; hk++) {
-      bodyHTML += '<th>' + TEST_METRIC_KEYS[hk].label + ' <small class="te-unit">(' + TEST_METRIC_KEYS[hk].unit + ')</small></th>';
+      bodyHTML +=
+        "<th>" +
+        TEST_METRIC_KEYS[hk].label +
+        ' <small class="te-unit">(' +
+        TEST_METRIC_KEYS[hk].unit +
+        ")</small></th>";
     }
-    bodyHTML += '<th>Done</th></tr></thead>';
-    bodyHTML += '<tbody>' + rows + '</tbody>';
+    bodyHTML += "<th>Done</th></tr></thead>";
+    bodyHTML += "<tbody>" + rows + "</tbody>";
     // Compute and append team averages footer
     var wsStats = computeTestAverages(
       athletes.map(function (a) {
         var entry = null;
         if (h[a.id]) {
           for (var ei2 = 0; ei2 < h[a.id].length; ei2++) {
-            if (h[a.id][ei2].date === dateStr && h[a.id][ei2].label === label) { entry = h[a.id][ei2]; break; }
+            if (h[a.id][ei2].date === dateStr && h[a.id][ei2].label === label) {
+              entry = h[a.id][ei2];
+              break;
+            }
           }
         }
         return { values: entry ? entry.values : {} };
-      })
+      }),
     );
-    bodyHTML += '<tfoot>' + buildAvgTableRows(wsStats, true, true) + '</tfoot>';
-    bodyHTML += '</table></div>';
+    bodyHTML += "<tfoot>" + buildAvgTableRows(wsStats, true, true) + "</tfoot>";
+    bodyHTML += "</table></div>";
     // Team averages summary bar
     bodyHTML += buildAvgSummaryHTML(wsStats);
     bodyHTML += '<div class="te-footer">';
-    bodyHTML += '<span class="te-footer-stat">' + filledCount + '/' + athletes.length + ' athletes have data</span>';
+    bodyHTML +=
+      '<span class="te-footer-stat">' +
+      filledCount +
+      "/" +
+      athletes.length +
+      " athletes have data</span>";
     bodyHTML += '<div class="te-footer-actions">';
-    bodyHTML += '<button class="btn btn-sm" onclick="document.querySelector(\'.te-modal\').remove(); viewSavedTests()">← Back to Test History</button>';
-    bodyHTML += '<button class="btn btn-sm" onclick="applyTestAsCurrent(\'' + esc(dateStr).replace(/'/g, "\\'") + "','" + esc(label).replace(/'/g, "\\'") + '\')" title="Update all athlete current values from this test">🔄 Apply as Current Data</button>';
-    bodyHTML += '<button class="btn btn-sm btn-primary" onclick="document.querySelector(\'.te-modal\').remove(); viewSavedTests()">✅ Done</button>';
-    bodyHTML += '</div></div></div>';
+    bodyHTML +=
+      '<button class="btn btn-sm" onclick="document.querySelector(\'.te-modal\').remove(); viewSavedTests()">← Back to Test History</button>';
+    bodyHTML +=
+      '<button class="btn btn-sm" onclick="applyTestAsCurrent(\'' +
+      esc(dateStr).replace(/'/g, "\\'") +
+      "','" +
+      esc(label).replace(/'/g, "\\'") +
+      '\')" title="Update all athlete current values from this test">🔄 Apply as Current Data</button>';
+    bodyHTML +=
+      '<button class="btn btn-sm btn-primary" onclick="document.querySelector(\'.te-modal\').remove(); viewSavedTests()">✅ Done</button>';
+    bodyHTML += "</div></div></div>";
 
-    var overlay = document.createElement('div');
-    overlay.className = 'modal-overlay te-modal';
+    var overlay = document.createElement("div");
+    overlay.className = "modal-overlay te-modal";
     overlay.innerHTML =
       '<div class="modal-content th-modal-content te-content">' +
       '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' +
       bodyHTML +
-      '</div>';
-    overlay.addEventListener('click', function (ev) {
+      "</div>";
+    overlay.addEventListener("click", function (ev) {
       if (ev.target === overlay) overlay.remove();
     });
     document.body.appendChild(overlay);
@@ -2727,7 +3073,7 @@
   window.applyTestAsCurrent = function (date, label) {
     var h = getTestHistory();
     var ids = Object.keys(h);
-    var edits = JSON.parse(localStorage.getItem('lc_edits') || '[]');
+    var edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
     var count = 0;
 
     for (var i = 0; i < ids.length; i++) {
@@ -2744,7 +3090,9 @@
             }
           }
           if (hasData) {
-            var existing = edits.find(function (e) { return e.id === aid; });
+            var existing = edits.find(function (e) {
+              return e.id === aid;
+            });
             if (existing) {
               Object.assign(existing.changes, changes);
             } else {
@@ -2757,15 +3105,22 @@
       }
     }
 
-    safeLSSet('lc_edits', JSON.stringify(edits));
+    safeLSSet("lc_edits", JSON.stringify(edits));
     rebuildFromStorage();
     markTabsDirty();
-    var activeTab = document.querySelector('.tab.active');
+    var activeTab = document.querySelector(".tab.active");
     if (activeTab) renderIfDirty(activeTab.dataset.tab);
     updateDataStatus();
-    var pid = document.getElementById('athleteSelect').value;
+    var pid = document.getElementById("athleteSelect").value;
     if (pid) renderProfile();
-    showToast('Applied "' + label + '" data to ' + count + ' athletes as current values.', 'success');
+    showToast(
+      'Applied "' +
+        label +
+        '" data to ' +
+        count +
+        " athletes as current values.",
+      "success",
+    );
   };
 
   window.deleteBulkTestEntry = function (date, label) {
@@ -2799,11 +3154,14 @@
 
   /* --- Change the date of a test session --- */
   window.changeTestDate = function (oldDate, label) {
-    var newDate = prompt('Change date for "' + label + '" (currently ' + oldDate + '):', oldDate);
+    var newDate = prompt(
+      'Change date for "' + label + '" (currently ' + oldDate + "):",
+      oldDate,
+    );
     if (!newDate || !newDate.trim() || newDate.trim() === oldDate) return;
     newDate = newDate.trim();
     if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
-      showToast('Invalid date format. Use YYYY-MM-DD.', 'error');
+      showToast("Invalid date format. Use YYYY-MM-DD.", "error");
       return;
     }
     var h = getTestHistory();
@@ -2822,26 +3180,33 @@
     var notes = getTestNotes();
     var oldNk = noteKey(oldDate, label);
     var newNk = noteKey(newDate, label);
-    if (notes[oldNk]) { notes[newNk] = notes[oldNk]; delete notes[oldNk]; setTestNotes(notes); }
-    showToast('Changed date to ' + newDate + ' (' + changed + ' entries)', 'success');
+    if (notes[oldNk]) {
+      notes[newNk] = notes[oldNk];
+      delete notes[oldNk];
+      setTestNotes(notes);
+    }
+    showToast(
+      "Changed date to " + newDate + " (" + changed + " entries)",
+      "success",
+    );
     rebuildFromStorage();
-    var existing = document.querySelector('.test-history-modal');
+    var existing = document.querySelector(".test-history-modal");
     if (existing) existing.remove();
     viewSavedTests();
-    var pid = document.getElementById('athleteSelect').value;
+    var pid = document.getElementById("athleteSelect").value;
     if (pid) renderProfile();
   };
 
   /* --- Duplicate a test session --- */
   window.duplicateTest = function (date, label) {
-    var newDate = prompt('Date for the duplicate (YYYY-MM-DD):', date);
+    var newDate = prompt("Date for the duplicate (YYYY-MM-DD):", date);
     if (!newDate || !newDate.trim()) return;
     newDate = newDate.trim();
-    var newLabel = prompt('Label for the duplicate:', label + ' (copy)');
+    var newLabel = prompt("Label for the duplicate:", label + " (copy)");
     if (!newLabel || !newLabel.trim()) return;
     newLabel = newLabel.trim();
     if (newDate === date && newLabel === label) {
-      showToast('Duplicate must have a different date or label.', 'warn');
+      showToast("Duplicate must have a different date or label.", "warn");
       return;
     }
     var h = getTestHistory();
@@ -2852,15 +3217,28 @@
         if (h[ids[i]][j].date === date && h[ids[i]][j].label === label) {
           // Deep clone values
           var clonedVals = JSON.parse(JSON.stringify(h[ids[i]][j].values));
-          h[ids[i]].push({ date: newDate, label: newLabel, values: clonedVals });
+          h[ids[i]].push({
+            date: newDate,
+            label: newLabel,
+            values: clonedVals,
+          });
           duped++;
           break;
         }
       }
     }
     setTestHistory(h);
-    showToast('Duplicated "' + label + '" → "' + newLabel + '" (' + duped + ' athletes)', 'success');
-    var existing = document.querySelector('.test-history-modal');
+    showToast(
+      'Duplicated "' +
+        label +
+        '" → "' +
+        newLabel +
+        '" (' +
+        duped +
+        " athletes)",
+      "success",
+    );
+    var existing = document.querySelector(".test-history-modal");
     if (existing) existing.remove();
     viewSavedTests();
   };
@@ -2869,8 +3247,8 @@
   window.editTestNote = function (date, label) {
     var notes = getTestNotes();
     var nk = noteKey(date, label);
-    var current = notes[nk] || '';
-    var newNote = prompt('Notes for "' + label + '" (' + date + '):', current);
+    var current = notes[nk] || "";
+    var newNote = prompt('Notes for "' + label + '" (' + date + "):", current);
     if (newNote === null) return;
     if (newNote.trim()) {
       notes[nk] = newNote.trim();
@@ -2878,8 +3256,8 @@
       delete notes[nk];
     }
     setTestNotes(notes);
-    showToast(newNote.trim() ? 'Note saved.' : 'Note cleared.', 'success');
-    var existing = document.querySelector('.test-history-modal');
+    showToast(newNote.trim() ? "Note saved." : "Note cleared.", "success");
+    var existing = document.querySelector(".test-history-modal");
     if (existing) existing.remove();
     viewSavedTests();
   };
@@ -2899,39 +3277,58 @@
         }
       }
     }
-    var missing = D.athletes.filter(function (a) { return !inTest[a.id]; });
+    var missing = D.athletes.filter(function (a) {
+      return !inTest[a.id];
+    });
     if (missing.length === 0) {
-      showToast('All athletes are already in this test.', 'info');
+      showToast("All athletes are already in this test.", "info");
       return;
     }
-    var names = missing.map(function (a, idx) { return (idx + 1) + '. ' + a.name; }).join('\n');
+    var names = missing
+      .map(function (a, idx) {
+        return idx + 1 + ". " + a.name;
+      })
+      .join("\n");
     var reply = prompt(
-      'Add athletes to "' + label + '" (' + date + '):\n\n' +
-      names + '\n\n' +
-      'Enter numbers separated by commas (e.g. 1,3,5) or "all":'
+      'Add athletes to "' +
+        label +
+        '" (' +
+        date +
+        "):\n\n" +
+        names +
+        "\n\n" +
+        'Enter numbers separated by commas (e.g. 1,3,5) or "all":',
     );
     if (!reply || !reply.trim()) return;
     reply = reply.trim().toLowerCase();
     var toAdd = [];
-    if (reply === 'all') {
+    if (reply === "all") {
       toAdd = missing;
     } else {
-      var nums = reply.split(',').map(function (s) { return parseInt(s.trim(), 10); });
+      var nums = reply.split(",").map(function (s) {
+        return parseInt(s.trim(), 10);
+      });
       for (var ni = 0; ni < nums.length; ni++) {
         if (nums[ni] >= 1 && nums[ni] <= missing.length) {
           toAdd.push(missing[nums[ni] - 1]);
         }
       }
     }
-    if (toAdd.length === 0) { showToast('No valid athletes selected.', 'warn'); return; }
+    if (toAdd.length === 0) {
+      showToast("No valid athletes selected.", "warn");
+      return;
+    }
     for (var ai = 0; ai < toAdd.length; ai++) {
       var aid = toAdd[ai].id;
       if (!h[aid]) h[aid] = [];
       h[aid].push({ date: date, label: label, values: {} });
     }
     setTestHistory(h);
-    showToast('Added ' + toAdd.length + ' athlete(s) to "' + label + '"', 'success');
-    var existing = document.querySelector('.test-history-modal');
+    showToast(
+      "Added " + toAdd.length + ' athlete(s) to "' + label + '"',
+      "success",
+    );
+    var existing = document.querySelector(".test-history-modal");
     if (existing) existing.remove();
     viewSavedTests();
   };
@@ -2946,88 +3343,136 @@
     for (var i = 0; i < ids.length; i++) {
       for (var j = 0; j < h[ids[i]].length; j++) {
         if (h[ids[i]][j].date === date && h[ids[i]][j].label === label) {
-          var found = D.athletes.find(function (x) { return x.id === ids[i]; });
+          var found = D.athletes.find(function (x) {
+            return x.id === ids[i];
+          });
           inTest.push({ id: ids[i], name: found ? found.name : ids[i] });
           break;
         }
       }
     }
-    if (inTest.length === 0) { showToast('No athletes in this test.', 'warn'); return; }
-    var names = inTest.map(function (a, idx) { return (idx + 1) + '. ' + a.name; }).join('\n');
+    if (inTest.length === 0) {
+      showToast("No athletes in this test.", "warn");
+      return;
+    }
+    var names = inTest
+      .map(function (a, idx) {
+        return idx + 1 + ". " + a.name;
+      })
+      .join("\n");
     var reply = prompt(
-      'Remove athletes from "' + label + '" (' + date + '):\n\n' + names +
-      '\n\nEnter numbers separated by commas (e.g. 1,3):'
+      'Remove athletes from "' +
+        label +
+        '" (' +
+        date +
+        "):\n\n" +
+        names +
+        "\n\nEnter numbers separated by commas (e.g. 1,3):",
     );
     if (!reply || !reply.trim()) return;
-    var nums = reply.trim().split(',').map(function (s) { return parseInt(s.trim(), 10); });
+    var nums = reply
+      .trim()
+      .split(",")
+      .map(function (s) {
+        return parseInt(s.trim(), 10);
+      });
     var removed = 0;
     for (var ni = 0; ni < nums.length; ni++) {
       if (nums[ni] >= 1 && nums[ni] <= inTest.length) {
         var rid = inTest[nums[ni] - 1].id;
         if (h[rid]) {
-          h[rid] = h[rid].filter(function (e) { return !(e.date === date && e.label === label); });
+          h[rid] = h[rid].filter(function (e) {
+            return !(e.date === date && e.label === label);
+          });
           if (h[rid].length === 0) delete h[rid];
           removed++;
         }
       }
     }
-    if (removed === 0) { showToast('No valid athletes selected.', 'warn'); return; }
+    if (removed === 0) {
+      showToast("No valid athletes selected.", "warn");
+      return;
+    }
     setTestHistory(h);
-    showToast('Removed ' + removed + ' athlete(s) from "' + label + '"', 'success');
-    var existing = document.querySelector('.test-history-modal');
+    showToast(
+      "Removed " + removed + ' athlete(s) from "' + label + '"',
+      "success",
+    );
+    var existing = document.querySelector(".test-history-modal");
     if (existing) existing.remove();
     viewSavedTests();
-    var pid = document.getElementById('athleteSelect').value;
+    var pid = document.getElementById("athleteSelect").value;
     if (pid) renderProfile();
   };
 
   /* --- More actions dropdown toggle --- */
   window.toggleThMore = function (btn) {
     var menu = btn.nextElementSibling;
-    var isOpen = menu.classList.contains('th-more-open');
+    var isOpen = menu.classList.contains("th-more-open");
     // Close all open menus
-    document.querySelectorAll('.th-more-menu.th-more-open').forEach(function (m) { m.classList.remove('th-more-open'); });
-    if (!isOpen) menu.classList.add('th-more-open');
+    document
+      .querySelectorAll(".th-more-menu.th-more-open")
+      .forEach(function (m) {
+        m.classList.remove("th-more-open");
+      });
+    if (!isOpen) menu.classList.add("th-more-open");
   };
   // Close menus when clicking outside
-  document.addEventListener('click', function (ev) {
-    if (!ev.target.closest('.th-more-wrap')) {
-      document.querySelectorAll('.th-more-menu.th-more-open').forEach(function (m) { m.classList.remove('th-more-open'); });
+  document.addEventListener("click", function (ev) {
+    if (!ev.target.closest(".th-more-wrap")) {
+      document
+        .querySelectorAll(".th-more-menu.th-more-open")
+        .forEach(function (m) {
+          m.classList.remove("th-more-open");
+        });
     }
   });
 
   /* --- Search / filter test cards --- */
   window.filterTestCards = function (query) {
-    query = (query || '').toLowerCase();
-    var cards = document.querySelectorAll('#thListView .th-card');
+    query = (query || "").toLowerCase();
+    var cards = document.querySelectorAll("#thListView .th-card");
     for (var i = 0; i < cards.length; i++) {
-      var label = cards[i].getAttribute('data-label') || '';
-      var date = cards[i].getAttribute('data-date') || '';
-      var match = !query || label.indexOf(query) >= 0 || date.indexOf(query) >= 0;
-      cards[i].style.display = match ? '' : 'none';
+      var label = cards[i].getAttribute("data-label") || "";
+      var date = cards[i].getAttribute("data-date") || "";
+      var match =
+        !query || label.indexOf(query) >= 0 || date.indexOf(query) >= 0;
+      cards[i].style.display = match ? "" : "none";
     }
   };
 
   /* --- Sort test cards --- */
   window.sortTestCards = function (mode) {
-    var list = document.getElementById('thListView');
+    var list = document.getElementById("thListView");
     if (!list) return;
-    var cards = Array.from(list.querySelectorAll('.th-card'));
+    var cards = Array.from(list.querySelectorAll(".th-card"));
     cards.sort(function (a, b) {
-      var aDate = a.getAttribute('data-date') || '';
-      var bDate = b.getAttribute('data-date') || '';
-      var aLabel = a.getAttribute('data-label') || '';
-      var bLabel = b.getAttribute('data-label') || '';
+      var aDate = a.getAttribute("data-date") || "";
+      var bDate = b.getAttribute("data-date") || "";
+      var aLabel = a.getAttribute("data-label") || "";
+      var bLabel = b.getAttribute("data-label") || "";
       // Count athletes from the stat text
-      var aCount = parseInt((a.querySelector('.th-stat strong') || {}).textContent || '0', 10);
-      var bCount = parseInt((b.querySelector('.th-stat strong') || {}).textContent || '0', 10);
+      var aCount = parseInt(
+        (a.querySelector(".th-stat strong") || {}).textContent || "0",
+        10,
+      );
+      var bCount = parseInt(
+        (b.querySelector(".th-stat strong") || {}).textContent || "0",
+        10,
+      );
       switch (mode) {
-        case 'date-asc': return aDate < bDate ? -1 : aDate > bDate ? 1 : 0;
-        case 'date-desc': return aDate > bDate ? -1 : aDate < bDate ? 1 : 0;
-        case 'name-asc': return aLabel < bLabel ? -1 : aLabel > bLabel ? 1 : 0;
-        case 'name-desc': return aLabel > bLabel ? -1 : aLabel < bLabel ? 1 : 0;
-        case 'athletes-desc': return bCount - aCount;
-        default: return 0;
+        case "date-asc":
+          return aDate < bDate ? -1 : aDate > bDate ? 1 : 0;
+        case "date-desc":
+          return aDate > bDate ? -1 : aDate < bDate ? 1 : 0;
+        case "name-asc":
+          return aLabel < bLabel ? -1 : aLabel > bLabel ? 1 : 0;
+        case "name-desc":
+          return aLabel > bLabel ? -1 : aLabel < bLabel ? 1 : 0;
+        case "athletes-desc":
+          return bCount - aCount;
+        default:
+          return 0;
       }
     });
     for (var i = 0; i < cards.length; i++) list.appendChild(cards[i]);
@@ -3039,18 +3484,39 @@
     var tests = Object.values(result.testMap).sort(function (a, b) {
       return a.date > b.date ? -1 : a.date < b.date ? 1 : 0;
     });
-    if (tests.length < 2) { showToast('Need at least 2 test sessions to compare.', 'warn'); return; }
+    if (tests.length < 2) {
+      showToast("Need at least 2 test sessions to compare.", "warn");
+      return;
+    }
 
-    var options = tests.map(function (t, i) { return (i + 1) + '. ' + t.label + ' (' + t.date + ')'; }).join('\n');
-    var pick1 = prompt('Compare Tests — pick FIRST test:\n\n' + options + '\n\nEnter number:');
+    var options = tests
+      .map(function (t, i) {
+        return i + 1 + ". " + t.label + " (" + t.date + ")";
+      })
+      .join("\n");
+    var pick1 = prompt(
+      "Compare Tests — pick FIRST test:\n\n" + options + "\n\nEnter number:",
+    );
     if (!pick1) return;
     var idx1 = parseInt(pick1.trim(), 10) - 1;
-    if (idx1 < 0 || idx1 >= tests.length) { showToast('Invalid selection.', 'warn'); return; }
+    if (idx1 < 0 || idx1 >= tests.length) {
+      showToast("Invalid selection.", "warn");
+      return;
+    }
 
-    var pick2 = prompt('Pick SECOND test to compare with "' + tests[idx1].label + '":\n\n' + options + '\n\nEnter number:');
+    var pick2 = prompt(
+      'Pick SECOND test to compare with "' +
+        tests[idx1].label +
+        '":\n\n' +
+        options +
+        "\n\nEnter number:",
+    );
     if (!pick2) return;
     var idx2 = parseInt(pick2.trim(), 10) - 1;
-    if (idx2 < 0 || idx2 >= tests.length || idx2 === idx1) { showToast('Invalid or same selection.', 'warn'); return; }
+    if (idx2 < 0 || idx2 >= tests.length || idx2 === idx1) {
+      showToast("Invalid or same selection.", "warn");
+      return;
+    }
 
     var t1 = tests[idx1];
     var t2 = tests[idx2];
@@ -3060,9 +3526,11 @@
 
     // Build athlete lookup for both
     var olderMap = {};
-    for (var oi = 0; oi < older.athleteDetails.length; oi++) olderMap[older.athleteDetails[oi].id] = older.athleteDetails[oi];
+    for (var oi = 0; oi < older.athleteDetails.length; oi++)
+      olderMap[older.athleteDetails[oi].id] = older.athleteDetails[oi];
     var newerMap = {};
-    for (var ni = 0; ni < newer.athleteDetails.length; ni++) newerMap[newer.athleteDetails[ni].id] = newer.athleteDetails[ni];
+    for (var ni = 0; ni < newer.athleteDetails.length; ni++)
+      newerMap[newer.athleteDetails[ni].id] = newer.athleteDetails[ni];
     // All athlete IDs in either
     var allIds = {};
     for (var ki in olderMap) allIds[ki] = true;
@@ -3071,28 +3539,51 @@
 
     var html = '<div class="th-modal-body">';
     html += '<div class="th-modal-header"><h2>🔀 Compare Tests</h2>';
-    html += '<p class="th-summary">' + esc(older.label) + ' (' + older.date + ') vs ' + esc(newer.label) + ' (' + newer.date + ')</p></div>';
-    html += '<div class="te-instructions"><span>🟢 = improved · 🔴 = declined · ↑↓ arrows show direction of change</span></div>';
-    html += '<div class="te-table-wrap"><table class="th-detail-table te-table"><thead><tr>';
-    html += '<th>Athlete</th>';
+    html +=
+      '<p class="th-summary">' +
+      esc(older.label) +
+      " (" +
+      older.date +
+      ") vs " +
+      esc(newer.label) +
+      " (" +
+      newer.date +
+      ")</p></div>";
+    html +=
+      '<div class="te-instructions"><span>🟢 = improved · 🔴 = declined · ↑↓ arrows show direction of change</span></div>';
+    html +=
+      '<div class="te-table-wrap"><table class="th-detail-table te-table"><thead><tr>';
+    html += "<th>Athlete</th>";
     for (var mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
-      html += '<th>' + TEST_METRIC_KEYS[mk].label + '</th>';
+      html += "<th>" + TEST_METRIC_KEYS[mk].label + "</th>";
     }
-    html += '</tr></thead><tbody>';
+    html += "</tr></thead><tbody>";
 
     var sortedIds = Object.keys(allIds).sort(function (a, b) {
-      var na = (D.athletes.find(function (x) { return x.id === a; }) || {}).name || a;
-      var nb = (D.athletes.find(function (x) { return x.id === b; }) || {}).name || b;
+      var na =
+        (
+          D.athletes.find(function (x) {
+            return x.id === a;
+          }) || {}
+        ).name || a;
+      var nb =
+        (
+          D.athletes.find(function (x) {
+            return x.id === b;
+          }) || {}
+        ).name || b;
       return na.localeCompare(nb);
     });
 
     for (var si = 0; si < sortedIds.length; si++) {
       var aid = sortedIds[si];
-      var found = D.athletes.find(function (x) { return x.id === aid; });
+      var found = D.athletes.find(function (x) {
+        return x.id === aid;
+      });
       var name = found ? found.name : aid;
       var oEntry = olderMap[aid];
       var nEntry = newerMap[aid];
-      html += '<tr><td><strong>' + esc(name) + '</strong></td>';
+      html += "<tr><td><strong>" + esc(name) + "</strong></td>";
       for (var cmk = 0; cmk < TEST_METRIC_KEYS.length; cmk++) {
         var jk = TEST_METRIC_KEYS[cmk].jsonKey;
         var lower = TEST_METRIC_KEYS[cmk].lower;
@@ -3101,35 +3592,61 @@
         if (oVal == null && nVal == null) {
           html += '<td class="num">—</td>';
         } else if (oVal == null) {
-          html += '<td class="num">' + nVal + ' <small class="text-muted">new</small></td>';
+          html +=
+            '<td class="num">' +
+            nVal +
+            ' <small class="text-muted">new</small></td>';
         } else if (nVal == null) {
-          html += '<td class="num">' + oVal + ' <small class="text-muted">only old</small></td>';
+          html +=
+            '<td class="num">' +
+            oVal +
+            ' <small class="text-muted">only old</small></td>';
         } else {
           var diff = nVal - oVal;
           var improved = lower ? diff < 0 : diff > 0;
           var declined = lower ? diff > 0 : diff < 0;
-          var cls = improved ? 'delta-up' : declined ? 'delta-down' : 'delta-flat';
-          var arrow = improved ? '▲' : declined ? '▼' : '—';
-          var sign = diff > 0 ? '+' : '';
-          html += '<td class="num ' + cls + '">' + nVal + ' <small>' + arrow + ' ' + sign + (Math.round(diff * 100) / 100) + '</small></td>';
+          var cls = improved
+            ? "delta-up"
+            : declined
+              ? "delta-down"
+              : "delta-flat";
+          var arrow = improved ? "▲" : declined ? "▼" : "—";
+          var sign = diff > 0 ? "+" : "";
+          html +=
+            '<td class="num ' +
+            cls +
+            '">' +
+            nVal +
+            " <small>" +
+            arrow +
+            " " +
+            sign +
+            Math.round(diff * 100) / 100 +
+            "</small></td>";
         }
       }
-      html += '</tr>';
+      html += "</tr>";
     }
-    html += '</tbody></table></div>';
+    html += "</tbody></table></div>";
     html += '<div class="te-footer"><div class="te-footer-actions">';
-    html += '<button class="btn btn-sm btn-primary" onclick="this.closest(\'.cmp-modal\').remove(); viewSavedTests()">← Back</button>';
-    html += '</div></div></div>';
+    html +=
+      '<button class="btn btn-sm btn-primary" onclick="this.closest(\'.cmp-modal\').remove(); viewSavedTests()">← Back</button>';
+    html += "</div></div></div>";
 
     // Close test history modal
-    var existingTh = document.querySelector('.test-history-modal');
+    var existingTh = document.querySelector(".test-history-modal");
     if (existingTh) existingTh.remove();
 
-    var overlay = document.createElement('div');
-    overlay.className = 'modal-overlay cmp-modal';
-    overlay.innerHTML = '<div class="modal-content th-modal-content">' +
-      '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' + html + '</div>';
-    overlay.addEventListener('click', function (ev) { if (ev.target === overlay) overlay.remove(); });
+    var overlay = document.createElement("div");
+    overlay.className = "modal-overlay cmp-modal";
+    overlay.innerHTML =
+      '<div class="modal-content th-modal-content">' +
+      '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' +
+      html +
+      "</div>";
+    overlay.addEventListener("click", function (ev) {
+      if (ev.target === overlay) overlay.remove();
+    });
     document.body.appendChild(overlay);
   };
 
@@ -5033,13 +5550,15 @@
         if (tEntries[tj].date > latestDate) latestDate = tEntries[tj].date;
       }
       // Merge all entries from that date (in case of multiple labels)
-      var tAthlete = rawCopy.athletes.find(function (a) { return a.id === tAid; });
+      var tAthlete = rawCopy.athletes.find(function (a) {
+        return a.id === tAid;
+      });
       if (!tAthlete) continue;
       for (var tk = 0; tk < tEntries.length; tk++) {
         if (tEntries[tk].date !== latestDate) continue;
         var vals = tEntries[tk].values;
         for (var vk in vals) {
-          if (vals[vk] !== null && vals[vk] !== undefined && vals[vk] !== '') {
+          if (vals[vk] !== null && vals[vk] !== undefined && vals[vk] !== "") {
             tAthlete[vk] = vals[vk];
           }
         }
@@ -5116,15 +5635,19 @@
     for (var hi = 0; hi < allIds.length; hi++) {
       for (var hj = 0; hj < h[allIds[hi]].length; hj++) {
         var ent = h[allIds[hi]][hj];
-        existingDates[ent.date + '|' + ent.label] = true;
+        existingDates[ent.date + "|" + ent.label] = true;
       }
     }
     var dateKeys = Object.keys(existingDates);
     if (dateKeys.length > 0) {
       if (!h[id]) h[id] = [];
       for (var dk = 0; dk < dateKeys.length; dk++) {
-        var parts = dateKeys[dk].split('|');
-        h[id].push({ date: parts[0], label: parts.slice(1).join('|'), values: {} });
+        var parts = dateKeys[dk].split("|");
+        h[id].push({
+          date: parts[0],
+          label: parts.slice(1).join("|"),
+          values: {},
+        });
       }
       setTestHistory(h);
     }
@@ -5140,7 +5663,10 @@
     renderProfile();
     openEditPanel(id);
 
-    var testMsg = dateKeys.length > 0 ? " — " + dateKeys.length + " test date(s) pre-populated" : "";
+    var testMsg =
+      dateKeys.length > 0
+        ? " — " + dateKeys.length + " test date(s) pre-populated"
+        : "";
     showToast("Added " + name.trim() + " (" + id + ")" + testMsg, "success");
   };
 
@@ -5454,18 +5980,35 @@
       for (var hi = 0; hi < history.length; hi++) {
         var he = history[hi];
         var metricsWithData = 0;
-        var metricChips = '';
+        var metricChips = "";
         for (var tki = 0; tki < TEST_METRIC_KEYS.length; tki++) {
           var tkVal = he.values[TEST_METRIC_KEYS[tki].jsonKey];
           if (tkVal !== null && tkVal !== undefined) {
             metricsWithData++;
-            metricChips += '<span class="th-chip">' + TEST_METRIC_KEYS[tki].label + ': <strong>' + tkVal + '</strong></span>';
+            metricChips +=
+              '<span class="th-chip">' +
+              TEST_METRIC_KEYS[tki].label +
+              ": <strong>" +
+              tkVal +
+              "</strong></span>";
           }
         }
         // Compute 40yd from sprints if available
-        var s020 = he.values.sprint_020, s2030 = he.values.sprint_2030, s3040 = he.values.sprint_3040;
-        if (s020 !== null && s020 !== undefined && s2030 !== null && s2030 !== undefined && s3040 !== null && s3040 !== undefined) {
-          metricChips += '<span class="th-chip th-chip-computed">40yd: <strong>' + (s020 + s2030 + s3040).toFixed(2) + 's</strong></span>';
+        var s020 = he.values.sprint_020,
+          s2030 = he.values.sprint_2030,
+          s3040 = he.values.sprint_3040;
+        if (
+          s020 !== null &&
+          s020 !== undefined &&
+          s2030 !== null &&
+          s2030 !== undefined &&
+          s3040 !== null &&
+          s3040 !== undefined
+        ) {
+          metricChips +=
+            '<span class="th-chip th-chip-computed">40yd: <strong>' +
+            (s020 + s2030 + s3040).toFixed(2) +
+            "s</strong></span>";
         }
         html += '<div class="edit-history-item">';
         html +=
@@ -5475,9 +6018,12 @@
           he.date +
           " · " +
           metricsWithData +
-          "/" + TEST_METRIC_KEYS.length +
+          "/" +
+          TEST_METRIC_KEYS.length +
           " metrics</small>" +
-          '<div class="th-chip-row">' + metricChips + '</div>' +
+          '<div class="th-chip-row">' +
+          metricChips +
+          "</div>" +
           "</div>";
         html += '<div class="edit-history-btns">';
         html +=
@@ -5487,7 +6033,7 @@
           esc(he.date) +
           "','" +
           esc(he.label) +
-          "')\" title=\"Edit this test entry\">✏️</button> ";
+          '\')" title="Edit this test entry">✏️</button> ';
         html +=
           '<button class="btn btn-xs btn-muted" onclick="deleteHistoryEntry(\'' +
           esc(a.id) +
@@ -5495,13 +6041,14 @@
           esc(he.date) +
           "','" +
           esc(he.label) +
-          "')\" title=\"Delete this test entry\">🗑</button>";
-        html += '</div>';
+          '\')" title="Delete this test entry">🗑</button>';
+        html += "</div>";
         html += "</div>";
       }
       html += "</div>";
     } else {
-      html += '<div class="th-empty-inline"><small>No test history for this athlete. Save a test date or add historical data above.</small></div>';
+      html +=
+        '<div class="th-empty-inline"><small>No test history for this athlete. Save a test date or add historical data above.</small></div>';
     }
 
     // Hidden previous test entry form (shared for add & edit)
@@ -5510,7 +6057,8 @@
     html += '<input type="hidden" id="prevTestEditMode" value="" />';
     html += '<input type="hidden" id="prevTestOrigDate" value="" />';
     html += '<input type="hidden" id="prevTestOrigLabel" value="" />';
-    html += '<div class="edit-section-title" id="prevTestFormTitle">Enter Previous Test Data</div>';
+    html +=
+      '<div class="edit-section-title" id="prevTestFormTitle">Enter Previous Test Data</div>';
     html += '<div class="edit-grid">';
     html +=
       '<div class="edit-field"><label>Test Date</label><input type="date" id="prevTestDate" value="" /></div>';
@@ -5681,12 +6229,16 @@
     document.getElementById("prevTestEditMode").value = "";
     document.getElementById("prevTestOrigDate").value = "";
     document.getElementById("prevTestOrigLabel").value = "";
-    document.getElementById("prevTestFormTitle").textContent = "Enter Previous Test Data";
-    document.getElementById("prevTestSubmitBtn").textContent = "💾 Save Previous Test";
+    document.getElementById("prevTestFormTitle").textContent =
+      "Enter Previous Test Data";
+    document.getElementById("prevTestSubmitBtn").textContent =
+      "💾 Save Previous Test";
     document.getElementById("prevTestDate").value = "";
     document.getElementById("prevTestLabel").value = "";
     for (var i = 0; i < TEST_METRIC_KEYS.length; i++) {
-      var el = document.getElementById("prevTest_" + TEST_METRIC_KEYS[i].jsonKey);
+      var el = document.getElementById(
+        "prevTest_" + TEST_METRIC_KEYS[i].jsonKey,
+      );
       if (el) el.value = "";
     }
     form.style.display = "block";
@@ -5702,7 +6254,10 @@
         break;
       }
     }
-    if (!entry) { showToast("Test entry not found.", "error"); return; }
+    if (!entry) {
+      showToast("Test entry not found.", "error");
+      return;
+    }
 
     var form = document.getElementById("prevTestForm");
     if (!form) return;
@@ -5711,8 +6266,10 @@
     document.getElementById("prevTestEditMode").value = "edit";
     document.getElementById("prevTestOrigDate").value = date;
     document.getElementById("prevTestOrigLabel").value = label;
-    document.getElementById("prevTestFormTitle").textContent = "Edit Test: " + label + " (" + date + ")";
-    document.getElementById("prevTestSubmitBtn").textContent = "💾 Update Test Entry";
+    document.getElementById("prevTestFormTitle").textContent =
+      "Edit Test: " + label + " (" + date + ")";
+    document.getElementById("prevTestSubmitBtn").textContent =
+      "💾 Update Test Entry";
 
     // Pre-fill date & label
     document.getElementById("prevTestDate").value = entry.date;
@@ -5724,7 +6281,7 @@
       var el = document.getElementById("prevTest_" + mk.jsonKey);
       if (el) {
         var v = entry.values[mk.jsonKey];
-        el.value = (v !== null && v !== undefined) ? v : "";
+        el.value = v !== null && v !== undefined ? v : "";
       }
     }
 

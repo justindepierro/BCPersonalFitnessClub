@@ -737,7 +737,8 @@
             if (!tEntries || tEntries.length === 0) continue;
             let latestDate = tEntries[0].date;
             for (let tj = 1; tj < tEntries.length; tj++) {
-              if (tEntries[tj].date > latestDate) latestDate = tEntries[tj].date;
+              if (tEntries[tj].date > latestDate)
+                latestDate = tEntries[tj].date;
             }
             const tAthlete = raw.athletes.find((a) => a.id === tAid);
             if (!tAthlete) continue;
@@ -745,7 +746,11 @@
               if (tEntries[tk].date !== latestDate) continue;
               const vals = tEntries[tk].values;
               for (const vk in vals) {
-                if (vals[vk] !== null && vals[vk] !== undefined && vals[vk] !== '') {
+                if (
+                  vals[vk] !== null &&
+                  vals[vk] !== undefined &&
+                  vals[vk] !== ""
+                ) {
                   tAthlete[vk] = vals[vk];
                 }
               }

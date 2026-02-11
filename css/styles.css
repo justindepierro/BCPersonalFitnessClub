@@ -2337,8 +2337,12 @@ select:focus,
   animation: fadeIn 0.2s ease;
 }
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* ---------- Test History Modal ---------- */
@@ -2452,8 +2456,14 @@ select:focus,
   animation: slideDown 0.2s ease;
 }
 @keyframes slideDown {
-  from { opacity: 0; max-height: 0; }
-  to   { opacity: 1; max-height: 600px; }
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 600px;
+  }
 }
 .th-detail-table {
   width: 100%;
@@ -2917,7 +2927,9 @@ select:focus,
 /* ---------- Inline Cell Editing ---------- */
 .ie-cell {
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   position: relative;
   min-width: 3rem;
 }
@@ -2952,8 +2964,12 @@ select:focus,
   animation: ieSavedPulse 0.8s ease;
 }
 @keyframes ieSavedPulse {
-  0%   { background: rgba(74, 222, 128, 0.25); }
-  100% { background: transparent; }
+  0% {
+    background: rgba(74, 222, 128, 0.25);
+  }
+  100% {
+    background: transparent;
+  }
 }
 
 /* ---------- Profile History Actions ---------- */
@@ -3085,7 +3101,9 @@ select:focus,
   padding: 0.3rem 0.6rem;
   font-size: 0.78rem;
   width: 140px;
-  transition: border-color 0.15s, width 0.2s;
+  transition:
+    border-color 0.15s,
+    width 0.2s;
 }
 .th-search:focus {
   border-color: var(--accent);
@@ -3107,11 +3125,21 @@ select:focus,
 }
 
 /* Compare delta styling (reuse existing delta classes) */
-.cmp-modal .delta-up { color: #4ade80; }
-.cmp-modal .delta-down { color: #f87171; }
-.cmp-modal .delta-flat { color: var(--text-muted); }
-.cmp-modal small { font-size: 0.68rem; }
-.text-muted { color: var(--text-muted); }
+.cmp-modal .delta-up {
+  color: #4ade80;
+}
+.cmp-modal .delta-down {
+  color: #f87171;
+}
+.cmp-modal .delta-flat {
+  color: var(--text-muted);
+}
+.cmp-modal small {
+  font-size: 0.68rem;
+}
+.text-muted {
+  color: var(--text-muted);
+}
 
 @media print {
   .scroll-top-btn,
