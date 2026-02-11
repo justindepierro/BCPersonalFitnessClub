@@ -1709,7 +1709,8 @@
         shown[ti].date +
         "</small></th>";
     }
-    if (shown.length > 0) html += "<th>vs Last</th>";
+    if (shown.length >= 2) html += "<th>Change</th>";
+    else if (shown.length === 1) html += "<th>vs Test</th>";
     html += "</tr></thead><tbody>";
 
     for (var mi = 0; mi < TEST_METRIC_KEYS.length; mi++) {
@@ -1732,16 +1733,17 @@
           (hVal !== null && hVal !== undefined ? hVal : "—") +
           "</td>";
       }
-      // Delta vs most recent
-      if (shown.length > 0) {
-        var lastVal = shown[0].values[mk.jsonKey];
+      // Delta: compare two most recent tests, or current vs single test
+      if (shown.length >= 2) {
+        var newerVal = shown[0].values[mk.jsonKey];
+        var olderVal = shown[1].values[mk.jsonKey];
         if (
-          curVal !== null &&
-          curVal !== undefined &&
-          lastVal !== null &&
-          lastVal !== undefined
+          newerVal !== null &&
+          newerVal !== undefined &&
+          olderVal !== null &&
+          olderVal !== undefined
         ) {
-          var delta = curVal - lastVal;
+          var delta = newerVal - olderVal;
           var pctChange =
             lastVal !== 0 ? Math.round((delta / Math.abs(lastVal)) * 100) : 0;
           var improved = mk.lower ? delta < 0 : delta > 0;
@@ -1768,6 +1770,41 @@
         } else {
           html += '<td class="na">—</td>';
         }
+      } else if (shown.length === 1) {
+        var lastVal = shown[0].values[mk.jsonKey];
+        if (
+          curVal !== null &&
+          curVal !== undefined &&
+          lastVal !== null &&
+          lastVal !== undefined
+        ) {
+          var delta1 = curVal - lastVal;
+          var pctChange1 =
+            lastVal !== 0 ? Math.round((delta1 / Math.abs(lastVal)) * 100) : 0;
+          var improved1 = mk.lower ? delta1 < 0 : delta1 > 0;
+          var declined1 = mk.lower ? delta1 > 0 : delta1 < 0;
+          var cls1 = improved1
+            ? "delta-up"
+            : declined1
+              ? "delta-down"
+              : "delta-flat";
+          var arrow1 = improved1 ? "▲" : declined1 ? "▼" : "—";
+          var sign1 = delta1 > 0 ? "+" : "";
+          html +=
+            '<td class="num ' +
+            cls1 +
+            '">' +
+            arrow1 +
+            " " +
+            sign1 +
+            (Number.isInteger(delta1) ? delta1 : delta1.toFixed(2)) +
+            " <small>(" +
+            sign1 +
+            pctChange1 +
+            "%)</small></td>";
+        } else {
+          html += '<td class="na">—</td>';
+        }
       }
       html += "</tr>";
     }
@@ -1787,22 +1824,33 @@
           : null;
       html += '<td class="num">' + (hForty !== null ? hForty : "—") + "</td>";
     }
-    if (shown.length > 0) {
-      var fvLast = shown[0].values;
-      var lastForty =
-        fvLast.sprint_020 !== null &&
-        fvLast.sprint_2030 !== null &&
-        fvLast.sprint_3040 !== null
+    if (shown.length >= 2) {
+      var fvNewer = shown[0].values;
+      var fvOlder = shown[1].values;
+      var newerForty =
+        fvNewer.sprint_020 !== null &&
+        fvNewer.sprint_2030 !== null &&
+        fvNewer.sprint_3040 !== null
           ? +(
-              fvLast.sprint_020 +
-              fvLast.sprint_2030 +
-              fvLast.sprint_3040
+              fvNewer.sprint_020 +
+              fvNewer.sprint_2030 +
+              fvNewer.sprint_3040
             ).toFixed(2)
           : null;
-      if (curForty !== null && lastForty !== null) {
-        var fd = curForty - lastForty;
+      var olderForty =
+        fvOlder.sprint_020 !== null &&
+        fvOlder.sprint_2030 !== null &&
+        fvOlder.sprint_3040 !== null
+          ? +(
+              fvOlder.sprint_020 +
+              fvOlder.sprint_2030 +
+              fvOlder.sprint_3040
+            ).toFixed(2)
+          : null;
+      if (newerForty !== null && olderForty !== null) {
+        var fd = newerForty - olderForty;
         var fpct =
-          lastForty !== 0 ? Math.round((fd / Math.abs(lastForty)) * 100) : 0;
+          olderForty !== 0 ? Math.round((fd / Math.abs(olderForty)) * 100) : 0;
         var fImproved = fd < 0;
         var fDeclined = fd > 0;
         var fCls = fImproved
@@ -1823,6 +1871,46 @@
           " <small>(" +
           fSign +
           fpct +
+          "%)</small></td>";
+      } else {
+        html += '<td class="na">—</td>';
+      }
+    } else if (shown.length === 1) {
+      var fvLast = shown[0].values;
+      var lastForty =
+        fvLast.sprint_020 !== null &&
+        fvLast.sprint_2030 !== null &&
+        fvLast.sprint_3040 !== null
+          ? +(
+              fvLast.sprint_020 +
+              fvLast.sprint_2030 +
+              fvLast.sprint_3040
+            ).toFixed(2)
+          : null;
+      if (curForty !== null && lastForty !== null) {
+        var fd1 = curForty - lastForty;
+        var fpct1 =
+          lastForty !== 0 ? Math.round((fd1 / Math.abs(lastForty)) * 100) : 0;
+        var fImproved1 = fd1 < 0;
+        var fDeclined1 = fd1 > 0;
+        var fCls1 = fImproved1
+          ? "delta-up"
+          : fDeclined1
+            ? "delta-down"
+            : "delta-flat";
+        var fArrow1 = fImproved1 ? "▲" : fDeclined1 ? "▼" : "—";
+        var fSign1 = fd1 > 0 ? "+" : "";
+        html +=
+          '<td class="num ' +
+          fCls1 +
+          '">' +
+          fArrow1 +
+          " " +
+          fSign1 +
+          fd1.toFixed(2) +
+          " <small>(" +
+          fSign1 +
+          fpct1 +
           "%)</small></td>";
       } else {
         html += '<td class="na">—</td>';
