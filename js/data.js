@@ -90,7 +90,8 @@
   }
 
   function rd(v, d) {
-    return v !== null && v !== undefined ? +v.toFixed(d) : null;
+    if (v === null || v === undefined || !isFinite(v)) return null;
+    return +v.toFixed(d);
   }
 
   /* ---------- Statistical helpers ---------- */

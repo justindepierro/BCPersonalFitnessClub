@@ -187,7 +187,7 @@
   }
 
   function getTestHistory() {
-    return JSON.parse(localStorage.getItem("lc_test_history") || "{}");
+    return safeLSGet("lc_test_history", {});
   }
   function setTestHistory(h) {
     safeLSSet("lc_test_history", JSON.stringify(h));
@@ -229,6 +229,15 @@
   }
 
   /* ---------- Safe localStorage (quota-aware) ---------- */
+  function safeLSGet(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw !== null ? JSON.parse(raw) : fallback;
+    } catch (e) {
+      console.error("localStorage read failed for " + key + ":", e);
+      return fallback;
+    }
+  }
   function safeLSSet(key, value) {
     try {
       localStorage.setItem(
@@ -1105,7 +1114,7 @@
       <tr class="${rowCls}" tabindex="0" role="button" onclick="selectAthlete('${a.id}')" onkeydown="if(event.key==='Enter')selectAthlete('${a.id}')">
         <td><strong>${esc(a.name)}</strong>${!isTested ? ' <span class="untested-badge">Untested</span>' : ""}</td>
         <td>${esc(a.position) || "—"}</td>
-        <td><span class="group-tag group-${a.group.replace(/\s/g, "")}">${esc(a.group)}</span></td>
+        <td><span class="group-tag group-${(a.group || "").replace(/\s/g, "")}">${esc(a.group || "—")}</span></td>
         <td class="num">${a.grade ? ordGrade(a.grade) : "—"}</td>
         ${cellN("height", 0)}
         ${cellN("weight", 0)}
@@ -1165,7 +1174,7 @@
           <div class="profile-meta">
             <span class="meta-item"><strong>Sport:</strong> ${esc(a.sport) || "Football"}</span>
             <span class="meta-item"><strong>Position:</strong> ${esc(a.position) || "N/A"}</span>
-            <span class="meta-item"><strong>Group:</strong> <span class="group-tag group-${a.group.replace(/\s/g, "")}">${a.group}</span></span>
+            <span class="meta-item"><strong>Group:</strong> <span class="group-tag group-${(a.group || "").replace(/\s/g, "")}">${a.group || "—"}</span></span>
             <span class="meta-item"><strong>Grade:</strong> ${a.grade ? ordGrade(a.grade) : "N/A"}</span>
             <span class="meta-item"><strong>Training Age:</strong> ${a.trainingAge !== null ? a.trainingAge + " yr" + (a.trainingAge !== 1 ? "s" : "") : "N/A"}</span>
             <span class="meta-item"><strong>Height:</strong> ${a.height ? fmtHeight(a.height) + " (" + a.height + " in)" : "N/A"}</span>
@@ -1319,12 +1328,12 @@
   }
 
   function normMetric(val, key) {
-    if (val === null) return 0;
+    if (val == null) return 0;
     const { max } = _getMinMax(key);
     return max > 0 ? Math.round((val / max) * 100) : 0;
   }
   function normMetricInv(val, key) {
-    if (val === null) return 0;
+    if (val == null) return 0;
     const { min, max } = _getMinMax(key);
     if (max === min) return 100;
     return Math.round(((max - val) / (max - min)) * 100);
@@ -2202,7 +2211,7 @@
 
   /* --- helpers for test notes --- */
   function getTestNotes() {
-    return JSON.parse(localStorage.getItem("lc_test_notes") || "{}");
+    return safeLSGet("lc_test_notes", {});
   }
   function setTestNotes(n) {
     safeLSSet("lc_test_notes", JSON.stringify(n));
@@ -2882,6 +2891,15 @@
       }
     }
     setTestHistory(h);
+    // Migrate test notes to new label
+    var notes = getTestNotes();
+    var oldNk = noteKey(date, oldLabel);
+    var newNk = noteKey(date, newLabel);
+    if (notes[oldNk]) {
+      notes[newNk] = notes[oldNk];
+      delete notes[oldNk];
+      setTestNotes(notes);
+    }
     showToast(
       'Renamed to "' + newLabel + '" (' + renamed + " entries)",
       "success",
@@ -3233,7 +3251,7 @@
   window.applyTestAsCurrent = function (date, label) {
     var h = getTestHistory();
     var ids = Object.keys(h);
-    var edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
+    var edits = safeLSGet("lc_edits", []);
     var count = 0;
 
     for (var i = 0; i < ids.length; i++) {
@@ -4285,7 +4303,7 @@
         return `<tr>
         <td><strong>${esc(a.name)}</strong></td>
         <td>${esc(a.position) || "—"}</td>
-        <td><span class="group-tag group-${a.group.replace(/\s/g, "")}">${esc(a.group)}</span></td>
+        <td><span class="group-tag group-${(a.group || "").replace(/\s/g, "")}">${esc(a.group || "—")}</span></td>
         ${cells}
       </tr>`;
       })
@@ -4510,13 +4528,13 @@
           result = parts.join(" | ") || "—";
         } else if (e.test === "Jump") {
           const parts = [];
-          if (e.vert) parts.push(`VJ: ${e.vert} in`);
-          if (e.broad) parts.push(`BJ: ${e.broad} in`);
+          if (e.vert != null) parts.push(`VJ: ${e.vert} in`);
+          if (e.broad != null) parts.push(`BJ: ${e.broad} in`);
           result = parts.join(" | ") || "—";
         } else if (e.test === "Strength") {
           const parts = [];
-          if (e.bench) parts.push(`Bench: ${e.bench} lb`);
-          if (e.squat) parts.push(`Squat: ${e.squat} lb`);
+          if (e.bench != null) parts.push(`Bench: ${e.bench} lb`);
+          if (e.squat != null) parts.push(`Squat: ${e.squat} lb`);
           result = parts.join(" | ") || "—";
         } else if (e.test === "Med Ball") {
           result =
@@ -4887,7 +4905,7 @@
       <div class="print-footer">Burke Catholic Personal Fitness Club &mdash; Confidential</div>
     </div>`;
 
-    openPrintWindow(printHTML, esc(a.name) + " — Athlete Profile");
+    openPrintWindow(printHTML, a.name + " — Athlete Profile");
   };
 
   /* --- Print Scorecard (coach report with breakdown) --- */
@@ -5419,13 +5437,13 @@
     for (const s of sessions) {
       sel.innerHTML +=
         '<option value="' +
-        s.date +
+        esc(s.date) +
         "|" +
-        s.label +
+        esc(s.label) +
         '">' +
-        s.label +
+        esc(s.label) +
         " (" +
-        s.date +
+        esc(s.date) +
         ") — " +
         s.count +
         " athletes</option>";
@@ -6115,9 +6133,9 @@
         "</td>";
       html +=
         '<td><span class="group-tag group-' +
-        a.group.replace(/\s/g, "") +
+        (a.group || "").replace(/\s/g, "") +
         '">' +
-        esc(a.group) +
+        esc(a.group || "—") +
         "</span></td>";
       for (const m of metrics) {
         html += _deltaCell(deltas[i], m);
@@ -6313,7 +6331,7 @@
       const metricAvgGrades = [];
       for (const mm of D.hsStandards._meta) {
         const scores = ga
-          .map((a) => a.grades[mm.key]?.score)
+          .map((a) => a.grades?.[mm.key]?.score)
           .filter((v) => v !== undefined);
         if (scores.length > 0) {
           const avgScore = scores.reduce((s, v) => s + v, 0) / scores.length;
@@ -6430,7 +6448,7 @@
     const sel = document.getElementById("snapshotSelect");
     if (!sel) return;
     sel.innerHTML = '<option value="">— Load Snapshot —</option>';
-    const snapshots = JSON.parse(localStorage.getItem("lc_snapshots") || "[]");
+    const snapshots = safeLSGet("lc_snapshots", []);
     for (const s of snapshots) {
       const o = document.createElement("option");
       o.value = s.name;
@@ -6442,10 +6460,10 @@
   function updateDataStatus() {
     const el = document.getElementById("dataStatus");
     if (!el) return;
-    const editsArr = JSON.parse(localStorage.getItem("lc_edits") || "[]");
-    const added = JSON.parse(localStorage.getItem("lc_added") || "[]");
-    const deleted = JSON.parse(localStorage.getItem("lc_deleted") || "[]");
-    const snapshots = JSON.parse(localStorage.getItem("lc_snapshots") || "[]");
+    const editsArr = safeLSGet("lc_edits", []);
+    const added = safeLSGet("lc_added", []);
+    const deleted = safeLSGet("lc_deleted", []);
+    const snapshots = safeLSGet("lc_snapshots", []);
     const parts = [];
     if (editsArr.length) parts.push("edits");
     if (added.length) parts.push("+" + added.length + " added");
@@ -6465,7 +6483,7 @@
       "Snapshot " + new Date().toLocaleDateString(),
     );
     if (!name) return;
-    const snapshots = JSON.parse(localStorage.getItem("lc_snapshots") || "[]");
+    const snapshots = safeLSGet("lc_snapshots", []);
 
     // Prevent duplicate snapshot names
     if (
@@ -6489,21 +6507,21 @@
     const rawCopy = JSON.parse(JSON.stringify(window._rawDataCache));
 
     // Apply additions
-    const added = JSON.parse(localStorage.getItem("lc_added") || "[]");
+    const added = safeLSGet("lc_added", []);
     for (const a of added) {
       if (!rawCopy.athletes.find((x) => x.id === a.id))
         rawCopy.athletes.push(a);
     }
 
     // Apply deletions
-    const deleted = JSON.parse(localStorage.getItem("lc_deleted") || "[]");
+    const deleted = safeLSGet("lc_deleted", []);
     if (deleted.length)
       rawCopy.athletes = rawCopy.athletes.filter(
         (a) => !deleted.includes(a.id),
       );
 
     // Apply edits
-    const edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
+    const edits = safeLSGet("lc_edits", []);
     for (const edit of edits) {
       const athlete = rawCopy.athletes.find((a) => a.id === edit.id);
       if (athlete) Object.assign(athlete, edit.changes);
@@ -6526,7 +6544,7 @@
       showToast("Select a snapshot to load.", "warn");
       return;
     }
-    const snapshots = JSON.parse(localStorage.getItem("lc_snapshots") || "[]");
+    const snapshots = safeLSGet("lc_snapshots", []);
     const snap = snapshots.find((s) => s.name === name);
     if (!snap) {
       showToast("Snapshot not found.", "error");
@@ -6554,7 +6572,7 @@
       return;
     }
     if (!confirm('Delete snapshot "' + name + '"?')) return;
-    let snapshots = JSON.parse(localStorage.getItem("lc_snapshots") || "[]");
+    let snapshots = safeLSGet("lc_snapshots", []);
     snapshots = snapshots.filter((s) => s.name !== name);
     safeLSSet("lc_snapshots", JSON.stringify(snapshots));
     refreshSnapshotList();
@@ -6563,7 +6581,7 @@
 
   /* ---------- Age-Adjusted Standards Toggle ---------- */
   window.toggleAgeAdjusted = function (on) {
-    localStorage.setItem("lc_age_adjusted", on ? "true" : "false");
+    safeLSSet("lc_age_adjusted", on ? "true" : "false");
     rebuildFromStorage();
     markTabsDirty();
     const activeTab = document.querySelector(".tab.active");
@@ -6703,7 +6721,7 @@
     const rawCopy = JSON.parse(JSON.stringify(window._rawDataCache));
 
     // Apply additions
-    const added = JSON.parse(localStorage.getItem("lc_added") || "[]");
+    const added = safeLSGet("lc_added", []);
     for (const a of added) {
       if (
         !rawCopy.athletes.find(function (x) {
@@ -6715,7 +6733,7 @@
     }
 
     // Apply deletions
-    const deleted = JSON.parse(localStorage.getItem("lc_deleted") || "[]");
+    const deleted = safeLSGet("lc_deleted", []);
     if (deleted.length) {
       rawCopy.athletes = rawCopy.athletes.filter(function (a) {
         return !deleted.includes(a.id);
@@ -6751,7 +6769,7 @@
     }
 
     // Apply edits AFTER test history so manual edits take priority
-    const edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
+    const edits = safeLSGet("lc_edits", []);
     for (const edit of edits) {
       const athlete = rawCopy.athletes.find(function (a) {
         return a.id === edit.id;
@@ -6765,7 +6783,7 @@
   /* ========== NEXT ATHLETE ID ========== */
   function nextAthleteId() {
     const D = window.CLUB;
-    const added = JSON.parse(localStorage.getItem("lc_added") || "[]");
+    const added = safeLSGet("lc_added", []);
     // Collect all existing IDs from processed data + localStorage additions
     const allIds = D.athletes.map(function (a) {
       return a.id;
@@ -6820,7 +6838,7 @@
     };
 
     // Save to lc_added
-    const added = JSON.parse(localStorage.getItem("lc_added") || "[]");
+    const added = safeLSGet("lc_added", []);
     added.push(newAthlete);
     safeLSSet("lc_added", JSON.stringify(added));
 
@@ -6897,19 +6915,19 @@
     }
 
     // Add to lc_deleted
-    const deleted = JSON.parse(localStorage.getItem("lc_deleted") || "[]");
+    const deleted = safeLSGet("lc_deleted", []);
     if (deleted.indexOf(id) === -1) deleted.push(id);
     safeLSSet("lc_deleted", JSON.stringify(deleted));
 
     // Also remove from lc_added if it was a newly added athlete
-    let added = JSON.parse(localStorage.getItem("lc_added") || "[]");
+    let added = safeLSGet("lc_added", []);
     added = added.filter(function (a) {
       return a.id !== id;
     });
     safeLSSet("lc_added", JSON.stringify(added));
 
     // Also remove from lc_edits
-    let edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
+    let edits = safeLSGet("lc_edits", []);
     edits = edits.filter(function (e) {
       return e.id !== id;
     });
@@ -7123,7 +7141,7 @@
     }
 
     // Get saved edits for this athlete to detect changes
-    const edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
+    const edits = safeLSGet("lc_edits", []);
     const athleteEdits = edits.find(function (e) {
       return e.id === a.id;
     });
@@ -7384,7 +7402,8 @@
       const rawVal = el.value.trim();
       let newVal;
       if (f.type === "number") {
-        newVal = rawVal === "" ? null : parseFloat(rawVal);
+        const parsed = parseFloat(rawVal);
+        newVal = rawVal === "" ? null : (isNaN(parsed) ? null : parsed);
       } else if (f.key === "grade") {
         newVal = rawVal === "" ? null : parseInt(rawVal, 10);
       } else {
@@ -7398,7 +7417,7 @@
     }
 
     // Save to localStorage
-    let edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
+    let edits = safeLSGet("lc_edits", []);
     const existing = edits.find(function (e) {
       return e.id === editingAthleteId;
     });
@@ -7447,7 +7466,7 @@
   }
 
   function markChangedFields() {
-    const edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
+    const edits = safeLSGet("lc_edits", []);
     const athleteEdits = edits.find(function (e) {
       return e.id === editingAthleteId;
     });
@@ -7479,6 +7498,10 @@
       new Date().toISOString().slice(0, 10),
     );
     if (!dateStr) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr) || isNaN(new Date(dateStr + "T00:00:00").getTime())) {
+      showToast("Invalid date format. Please use YYYY-MM-DD.", "warn");
+      return;
+    }
     var label = prompt(
       "Enter a label for this test (e.g. 'Spring 2025', 'Pre-Season'):",
       "",
@@ -7674,6 +7697,7 @@
   };
 
   window.editPanelPrev = function () {
+    if (autoSaveTimer) { clearTimeout(autoSaveTimer); autoSaveTimer = null; doAutoSave(); }
     const sorted = sortedAthletes();
     if (sorted.length === 0) return;
     let idx = sorted.findIndex(function (a) {
@@ -7684,6 +7708,7 @@
   };
 
   window.editPanelNext = function () {
+    if (autoSaveTimer) { clearTimeout(autoSaveTimer); autoSaveTimer = null; doAutoSave(); }
     const sorted = sortedAthletes();
     if (sorted.length === 0) return;
     let idx = sorted.findIndex(function (a) {
@@ -7696,7 +7721,7 @@
   /* ---------- Undo & athlete-level export ---------- */
   window.undoAthleteEdits = function () {
     if (!editingAthleteId) return;
-    let edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
+    let edits = safeLSGet("lc_edits", []);
     edits = edits.filter(function (e) {
       return e.id !== editingAthleteId;
     });
@@ -7974,6 +7999,8 @@
         localStorage.removeItem("lc_edits");
         localStorage.removeItem("lc_added");
         localStorage.removeItem("lc_deleted");
+        localStorage.removeItem("lc_snapshots");
+        localStorage.removeItem("lc_test_notes");
 
         /* --- Restore test history if present in import --- */
         if (data.test_history && typeof data.test_history === "object") {
