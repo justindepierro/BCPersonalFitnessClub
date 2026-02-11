@@ -1156,33 +1156,33 @@
     var thRow = '<tr>';
     thRow += '<th data-sort="name">Athlete</th>';
     thRow += '<th data-sort="position" title="Playing position">Pos</th>';
-    thRow += '<th data-sort="group" title="Position group">Group</th>';
-    thRow += '<th data-sort="grade" title="Current grade level (6th–12th)">Grade</th>';
+    thRow += '<th data-sort="group" title="Position group">' + (showRel ? 'Grp' : 'Group') + '</th>';
+    thRow += '<th data-sort="grade" title="Current grade level (6th–12th)">' + (showRel ? 'Gr' : 'Grade') + '</th>';
     if (showRel) {
-      thRow += '<th data-sort="trainingAge" title="Training age = grade − 8 (years of development)">T-Age</th>';
+      thRow += '<th data-sort="trainingAge" title="Training age = grade − 8 (years of development)">TA</th>';
     }
-    thRow += '<th data-sort="height" title="Standing height in inches">Ht (in)</th>';
-    thRow += '<th data-sort="weight" title="Body weight in pounds">Wt (lb)</th>';
-    thRow += '<th data-sort="bench" title="Bench Press 1RM (lb)">Bench</th>';
+    thRow += '<th data-sort="height" title="Standing height in inches">' + (showRel ? 'Ht' : 'Ht (in)') + '</th>';
+    thRow += '<th data-sort="weight" title="Body weight in pounds">' + (showRel ? 'Wt' : 'Wt (lb)') + '</th>';
+    thRow += '<th data-sort="bench" title="Bench Press 1RM (lb)">' + (showRel ? 'BP' : 'Bench') + '</th>';
     if (showRel) {
-      thRow += '<th data-sort="relBench" title="Bench Press / Body Weight (xBW)">Rel B</th>';
+      thRow += '<th data-sort="relBench" title="Bench Press / Body Weight (xBW)">rBP</th>';
     }
-    thRow += '<th data-sort="squat" title="Back Squat 1RM (lb)">Squat</th>';
+    thRow += '<th data-sort="squat" title="Back Squat 1RM (lb)">' + (showRel ? 'SQ' : 'Squat') + '</th>';
     if (showRel) {
-      thRow += '<th data-sort="relSquat" title="Squat / Body Weight (xBW)">Rel S</th>';
+      thRow += '<th data-sort="relSquat" title="Squat / Body Weight (xBW)">rSQ</th>';
     }
     thRow += '<th data-sort="medball" title="Seated Med Ball Throw (in)">MB</th>';
     if (showRel) {
-      thRow += '<th data-sort="mbRel" title="Med Ball / Body Weight (in/lb)">MB/BW</th>';
+      thRow += '<th data-sort="mbRel" title="Med Ball / Body Weight (in/lb)">rMB</th>';
     }
     thRow += '<th data-sort="vert" title="Vertical Jump (in)">VJ</th>';
     thRow += '<th data-sort="broad" title="Broad Jump (in)">BJ</th>';
-    thRow += '<th data-sort="forty" title="40-Yard Dash (s). Lower is better.">40 yd</th>';
+    thRow += '<th data-sort="forty" title="40-Yard Dash (s). Lower is better.">' + (showRel ? '40' : '40 yd') + '</th>';
     if (showRel) {
-      thRow += '<th data-sort="peakPower" title="Peak Power via Sayers equation (W)">PP (W)</th>';
-      thRow += '<th data-sort="relPeakPower" title="Peak Power / Mass (W/kg)">Rel PP</th>';
+      thRow += '<th data-sort="peakPower" title="Peak Power via Sayers equation (W)">PP</th>';
+      thRow += '<th data-sort="relPeakPower" title="Peak Power / Mass (W/kg)">rPP</th>';
     }
-    thRow += '<th data-sort="zMB" title="Med Ball Z-Score">z(MB)</th>';
+    thRow += '<th data-sort="zMB" title="Med Ball Z-Score">zMB</th>';
     thRow += '<th data-sort="overallGrade" title="Overall rating">Rating</th>';
     thRow += '</tr>';
     thead.innerHTML = thRow;

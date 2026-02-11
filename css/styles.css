@@ -381,11 +381,17 @@ select:focus,
 /* Compact cells when relative columns are visible */
 .roster-table-wrap.has-rel-cols .data-table th,
 .roster-table-wrap.has-rel-cols .data-table td {
-  padding: 0.45rem 0.45rem;
-  font-size: 0.74rem;
+  padding: 0.35rem 0.3rem;
+  font-size: 0.7rem;
 }
 .roster-table-wrap.has-rel-cols .data-table th {
-  font-size: 0.68rem;
+  font-size: 0.62rem;
+}
+/* Truncate athlete name column so it doesn't hog space */
+.roster-table-wrap.has-rel-cols .data-table td:first-child {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .data-table {
