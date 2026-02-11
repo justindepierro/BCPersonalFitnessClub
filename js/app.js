@@ -1022,7 +1022,7 @@
 
       <div class="profile-section-title">Explosiveness</div>
       <div class="metric-grid">
-        ${metricCard("Med Ball Throw", a.medball, "in", a.medball ? fmtHeight(a.medball) : null, a.grades.medball)}
+        ${metricCard("Med Ball Throw", a.medball, "in", a.medball ? (Math.floor(a.medball / 12) + "'" + (a.medball % 12) + "\" (" + a.medball + " in)") : null, a.grades.medball)}
         ${metricCard("MB Relative", a.mbRel, "in/lb", null, a.grades.mbRel)}
         ${metricCard("Vertical Jump", a.vert, "in", a.vertCm ? a.vertCm + " cm" : null, a.grades.vert)}
         ${metricCard("Broad Jump", a.broad, "in", a.broadCm ? a.broadCm + " cm" : null, a.grades.broad)}
@@ -5068,16 +5068,18 @@
     for (const g of groups) {
       const ga = D.athletes.filter((a) => a.group === g);
       if (ga.length === 0) continue;
-      const groupLabels = {
-        Skill: "Skill (RB/WR/DB)",
-        "Big Skill": "Big Skill (QB/TE/LB)",
-        Linemen: "Linemen (OL/DL)",
-        Other: "Other",
-      };
+      // Build label dynamically from sport positions
+      let groupLabel = g;
+      for (const sp of Object.values(D.sportPositions || {})) {
+        if (sp.groups[g]) {
+          groupLabel = g + " (" + sp.groups[g].join("/") + ")";
+          break;
+        }
+      }
 
       html += `<div class="grp-panel">
         <div class="grp-panel-header">
-          <span class="grp-panel-title">${groupLabels[g] || g}</span>
+          <span class="grp-panel-title">${groupLabel}</span>
           <span class="grp-panel-count">${ga.length} athletes</span>
         </div>`;
 
@@ -5193,6 +5195,8 @@
     const headers = [
       "Name",
       "Position",
+      "Sport",
+      "Grade",
       "Group",
       "Height (in)",
       "Weight (lb)",
@@ -5223,6 +5227,8 @@
       const row = [
         '"' + (a.name || "").replace(/"/g, '""') + '"',
         '"' + (a.position || "").replace(/"/g, '""') + '"',
+        '"' + (a.sport || "Football").replace(/"/g, '""') + '"',
+        a.grade ?? "",
         '"' + (a.group || "").replace(/"/g, '""') + '"',
         a.height ?? "",
         a.weight ?? "",
@@ -5498,6 +5504,28 @@
     // Refresh position filter dropdown
     refreshPositionFilter();
 
+    // Refresh group filter dropdowns from current athlete groups
+    const activeGroups = [...new Set(window.CLUB.athletes.map((a) => a.group))].sort();
+    const groupSelects = [
+      document.getElementById("overviewGroupFilter"),
+      document.getElementById("lbGroupFilter"),
+      document.getElementById("grpDash"),
+    ];
+    for (const gs of groupSelects) {
+      if (!gs) continue;
+      const curVal = gs.value;
+      // Keep only the "All Groups" option, rebuild the rest
+      gs.innerHTML = '<option value="all">All Groups</option>';
+      for (const g of activeGroups) {
+        const o = document.createElement("option");
+        o.value = g;
+        o.textContent = g;
+        gs.appendChild(o);
+      }
+      // Restore previous selection if still valid
+      if (curVal && curVal !== "all" && activeGroups.includes(curVal)) gs.value = curVal;
+    }
+
     // Mark all tabs dirty; only render the currently active one
     markTabsDirty();
     const activeTab = document.querySelector(".tab.active");
@@ -5616,6 +5644,8 @@
       id: id,
       name: name.trim(),
       position: null,
+      sport: "Football",
+      grade: null,
       height_in: null,
       weight_lb: null,
       bench_1rm: null,
@@ -6504,6 +6534,8 @@
       id: a.id,
       name: a.name,
       position: a.position,
+      sport: a.sport || "Football",
+      grade: a.grade,
       group: a.group,
       height_in: a.height,
       weight_lb: a.weight,
@@ -6554,6 +6586,8 @@
           id: a.id,
           name: a.name,
           position: a.position,
+          sport: a.sport || "Football",
+          grade: a.grade,
           group: a.group,
           height_in: a.height,
           weight_lb: a.weight,
@@ -6684,6 +6718,8 @@
             id: a.id,
             name: a.name,
             position: a.position,
+            sport: a.sport || null,
+            grade: a.grade !== undefined ? a.grade : null,
             height_in: a.height_in !== undefined ? a.height_in : null,
             weight_lb: a.weight_lb !== undefined ? a.weight_lb : null,
             sprint_020: a.sprint_020 !== undefined ? a.sprint_020 : null,

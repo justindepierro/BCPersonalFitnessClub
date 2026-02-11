@@ -393,7 +393,7 @@ select:focus,
 }
 
 /* Right-align numeric column headers to match data cells */
-#rosterTable thead th:nth-child(n + 4):not(:last-child),
+#rosterTable thead th:nth-child(n + 5):not(:last-child),
 #sprintTable thead th:nth-child(n + 3),
 #strengthTable thead th:nth-child(n + 3),
 #lbTable thead th:first-child,
@@ -401,7 +401,8 @@ select:focus,
   text-align: right;
 }
 
-/* Center Grade column header and scorecard metric headers */
+/* Center school grade and overall rating column headers */
+#rosterTable thead th:nth-child(4),
 #rosterTable thead th:last-child,
 #scorecardTable thead th:nth-child(n + 4) {
   text-align: center;
