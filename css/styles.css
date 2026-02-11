@@ -683,62 +683,6 @@ select:focus,
   margin-bottom: 0.75rem;
 }
 
-.band-chart {
-  display: flex;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  margin-bottom: 0.65rem;
-}
-
-.band-segment {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: #fff;
-  min-width: 40px;
-}
-
-.band-developing {
-  background: var(--red);
-}
-.band-competitive {
-  background: var(--yellow);
-  color: #1a1d27;
-}
-.band-solid {
-  background: var(--blue);
-}
-.band-strong {
-  background: var(--green);
-}
-.band-elite {
-  background: var(--purple);
-}
-
-.band-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  font-size: 0.7rem;
-  color: var(--text-muted);
-}
-
-.band-legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.band-legend .dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  display: inline-block;
-}
-
 /* Standards athlete list */
 .std-athlete-list {
   margin-top: 0.75rem;
@@ -907,51 +851,27 @@ select:focus,
   letter-spacing: 0.03em;
 }
 
-.group-Skill {
+.group-Skill,
+.group-Speed,
+.group-PositionPlayer,
+.group-Guard {
   background: var(--green-bg);
   color: var(--green);
 }
-.group-BigSkill {
+.group-BigSkill,
+.group-Physical,
+.group-Big {
   background: var(--blue-bg);
   color: var(--blue);
 }
-.group-Linemen {
+.group-Linemen,
+.group-Battery {
   background: var(--orange-bg);
   color: var(--orange);
 }
 .group-Other {
   background: var(--surface2);
   color: var(--text-muted);
-}
-
-/* Soccer groups */
-.group-Speed {
-  background: var(--green-bg);
-  color: var(--green);
-}
-.group-Physical {
-  background: var(--blue-bg);
-  color: var(--blue);
-}
-
-/* Baseball groups */
-.group-PositionPlayer {
-  background: var(--green-bg);
-  color: var(--green);
-}
-.group-Battery {
-  background: var(--orange-bg);
-  color: var(--orange);
-}
-
-/* Basketball groups */
-.group-Guard {
-  background: var(--green-bg);
-  color: var(--green);
-}
-.group-Big {
-  background: var(--blue-bg);
-  color: var(--blue);
 }
 
 /* ---------- Info Banner ---------- */
@@ -1311,7 +1231,6 @@ select:focus,
 
 .plan-day-focus {
   font-size: 0.78rem;
-  color: var(--text-muted);
   font-weight: 600;
   margin-left: auto;
   background: var(--accent-glow);
@@ -1687,12 +1606,6 @@ select:focus,
 }
 
 /* ---------- Head-to-Head Comparison ---------- */
-.cmp-grid {
-  display: grid;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
 .cmp-profile-row {
   display: grid;
   gap: 0.75rem;
@@ -1876,13 +1789,6 @@ select:focus,
   font-size: 0.62rem;
   color: var(--text-muted);
   margin-top: 0.2rem;
-}
-
-.delta-up {
-  color: var(--green);
-}
-.delta-down {
-  color: var(--red);
 }
 
 .cmp-bar-wrap {
@@ -2398,11 +2304,6 @@ select:focus,
 }
 
 /* ---------- Toast dismiss button ---------- */
-.toast {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
 .toast-dismiss {
   background: none;
   border: none;
@@ -2533,14 +2434,6 @@ select:focus,
   justify-content: center;
   padding: 1.5rem;
   animation: fadeIn 0.2s ease;
-}
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 /* ---------- Test History Modal ---------- */
@@ -3322,13 +3215,7 @@ select:focus,
   outline: none;
 }
 
-/* Compare delta styling (reuse existing delta classes) */
-.cmp-modal .delta-up {
-  color: #4ade80;
-}
-.cmp-modal .delta-down {
-  color: #f87171;
-}
+/* Compare delta styling */
 .cmp-modal .delta-flat {
   color: var(--text-muted);
 }

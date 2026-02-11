@@ -191,6 +191,9 @@
   }
   function setTestHistory(h) {
     safeLSSet("lc_test_history", JSON.stringify(h));
+    // Invalidate stale/prev caches when test data changes
+    _prevTestCache = null;
+    _staleKeysCache = null;
   }
   function getAthleteHistory(athleteId) {
     const h = getTestHistory();
@@ -742,8 +745,7 @@
       }
       if (prevId === "leaderboards")
         lbChartInstance = destroyChart(lbChartInstance);
-      if (prevId === "compare")
-        _destroyAllCmpCharts();
+      if (prevId === "compare") _destroyAllCmpCharts();
     }
     document.querySelectorAll(".tab").forEach((t) => {
       const isActive = t.dataset.tab === tabId;
@@ -1059,10 +1061,6 @@
       }
       warnContainer.innerHTML = warnHtml;
     }
-
-    // Clear previous-test cache so it rebuilds with current history
-    _prevTestCache = null;
-    _staleKeysCache = null;
 
     const tbody = document.querySelector("#rosterTable tbody");
     tbody.innerHTML = list
@@ -2254,14 +2252,6 @@
     var totalEntries = 0;
     for (var t = 0; t < tests.length; t++) totalEntries += tests[t].count;
 
-    // Count total athletes with data
-    var filledAthletes = 0;
-    for (var t2 = 0; t2 < tests.length; t2++) {
-      for (var ad2 = 0; ad2 < tests[t2].athleteDetails.length; ad2++) {
-        if (tests[t2].athleteDetails[ad2].metrics > 0) filledAthletes++;
-      }
-    }
-
     // Build test cards
     var cards = "";
     for (var ci = 0; ci < tests.length; ci++) {
@@ -2439,11 +2429,12 @@
         }
         cards += "</tr>";
       }
+      var testStats = computeTestAverages(test.athleteDetails);
       cards +=
         "</tbody><tfoot>" +
-        buildAvgTableRows(computeTestAverages(test.athleteDetails), true) +
+        buildAvgTableRows(testStats, true) +
         "</tfoot></table>";
-      cards += buildAvgSummaryHTML(computeTestAverages(test.athleteDetails));
+      cards += buildAvgSummaryHTML(testStats);
       cards += "</div>";
       cards += "</div>";
     }
@@ -2519,8 +2510,6 @@
     });
     document.body.appendChild(overlay);
 
-    // Store tests for calendar view
-    window._thTestsCache = tests;
     // Build calendar content
     if (tests.length > 0) buildTestCalendar(tests);
   };
@@ -5308,31 +5297,78 @@
 
   /* ========== COMPARE & IMPROVEMENT TRACKER ========== */
   let cmpChartInstance = null;
-  let cmpBarChartInstance = null;
   let _cmpCharts = [];
 
   function _destroyAllCmpCharts() {
     cmpChartInstance = destroyChart(cmpChartInstance);
-    cmpBarChartInstance = destroyChart(cmpBarChartInstance);
     for (const c of _cmpCharts) destroyChart(c);
     _cmpCharts = [];
   }
 
   const CMP_METRICS = [
-    { key: "bench", label: "Bench 1RM", unit: "lb", dec: 0, jsonKey: "bench_1rm" },
-    { key: "squat", label: "Squat 1RM", unit: "lb", dec: 0, jsonKey: "squat_1rm" },
-    { key: "medball", label: "Med Ball", unit: "in", dec: 0, jsonKey: "medball_in" },
+    {
+      key: "bench",
+      label: "Bench 1RM",
+      unit: "lb",
+      dec: 0,
+      jsonKey: "bench_1rm",
+    },
+    {
+      key: "squat",
+      label: "Squat 1RM",
+      unit: "lb",
+      dec: 0,
+      jsonKey: "squat_1rm",
+    },
+    {
+      key: "medball",
+      label: "Med Ball",
+      unit: "in",
+      dec: 0,
+      jsonKey: "medball_in",
+    },
     { key: "vert", label: "Vert Jump", unit: "in", dec: 1, jsonKey: "vert_in" },
-    { key: "broad", label: "Broad Jump", unit: "in", dec: 0, jsonKey: "broad_in" },
-    { key: "weight", label: "Weight", unit: "lb", dec: 0, jsonKey: "weight_lb" },
-    { key: "forty", label: "40 yd Dash", unit: "s", dec: 2, invert: true, derived: true },
+    {
+      key: "broad",
+      label: "Broad Jump",
+      unit: "in",
+      dec: 0,
+      jsonKey: "broad_in",
+    },
+    {
+      key: "weight",
+      label: "Weight",
+      unit: "lb",
+      dec: 0,
+      jsonKey: "weight_lb",
+    },
+    {
+      key: "forty",
+      label: "40 yd Dash",
+      unit: "s",
+      dec: 2,
+      invert: true,
+      derived: true,
+    },
     { key: "vMax", label: "Max Velocity", unit: "m/s", dec: 2, derived: true },
     { key: "F1", label: "Sprint Force", unit: "N", dec: 1, derived: true },
-    { key: "momMax", label: "Peak Momentum", unit: "kg·m/s", dec: 1, derived: true },
+    {
+      key: "momMax",
+      label: "Peak Momentum",
+      unit: "kg·m/s",
+      dec: 1,
+      derived: true,
+    },
     { key: "peakPower", label: "Peak Power", unit: "W", dec: 0, derived: true },
     { key: "relBench", label: "Rel Bench", unit: "×BW", dec: 2, derived: true },
     { key: "relSquat", label: "Rel Squat", unit: "×BW", dec: 2, derived: true },
-    { key: "relPeakPower", label: "Rel Peak Power", unit: "W/kg", dec: 1, derived: true },
+    {
+      key: "relPeakPower",
+      label: "Rel Peak Power",
+      unit: "W/kg",
+      dec: 1,
+      derived: true,
+    },
   ];
 
   /* Get unique test sessions across all athletes sorted by date */
@@ -5346,7 +5382,9 @@
         map[k].count++;
       }
     }
-    return Object.values(map).sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+    return Object.values(map).sort((a, b) =>
+      a.date < b.date ? -1 : a.date > b.date ? 1 : 0,
+    );
   }
 
   /* Populate baseline session dropdown */
@@ -5357,8 +5395,18 @@
     const sessions = _getTestSessions();
     sel.innerHTML = '<option value="">— pick baseline test —</option>';
     for (const s of sessions) {
-      sel.innerHTML += '<option value="' + s.date + "|" + s.label + '">' +
-        s.label + " (" + s.date + ") — " + s.count + " athletes</option>";
+      sel.innerHTML +=
+        '<option value="' +
+        s.date +
+        "|" +
+        s.label +
+        '">' +
+        s.label +
+        " (" +
+        s.date +
+        ") — " +
+        s.count +
+        " athletes</option>";
     }
     if (curVal) sel.value = curVal;
   }
@@ -5367,11 +5415,13 @@
   function _populateCmpGroups() {
     const sel = document.getElementById("cmpGroupSel");
     if (!sel) return;
-    const groups = [...new Set(window.CLUB.athletes.map(a => a.group))].sort();
+    const groups = [
+      ...new Set(window.CLUB.athletes.map((a) => a.group)),
+    ].sort();
     const curVal = sel.value;
     sel.innerHTML = '<option value="all">All Groups</option>';
     for (const g of groups) {
-      sel.innerHTML += '<option value="' + g + '">' + g + '</option>';
+      sel.innerHTML += '<option value="' + g + '">' + g + "</option>";
     }
     if (curVal) sel.value = curVal;
   }
@@ -5390,27 +5440,61 @@
     const results = [];
     for (const a of athletes) {
       const baseline = _getSessionValues(a.id, sessionDate, sessionLabel);
-      if (!baseline) { results.push(null); continue; }
+      if (!baseline) {
+        results.push(null);
+        continue;
+      }
       const deltas = {};
       for (const m of CMP_METRICS) {
         const curVal = a[m.key];
         let baseVal = null;
         if (m.jsonKey) baseVal = baseline[m.jsonKey] ?? null;
-        // Derived metrics from baseline sprint splits
-        if (m.derived && !baseVal) {
-          if (m.key === "forty") {
-            const s020 = baseline.sprint_020, s2030 = baseline.sprint_2030, s3040 = baseline.sprint_3040;
-            if (s020 != null && s2030 != null && s3040 != null) baseVal = +(s020 + s2030 + s3040).toFixed(2);
+        // Derived metrics from baseline sprint splits / body data
+        if (m.derived && baseVal == null) {
+          const s020 = baseline.sprint_020, s2030 = baseline.sprint_2030, s3040 = baseline.sprint_3040;
+          const bWt = baseline.weight_lb, bBench = baseline.bench_1rm, bSquat = baseline.squat_1rm;
+          const bVert = baseline.vert_in;
+          const hasSprints = s020 != null && s2030 != null && s3040 != null;
+          if (m.key === "forty" && hasSprints)
+            baseVal = +(s020 + s2030 + s3040).toFixed(2);
+          if (m.key === "vMax" && hasSprints) {
+            const v2 = 9.144 / s2030, v3 = 9.144 / s3040;
+            baseVal = +Math.max(v2, v3).toFixed(2);
           }
-          if (m.key === "relBench" && baseline.bench_1rm != null && baseline.weight_lb != null)
-            baseVal = +(baseline.bench_1rm / baseline.weight_lb).toFixed(2);
-          if (m.key === "relSquat" && baseline.squat_1rm != null && baseline.weight_lb != null)
-            baseVal = +(baseline.squat_1rm / baseline.weight_lb).toFixed(2);
+          if (m.key === "F1" && hasSprints && bWt != null) {
+            const massKg = bWt * 0.453592;
+            const v1 = 18.288 / s020;
+            baseVal = +(massKg * (v1 / s020)).toFixed(1);
+          }
+          if (m.key === "momMax" && hasSprints && bWt != null) {
+            const massKg = bWt * 0.453592;
+            const v2 = 9.144 / s2030, v3 = 9.144 / s3040;
+            baseVal = +(massKg * Math.max(v2, v3)).toFixed(1);
+          }
+          if (m.key === "peakPower" && bVert != null && bWt != null) {
+            const massKg = bWt * 0.453592;
+            baseVal = +(60.7 * (bVert * 2.54) + 45.3 * massKg - 2055).toFixed(0);
+          }
+          if (m.key === "relPeakPower" && bVert != null && bWt != null) {
+            const massKg = bWt * 0.453592;
+            const pp = 60.7 * (bVert * 2.54) + 45.3 * massKg - 2055;
+            baseVal = +(pp / massKg).toFixed(1);
+          }
+          if (m.key === "relBench" && bBench != null && bWt != null)
+            baseVal = +(bBench / bWt).toFixed(2);
+          if (m.key === "relSquat" && bSquat != null && bWt != null)
+            baseVal = +(bSquat / bWt).toFixed(2);
         }
         if (curVal != null && baseVal != null) {
           const rawDelta = curVal - baseVal;
-          const pctDelta = baseVal !== 0 ? (rawDelta / Math.abs(baseVal)) * 100 : 0;
-          deltas[m.key] = { cur: curVal, base: baseVal, delta: rawDelta, pct: pctDelta };
+          const pctDelta =
+            baseVal !== 0 ? (rawDelta / Math.abs(baseVal)) * 100 : 0;
+          deltas[m.key] = {
+            cur: curVal,
+            base: baseVal,
+            delta: rawDelta,
+            pct: pctDelta,
+          };
         }
       }
       results.push(deltas);
@@ -5429,14 +5513,31 @@
     const cls = improved ? "delta-up" : declined ? "delta-down" : "";
     const arrow = improved ? "▲" : declined ? "▼" : "";
     const sign = raw > 0 ? "+" : "";
-    return '<td class="num ' + cls + '" title="From ' + dd.base.toFixed(m.dec) + " → " + dd.cur.toFixed(m.dec) + '">' +
-      arrow + " " + sign + raw.toFixed(m.dec) + ' <small>(' + sign + pct.toFixed(1) + '%)</small></td>';
+    return (
+      '<td class="num ' +
+      cls +
+      '" title="From ' +
+      dd.base.toFixed(m.dec) +
+      " → " +
+      dd.cur.toFixed(m.dec) +
+      '">' +
+      arrow +
+      " " +
+      sign +
+      raw.toFixed(m.dec) +
+      " <small>(" +
+      sign +
+      pct.toFixed(1) +
+      "%)</small></td>"
+    );
   }
 
   window.switchCompareMode = function () {
     const mode = document.getElementById("cmpMode").value;
-    document.getElementById("cmpGroupFilters").style.display = mode === "group" ? "flex" : "none";
-    document.getElementById("cmpH2HFilters").style.display = mode === "h2h" ? "flex" : "none";
+    document.getElementById("cmpGroupFilters").style.display =
+      mode === "group" ? "flex" : "none";
+    document.getElementById("cmpH2HFilters").style.display =
+      mode === "h2h" ? "flex" : "none";
     renderComparison();
   };
 
@@ -5457,18 +5558,23 @@
 
     const baselineSel = document.getElementById("cmpBaselineSession").value;
     if (!baselineSel) {
-      container.innerHTML = '<p class="placeholder-text">Select a baseline test session to compare against current data.</p>';
+      container.innerHTML =
+        '<p class="placeholder-text">Select a baseline test session to compare against current data.</p>';
       return;
     }
     const [sessionDate, sessionLabel] = baselineSel.split("|");
     document.getElementById("cmpBaselineInfo").textContent =
-      'Showing improvement from "' + sessionLabel + '" (' + sessionDate + ') → Current';
+      'Showing improvement from "' +
+      sessionLabel +
+      '" (' +
+      sessionDate +
+      ") → Current";
 
     const athletes = D.athletes;
     const deltas = _computeDeltas(athletes, sessionDate, sessionLabel);
 
     // Build summary cards
-    const filteredMetrics = CMP_METRICS.filter(m => m.key !== "weight");
+    const filteredMetrics = CMP_METRICS.filter((m) => m.key !== "weight");
     const summaryData = {};
     for (const m of filteredMetrics) {
       const vals = [];
@@ -5480,21 +5586,41 @@
       if (vals.length === 0) continue;
       const avgDelta = vals.reduce((s, v) => s + v.delta, 0) / vals.length;
       const avgPct = vals.reduce((s, v) => s + v.pct, 0) / vals.length;
-      const improved = vals.filter(v => m.invert ? v.delta < 0 : v.delta > 0).length;
-      const declined = vals.filter(v => m.invert ? v.delta > 0 : v.delta < 0).length;
-      summaryData[m.key] = { avgDelta, avgPct, improved, declined, total: vals.length, label: m.label, unit: m.unit, dec: m.dec, invert: m.invert };
+      const improved = vals.filter((v) =>
+        m.invert ? v.delta < 0 : v.delta > 0,
+      ).length;
+      const declined = vals.filter((v) =>
+        m.invert ? v.delta > 0 : v.delta < 0,
+      ).length;
+      summaryData[m.key] = {
+        avgDelta,
+        avgPct,
+        improved,
+        declined,
+        total: vals.length,
+        label: m.label,
+        unit: m.unit,
+        dec: m.dec,
+        invert: m.invert,
+      };
     }
 
     if (Object.keys(summaryData).length === 0) {
-      container.innerHTML = '<p class="placeholder-text">No comparable data found between current and "' + sessionLabel + '".</p>';
+      container.innerHTML =
+        '<p class="placeholder-text">No comparable data found between current and "' +
+        sessionLabel +
+        '".</p>';
       return;
     }
 
     // Count overall
-    let totalImproved = 0, totalDeclined = 0, totalSame = 0;
+    let totalImproved = 0,
+      totalDeclined = 0,
+      totalSame = 0;
     for (let i = 0; i < athletes.length; i++) {
       if (!deltas[i]) continue;
-      let up = 0, down = 0;
+      let up = 0,
+        down = 0;
       for (const m of filteredMetrics) {
         const d = deltas[i][m.key];
         if (!d) continue;
@@ -5507,10 +5633,19 @@
     }
 
     let html = '<div class="cmp-summary-banner">';
-    html += '<div class="cmp-stat-card cmp-stat-up"><div class="cmp-stat-num">' + totalImproved + '</div><div class="cmp-stat-label">Athletes Improved</div></div>';
-    html += '<div class="cmp-stat-card cmp-stat-same"><div class="cmp-stat-num">' + totalSame + '</div><div class="cmp-stat-label">Unchanged</div></div>';
-    html += '<div class="cmp-stat-card cmp-stat-down"><div class="cmp-stat-num">' + totalDeclined + '</div><div class="cmp-stat-label">Athletes Declined</div></div>';
-    html += '</div>';
+    html +=
+      '<div class="cmp-stat-card cmp-stat-up"><div class="cmp-stat-num">' +
+      totalImproved +
+      '</div><div class="cmp-stat-label">Athletes Improved</div></div>';
+    html +=
+      '<div class="cmp-stat-card cmp-stat-same"><div class="cmp-stat-num">' +
+      totalSame +
+      '</div><div class="cmp-stat-label">Unchanged</div></div>';
+    html +=
+      '<div class="cmp-stat-card cmp-stat-down"><div class="cmp-stat-num">' +
+      totalDeclined +
+      '</div><div class="cmp-stat-label">Athletes Declined</div></div>';
+    html += "</div>";
 
     // Metric-by-metric summary cards
     html += '<h3 class="cmp-section-title">Average Change by Metric</h3>';
@@ -5521,17 +5656,39 @@
       const cls = improved ? "delta-up" : s.avgDelta === 0 ? "" : "delta-down";
       const sign = s.avgDelta > 0 ? "+" : "";
       html += '<div class="cmp-metric-card">';
-      html += '<div class="cmp-mc-label">' + s.label + '</div>';
-      html += '<div class="cmp-mc-delta ' + cls + '">' + sign + s.avgDelta.toFixed(s.dec) + ' ' + s.unit + '</div>';
-      html += '<div class="cmp-mc-pct ' + cls + '">' + sign + s.avgPct.toFixed(1) + '%</div>';
-      html += '<div class="cmp-mc-counts">▲' + s.improved + ' / ▼' + s.declined + ' / ' + s.total + '</div>';
-      html += '</div>';
+      html += '<div class="cmp-mc-label">' + s.label + "</div>";
+      html +=
+        '<div class="cmp-mc-delta ' +
+        cls +
+        '">' +
+        sign +
+        s.avgDelta.toFixed(s.dec) +
+        " " +
+        s.unit +
+        "</div>";
+      html +=
+        '<div class="cmp-mc-pct ' +
+        cls +
+        '">' +
+        sign +
+        s.avgPct.toFixed(1) +
+        "%</div>";
+      html +=
+        '<div class="cmp-mc-counts">▲' +
+        s.improved +
+        " / ▼" +
+        s.declined +
+        " / " +
+        s.total +
+        "</div>";
+      html += "</div>";
     }
-    html += '</div>';
+    html += "</div>";
 
     // Bar chart for average % change
     html += '<h3 class="cmp-section-title">Average % Change by Metric</h3>';
-    html += '<div class="cmp-bar-wrap"><canvas id="cmpBarChart"></canvas></div>';
+    html +=
+      '<div class="cmp-bar-wrap"><canvas id="cmpBarChart"></canvas></div>';
 
     // Per-athlete improvement table
     html += '<h3 class="cmp-section-title">Individual Athlete Changes</h3>';
@@ -5549,23 +5706,32 @@
 
     const baselineSel = document.getElementById("cmpBaselineSession").value;
     if (!baselineSel) {
-      container.innerHTML = '<p class="placeholder-text">Select a baseline test session to compare against current data.</p>';
+      container.innerHTML =
+        '<p class="placeholder-text">Select a baseline test session to compare against current data.</p>';
       return;
     }
     const [sessionDate, sessionLabel] = baselineSel.split("|");
     document.getElementById("cmpBaselineInfo").textContent =
-      'Showing improvement from "' + sessionLabel + '" (' + sessionDate + ') → Current';
+      'Showing improvement from "' +
+      sessionLabel +
+      '" (' +
+      sessionDate +
+      ") → Current";
 
     const groupFilter = document.getElementById("cmpGroupSel").value;
-    const allGroups = groupFilter === "all"
-      ? [...new Set(D.athletes.map(a => a.group))].sort()
-      : [groupFilter];
+    const allGroups =
+      groupFilter === "all"
+        ? [...new Set(D.athletes.map((a) => a.group))].sort()
+        : [groupFilter];
 
-    const filteredMetrics = CMP_METRICS.filter(m => m.key !== "weight");
-    let html = '';
+    const filteredMetrics = CMP_METRICS.filter((m) => m.key !== "weight");
+    let html = "";
+
+    // Cache per-group data for reuse in chart building
+    const _groupCache = {};
 
     for (const group of allGroups) {
-      const athletes = D.athletes.filter(a => a.group === group);
+      const athletes = D.athletes.filter((a) => a.group === group);
       if (athletes.length === 0) continue;
       const deltas = _computeDeltas(athletes, sessionDate, sessionLabel);
 
@@ -5579,69 +5745,104 @@
         if (vals.length === 0) continue;
         const avgDelta = vals.reduce((s, v) => s + v.delta, 0) / vals.length;
         const avgPct = vals.reduce((s, v) => s + v.pct, 0) / vals.length;
-        const improved = vals.filter(v => m.invert ? v.delta < 0 : v.delta > 0).length;
-        const declined = vals.filter(v => m.invert ? v.delta > 0 : v.delta < 0).length;
-        groupSummary[m.key] = { avgDelta, avgPct, improved, declined, total: vals.length, label: m.label, unit: m.unit, dec: m.dec, invert: m.invert };
+        const improved = vals.filter((v) =>
+          m.invert ? v.delta < 0 : v.delta > 0,
+        ).length;
+        const declined = vals.filter((v) =>
+          m.invert ? v.delta > 0 : v.delta < 0,
+        ).length;
+        groupSummary[m.key] = {
+          avgDelta,
+          avgPct,
+          improved,
+          declined,
+          total: vals.length,
+          label: m.label,
+          unit: m.unit,
+          dec: m.dec,
+          invert: m.invert,
+        };
       }
 
       if (Object.keys(groupSummary).length === 0) continue;
+      _groupCache[group] = { athletes, deltas, groupSummary };
 
       html += '<div class="cmp-group-section">';
-      html += '<h3 class="cmp-group-title"><span class="group-tag group-' + group.replace(/\s/g, "") + '">' + group + '</span> <small>(' + athletes.length + ' athletes)</small></h3>';
+      html +=
+        '<h3 class="cmp-group-title"><span class="group-tag group-' +
+        group.replace(/\s/g, "") +
+        '">' +
+        group +
+        "</span> <small>(" +
+        athletes.length +
+        " athletes)</small></h3>";
 
       // Metric cards
       html += '<div class="cmp-metric-cards">';
       for (const key in groupSummary) {
         const s = groupSummary[key];
         const improved = s.invert ? s.avgDelta < 0 : s.avgDelta > 0;
-        const cls = improved ? "delta-up" : s.avgDelta === 0 ? "" : "delta-down";
+        const cls = improved
+          ? "delta-up"
+          : s.avgDelta === 0
+            ? ""
+            : "delta-down";
         const sign = s.avgDelta > 0 ? "+" : "";
         html += '<div class="cmp-metric-card">';
-        html += '<div class="cmp-mc-label">' + s.label + '</div>';
-        html += '<div class="cmp-mc-delta ' + cls + '">' + sign + s.avgDelta.toFixed(s.dec) + ' ' + s.unit + '</div>';
-        html += '<div class="cmp-mc-pct ' + cls + '">' + sign + s.avgPct.toFixed(1) + '%</div>';
-        html += '<div class="cmp-mc-counts">▲' + s.improved + ' / ▼' + s.declined + ' / ' + s.total + '</div>';
-        html += '</div>';
+        html += '<div class="cmp-mc-label">' + s.label + "</div>";
+        html +=
+          '<div class="cmp-mc-delta ' +
+          cls +
+          '">' +
+          sign +
+          s.avgDelta.toFixed(s.dec) +
+          " " +
+          s.unit +
+          "</div>";
+        html +=
+          '<div class="cmp-mc-pct ' +
+          cls +
+          '">' +
+          sign +
+          s.avgPct.toFixed(1) +
+          "%</div>";
+        html +=
+          '<div class="cmp-mc-counts">▲' +
+          s.improved +
+          " / ▼" +
+          s.declined +
+          " / " +
+          s.total +
+          "</div>";
+        html += "</div>";
       }
-      html += '</div>';
+      html += "</div>";
 
       // Bar chart
       const chartId = "cmpGroupBar_" + group.replace(/\s/g, "");
-      html += '<div class="cmp-bar-wrap"><canvas id="' + chartId + '"></canvas></div>';
+      html +=
+        '<div class="cmp-bar-wrap"><canvas id="' +
+        chartId +
+        '"></canvas></div>';
 
       // Athlete table
       html += _buildDeltaTable(athletes, deltas, filteredMetrics);
-      html += '</div>';
+      html += "</div>";
     }
 
     if (!html) {
-      container.innerHTML = '<p class="placeholder-text">No comparable data found for the selected group.</p>';
+      container.innerHTML =
+        '<p class="placeholder-text">No comparable data found for the selected group.</p>';
       return;
     }
     container.innerHTML = html;
 
-    // Build charts for each group
-    for (const group of allGroups) {
-      const athletes = D.athletes.filter(a => a.group === group);
-      if (athletes.length === 0) continue;
-      const deltas = _computeDeltas(athletes, sessionDate, sessionLabel);
-      const groupSummary = {};
-      for (const m of filteredMetrics) {
-        const vals = [];
-        for (let i = 0; i < athletes.length; i++) {
-          if (deltas[i] && deltas[i][m.key]) vals.push(deltas[i][m.key]);
-        }
-        if (vals.length === 0) continue;
-        groupSummary[m.key] = {
-          avgPct: vals.reduce((s, v) => s + v.pct, 0) / vals.length,
-          label: m.label, invert: m.invert
-        };
-      }
+    // Build charts for each group (reuse cached data)
+    for (const group in _groupCache) {
+      const { groupSummary } = _groupCache[group];
       const chartId = "cmpGroupBar_" + group.replace(/\s/g, "");
       const canvas = document.getElementById(chartId);
-      if (canvas && Object.keys(groupSummary).length > 0) {
-        _buildBarChart(chartId, groupSummary);
-      }
+      if (canvas) _buildBarChart(chartId, groupSummary);
     }
   }
 
@@ -5682,20 +5883,39 @@
     // Profile cards
     let html = '<div class="cmp-profile-row cols-' + cols + '">';
     for (const a of athletes) {
-      html += '<div class="cmp-card">' +
-        '<div class="cmp-avatar">' + a.initials + '</div>' +
-        '<div class="cmp-name">' + esc(a.name) + '</div>' +
-        '<div class="cmp-meta">' + (esc(a.position) || "—") + " · " + esc(a.group) + " · " + (a.weight || "—") + " lb" +
-        (a.overallGrade ? ' · <span class="grade-badge grade-bg-' + a.overallGrade.tier + '">' + a.overallGrade.label + "</span>" : "") + '</div>' +
-        '</div>';
+      html +=
+        '<div class="cmp-card">' +
+        '<div class="cmp-avatar">' +
+        a.initials +
+        "</div>" +
+        '<div class="cmp-name">' +
+        esc(a.name) +
+        "</div>" +
+        '<div class="cmp-meta">' +
+        (esc(a.position) || "—") +
+        " · " +
+        esc(a.group) +
+        " · " +
+        (a.weight || "—") +
+        " lb" +
+        (a.overallGrade
+          ? ' · <span class="grade-badge grade-bg-' +
+            a.overallGrade.tier +
+            '">' +
+            a.overallGrade.label +
+            "</span>"
+          : "") +
+        "</div>" +
+        "</div>";
     }
     html += "</div>";
 
     // Current values table
-    const h2hMetrics = CMP_METRICS.filter(m => m.key !== "weight");
+    const h2hMetrics = CMP_METRICS.filter((m) => m.key !== "weight");
     html +=
       '<div class="table-wrap"><table class="cmp-table"><thead><tr><th>Metric</th>';
-    for (const a of athletes) html += '<th>' + esc(a.name).split(" ")[0] + '</th>';
+    for (const a of athletes)
+      html += "<th>" + esc(a.name).split(" ")[0] + "</th>";
     html += "<th>Δ</th></tr></thead><tbody>";
 
     for (const m of h2hMetrics) {
@@ -5725,7 +5945,7 @@
           ? Math.abs(Math.max(...numVals) - Math.min(...numVals))
           : null;
 
-      html += '<tr><td>' + m.label + ' <small>(' + m.unit + ')</small></td>';
+      html += "<tr><td>" + m.label + " <small>(" + m.unit + ")</small></td>";
       for (let i = 0; i < athletes.length; i++) {
         const v = vals[i];
         const cls =
@@ -5734,9 +5954,17 @@
             : i === worstIdx && athletes.length > 2
               ? "cmp-worst"
               : "";
-        html += '<td class="num ' + cls + '">' + (v !== null ? v.toFixed(m.dec) : "—") + '</td>';
+        html +=
+          '<td class="num ' +
+          cls +
+          '">' +
+          (v !== null ? v.toFixed(m.dec) : "—") +
+          "</td>";
       }
-      html += '<td class="num">' + (delta !== null ? delta.toFixed(m.dec) : "—") + '</td>';
+      html +=
+        '<td class="num">' +
+        (delta !== null ? delta.toFixed(m.dec) : "—") +
+        "</td>";
       html += "</tr>";
     }
     html += "</tbody></table></div>";
@@ -5749,18 +5977,23 @@
       document.getElementById("cmpBaselineInfo").textContent =
         'Showing improvement from "' + sessionLabel + '" → Current';
 
-      html += '<h3 class="cmp-section-title">Individual Improvement since "' + esc(sessionLabel) + '"</h3>';
-      html += '<div class="table-wrap"><table class="cmp-table"><thead><tr><th>Metric</th>';
-      for (const a of athletes) html += '<th>' + esc(a.name).split(" ")[0] + '</th>';
-      html += '</tr></thead><tbody>';
+      html +=
+        '<h3 class="cmp-section-title">Individual Improvement since "' +
+        esc(sessionLabel) +
+        '"</h3>';
+      html +=
+        '<div class="table-wrap"><table class="cmp-table"><thead><tr><th>Metric</th>';
+      for (const a of athletes)
+        html += "<th>" + esc(a.name).split(" ")[0] + "</th>";
+      html += "</tr></thead><tbody>";
       for (const m of h2hMetrics) {
-        html += '<tr><td>' + m.label + '</td>';
+        html += "<tr><td>" + m.label + "</td>";
         for (let i = 0; i < athletes.length; i++) {
           html += _deltaCell(deltas[i], m);
         }
-        html += '</tr>';
+        html += "</tr>";
       }
-      html += '</tbody></table></div>';
+      html += "</tbody></table></div>";
     }
 
     // Radar overlay
@@ -5770,13 +6003,21 @@
     // Build overlaid radar chart
     if (typeof Chart === "undefined") {
       const rw = document.getElementById("cmpRadar")?.parentElement;
-      if (rw) rw.innerHTML =
-        '<p class="placeholder-text">Charts unavailable (Chart.js failed to load)</p>';
+      if (rw)
+        rw.innerHTML =
+          '<p class="placeholder-text">Charts unavailable (Chart.js failed to load)</p>';
       return;
     }
     const radarKeys = [
-      "bench", "squat", "medball", "vert", "broad",
-      "forty", "F1", "peakPower", "momMax",
+      "bench",
+      "squat",
+      "medball",
+      "vert",
+      "broad",
+      "forty",
+      "F1",
+      "peakPower",
+      "momMax",
     ];
     const radarLabels = radarKeys.map((k) => METRIC_INFO[k]?.name || k);
 
@@ -5824,7 +6065,8 @@
           legend: { labels: { color: "#e4e6ed", font: { size: 11 } } },
           tooltip: {
             callbacks: {
-              label: (ctx) => ctx.dataset.label + ": " + ctx.raw + "% of team max",
+              label: (ctx) =>
+                ctx.dataset.label + ": " + ctx.raw + "% of team max",
             },
           },
         },
@@ -5834,20 +6076,29 @@
 
   /* ===== SHARED: Delta table builder ===== */
   function _buildDeltaTable(athletes, deltas, metrics) {
-    let html = '<div class="table-wrap"><table class="cmp-table"><thead><tr><th>Athlete</th><th>Group</th>';
-    for (const m of metrics) html += '<th>' + m.label + '</th>';
-    html += '</tr></thead><tbody>';
+    let html =
+      '<div class="table-wrap"><table class="cmp-table"><thead><tr><th>Athlete</th><th>Group</th>';
+    for (const m of metrics) html += "<th>" + m.label + "</th>";
+    html += "</tr></thead><tbody>";
     for (let i = 0; i < athletes.length; i++) {
       const a = athletes[i];
       if (!deltas[i]) continue;
-      html += '<tr><td style="text-align:left;text-transform:none;font-weight:700;color:var(--text)">' + esc(a.name) + '</td>';
-      html += '<td><span class="group-tag group-' + a.group.replace(/\s/g, "") + '">' + esc(a.group) + '</span></td>';
+      html +=
+        '<tr><td style="text-align:left;text-transform:none;font-weight:700;color:var(--text)">' +
+        esc(a.name) +
+        "</td>";
+      html +=
+        '<td><span class="group-tag group-' +
+        a.group.replace(/\s/g, "") +
+        '">' +
+        esc(a.group) +
+        "</span></td>";
       for (const m of metrics) {
         html += _deltaCell(deltas[i], m);
       }
-      html += '</tr>';
+      html += "</tr>";
     }
-    html += '</tbody></table></div>';
+    html += "</tbody></table></div>";
     return html;
   }
 
@@ -5865,19 +6116,29 @@
       const pct = s.avgPct || 0;
       values.push(+pct.toFixed(1));
       const improved = s.invert ? pct < 0 : pct > 0;
-      colors.push(improved ? "rgba(74,222,128,.7)" : pct === 0 ? "rgba(139,144,160,.5)" : "rgba(239,68,68,.7)");
+      colors.push(
+        improved
+          ? "rgba(74,222,128,.7)"
+          : pct === 0
+            ? "rgba(139,144,160,.5)"
+            : "rgba(239,68,68,.7)",
+      );
     }
     const chart = new Chart(canvas, {
       type: "bar",
       data: {
         labels,
-        datasets: [{
-          data: values,
-          backgroundColor: colors,
-          borderColor: colors.map(c => c.replace(",.7)", ",1)").replace(",.5)", ",1)")),
-          borderWidth: 1,
-          borderRadius: 4,
-        }],
+        datasets: [
+          {
+            data: values,
+            backgroundColor: colors,
+            borderColor: colors.map((c) =>
+              c.replace(",.7)", ",1)").replace(",.5)", ",1)"),
+            ),
+            borderWidth: 1,
+            borderRadius: 4,
+          },
+        ],
       },
       options: {
         responsive: true,
@@ -5887,15 +6148,23 @@
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: (ctx) => (ctx.raw > 0 ? "+" : "") + ctx.raw + "%"
-            }
-          }
+              label: (ctx) => (ctx.raw > 0 ? "+" : "") + ctx.raw + "%",
+            },
+          },
         },
         scales: {
           x: {
-            title: { display: true, text: "% Change", color: "#8b90a0", font: { size: 11 } },
+            title: {
+              display: true,
+              text: "% Change",
+              color: "#8b90a0",
+              font: { size: 11 },
+            },
             grid: { color: "rgba(255,255,255,.06)" },
-            ticks: { color: "#8b90a0", callback: (v) => (v > 0 ? "+" : "") + v + "%" },
+            ticks: {
+              color: "#8b90a0",
+              callback: (v) => (v > 0 ? "+" : "") + v + "%",
+            },
           },
           y: {
             grid: { display: false },
@@ -5906,8 +6175,6 @@
     });
     _cmpCharts.push(chart);
   }
-
-  /* ===== Destroy compare charts on tab leave ===== */
 
   /* ========== POSITION GROUP DASHBOARD ========== */
   window.renderGroupDashboard = function () {
@@ -6149,12 +6416,12 @@
   function updateDataStatus() {
     const el = document.getElementById("dataStatus");
     if (!el) return;
-    const hasEdits = localStorage.getItem("lc_edits");
+    const editsArr = JSON.parse(localStorage.getItem("lc_edits") || "[]");
     const added = JSON.parse(localStorage.getItem("lc_added") || "[]");
     const deleted = JSON.parse(localStorage.getItem("lc_deleted") || "[]");
     const snapshots = JSON.parse(localStorage.getItem("lc_snapshots") || "[]");
     const parts = [];
-    if (hasEdits) parts.push("edits");
+    if (editsArr.length) parts.push("edits");
     if (added.length) parts.push("+" + added.length + " added");
     if (deleted.length) parts.push("-" + deleted.length + " deleted");
     if (parts.length) {
@@ -7348,7 +7615,6 @@
   };
 
   window.editPanelPrev = function () {
-    const D = window.CLUB;
     const sorted = sortedAthletes();
     if (sorted.length === 0) return;
     let idx = sorted.findIndex(function (a) {
@@ -7359,7 +7625,6 @@
   };
 
   window.editPanelNext = function () {
-    const D = window.CLUB;
     const sorted = sortedAthletes();
     if (sorted.length === 0) return;
     let idx = sorted.findIndex(function (a) {
@@ -7676,7 +7941,4 @@
     reader.readAsText(file);
   };
 
-  // Legacy compat (kept for any external references)
-  window.openEditModal = window.openEditPanel;
-  window.closeEditModal = window.closeEditPanel;
 })();

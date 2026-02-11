@@ -1788,14 +1788,14 @@
         </div>
 
         <!-- Sub-filters: Group mode -->
-        <div id="cmpGroupFilters" class="cmp-sub-filters" style="display:none">
+        <div id="cmpGroupFilters" class="cmp-sub-filters" style="display: none">
           <select id="cmpGroupSel" onchange="renderComparison()">
             <option value="all">All Groups</option>
           </select>
         </div>
 
         <!-- Sub-filters: Head-to-Head mode -->
-        <div id="cmpH2HFilters" class="cmp-sub-filters" style="display:none">
+        <div id="cmpH2HFilters" class="cmp-sub-filters" style="display: none">
           <select id="cmpA" onchange="renderComparison()">
             <option value="">— Athlete A —</option>
           </select>
@@ -1810,17 +1810,29 @@
 
         <!-- Sub-filter: Test session selector (all modes) -->
         <div class="cmp-sub-filters">
-          <label style="font-weight:600;margin-right:.5rem;font-size:.82rem">Compare against:</label>
-          <select id="cmpBaselineSession" onchange="renderComparison()" style="min-width:170px">
+          <label
+            style="font-weight: 600; margin-right: 0.5rem; font-size: 0.82rem"
+            >Compare against:</label
+          >
+          <select
+            id="cmpBaselineSession"
+            onchange="renderComparison()"
+            style="min-width: 170px"
+          >
             <option value="">— pick baseline test —</option>
           </select>
-          <span style="font-size:.72rem;color:var(--text-muted);margin-left:.5rem" id="cmpBaselineInfo"></span>
+          <span
+            style="
+              font-size: 0.72rem;
+              color: var(--text-muted);
+              margin-left: 0.5rem;
+            "
+            id="cmpBaselineInfo"
+          ></span>
         </div>
 
         <div id="compareContent">
-          <p class="placeholder-text">
-            Select a comparison mode to begin.
-          </p>
+          <p class="placeholder-text">Select a comparison mode to begin.</p>
         </div>
       </section>
 
