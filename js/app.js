@@ -5462,7 +5462,7 @@
     }
     const [sessionDate, sessionLabel] = baselineSel.split("|");
     document.getElementById("cmpBaselineInfo").textContent =
-      "Showing improvement from "" + sessionLabel + "" (" + sessionDate + ") → Current";
+      'Showing improvement from "' + sessionLabel + '" (' + sessionDate + ') → Current';
 
     const athletes = D.athletes;
     const deltas = _computeDeltas(athletes, sessionDate, sessionLabel);
@@ -5554,7 +5554,7 @@
     }
     const [sessionDate, sessionLabel] = baselineSel.split("|");
     document.getElementById("cmpBaselineInfo").textContent =
-      "Showing improvement from "" + sessionLabel + "" (" + sessionDate + ") → Current";
+      'Showing improvement from "' + sessionLabel + '" (' + sessionDate + ') → Current';
 
     const groupFilter = document.getElementById("cmpGroupSel").value;
     const allGroups = groupFilter === "all"
@@ -5747,7 +5747,7 @@
       const [sessionDate, sessionLabel] = baselineSel.split("|");
       const deltas = _computeDeltas(athletes, sessionDate, sessionLabel);
       document.getElementById("cmpBaselineInfo").textContent =
-        "Showing improvement from "" + sessionLabel + "" → Current";
+        'Showing improvement from "' + sessionLabel + '" → Current';
 
       html += '<h3 class="cmp-section-title">Individual Improvement since "' + esc(sessionLabel) + '"</h3>';
       html += '<div class="table-wrap"><table class="cmp-table"><thead><tr><th>Metric</th>';
