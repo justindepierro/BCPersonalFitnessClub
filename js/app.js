@@ -853,11 +853,19 @@
       return stale;
     }
     const latest = entries[0]; // most recent test snapshot
+    // Skip completely empty entries (e.g. new test worksheet opened but not filled)
+    let latestWithData = latest;
+    for (let ei = 0; ei < entries.length; ei++) {
+      if (Object.values(entries[ei].values).some(v => v != null)) {
+        latestWithData = entries[ei];
+        break;
+      }
+    }
     for (const mk of TEST_METRIC_KEYS) {
       const inLatest =
-        latest.values.hasOwnProperty(mk.jsonKey) &&
-        latest.values[mk.jsonKey] !== null &&
-        latest.values[mk.jsonKey] !== undefined;
+        latestWithData.values.hasOwnProperty(mk.jsonKey) &&
+        latestWithData.values[mk.jsonKey] !== null &&
+        latestWithData.values[mk.jsonKey] !== undefined;
       if (!inLatest) stale.add(mk.key);
     }
     // Derived keys: forty is stale if all sprint splits are stale
@@ -1987,9 +1995,9 @@
     for (var fi = 0; fi < shown.length; fi++) {
       var fv = shown[fi].values;
       var hForty =
-        fv.sprint_020 !== null &&
-        fv.sprint_2030 !== null &&
-        fv.sprint_3040 !== null
+        fv.sprint_020 != null &&
+        fv.sprint_2030 != null &&
+        fv.sprint_3040 != null
           ? +(fv.sprint_020 + fv.sprint_2030 + fv.sprint_3040).toFixed(2)
           : null;
       html += '<td class="num">' + (hForty !== null ? hForty : "—") + "</td>";
@@ -1998,9 +2006,9 @@
       var fvNewer = shown[0].values;
       var fvOlder = shown[1].values;
       var newerForty =
-        fvNewer.sprint_020 !== null &&
-        fvNewer.sprint_2030 !== null &&
-        fvNewer.sprint_3040 !== null
+        fvNewer.sprint_020 != null &&
+        fvNewer.sprint_2030 != null &&
+        fvNewer.sprint_3040 != null
           ? +(
               fvNewer.sprint_020 +
               fvNewer.sprint_2030 +
@@ -2008,9 +2016,9 @@
             ).toFixed(2)
           : null;
       var olderForty =
-        fvOlder.sprint_020 !== null &&
-        fvOlder.sprint_2030 !== null &&
-        fvOlder.sprint_3040 !== null
+        fvOlder.sprint_020 != null &&
+        fvOlder.sprint_2030 != null &&
+        fvOlder.sprint_3040 != null
           ? +(
               fvOlder.sprint_020 +
               fvOlder.sprint_2030 +
@@ -2048,9 +2056,9 @@
     } else if (shown.length === 1) {
       var fvLast = shown[0].values;
       var lastForty =
-        fvLast.sprint_020 !== null &&
-        fvLast.sprint_2030 !== null &&
-        fvLast.sprint_3040 !== null
+        fvLast.sprint_020 != null &&
+        fvLast.sprint_2030 != null &&
+        fvLast.sprint_3040 != null
           ? +(
               fvLast.sprint_020 +
               fvLast.sprint_2030 +
@@ -3189,9 +3197,9 @@
       '<button class="btn btn-sm" onclick="document.querySelector(\'.te-modal\').remove(); viewSavedTests()">← Back to Test History</button>';
     bodyHTML +=
       '<button class="btn btn-sm" onclick="applyTestAsCurrent(\'' +
-      esc(dateStr).replace(/'/g, "\\'") +
+      dateStr.replace(/\\/g, "\\\\").replace(/'/g, "\\'") +
       "','" +
-      esc(label).replace(/'/g, "\\'") +
+      label.replace(/\\/g, "\\\\").replace(/'/g, "\\'") +
       '\')" title="Update all athlete current values from this test">🔄 Apply as Current Data</button>';
     bodyHTML +=
       '<button class="btn btn-sm btn-primary" onclick="document.querySelector(\'.te-modal\').remove(); viewSavedTests()">✅ Done</button>';
@@ -5421,7 +5429,7 @@
     const curVal = sel.value;
     sel.innerHTML = '<option value="all">All Groups</option>';
     for (const g of groups) {
-      sel.innerHTML += '<option value="' + g + '">' + g + "</option>";
+      sel.innerHTML += '<option value="' + esc(g) + '">' + esc(g) + "</option>";
     }
     if (curVal) sel.value = curVal;
   }
@@ -5458,8 +5466,8 @@
           if (m.key === "forty" && hasSprints)
             baseVal = +(s020 + s2030 + s3040).toFixed(2);
           if (m.key === "vMax" && hasSprints) {
-            const v2 = 9.144 / s2030, v3 = 9.144 / s3040;
-            baseVal = +Math.max(v2, v3).toFixed(2);
+            const v1 = 18.288 / s020, v2 = 9.144 / s2030, v3 = 9.144 / s3040;
+            baseVal = +Math.max(v1, v2, v3).toFixed(2);
           }
           if (m.key === "F1" && hasSprints && bWt != null) {
             const massKg = bWt * 0.453592;
@@ -5562,7 +5570,9 @@
         '<p class="placeholder-text">Select a baseline test session to compare against current data.</p>';
       return;
     }
-    const [sessionDate, sessionLabel] = baselineSel.split("|");
+    const _sepIdx1 = baselineSel.indexOf("|");
+    const sessionDate = baselineSel.substring(0, _sepIdx1);
+    const sessionLabel = baselineSel.substring(_sepIdx1 + 1);
     document.getElementById("cmpBaselineInfo").textContent =
       'Showing improvement from "' +
       sessionLabel +
@@ -5710,7 +5720,9 @@
         '<p class="placeholder-text">Select a baseline test session to compare against current data.</p>';
       return;
     }
-    const [sessionDate, sessionLabel] = baselineSel.split("|");
+    const _sepIdx2 = baselineSel.indexOf("|");
+    const sessionDate = baselineSel.substring(0, _sepIdx2);
+    const sessionLabel = baselineSel.substring(_sepIdx2 + 1);
     document.getElementById("cmpBaselineInfo").textContent =
       'Showing improvement from "' +
       sessionLabel +
@@ -5972,7 +5984,9 @@
     // Improvement section if baseline selected
     const baselineSel = document.getElementById("cmpBaselineSession").value;
     if (baselineSel) {
-      const [sessionDate, sessionLabel] = baselineSel.split("|");
+      const _sepIdx3 = baselineSel.indexOf("|");
+      const sessionDate = baselineSel.substring(0, _sepIdx3);
+      const sessionLabel = baselineSel.substring(_sepIdx3 + 1);
       const deltas = _computeDeltas(athletes, sessionDate, sessionLabel);
       document.getElementById("cmpBaselineInfo").textContent =
         'Showing improvement from "' + sessionLabel + '" → Current';
@@ -6696,15 +6710,6 @@
       });
     }
 
-    // Apply edits
-    const edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
-    for (const edit of edits) {
-      const athlete = rawCopy.athletes.find(function (a) {
-        return a.id === edit.id;
-      });
-      if (athlete) Object.assign(athlete, edit.changes);
-    }
-
     // Apply latest test data as current values for each athlete
     var testH = getTestHistory();
     var testIds = Object.keys(testH);
@@ -6731,6 +6736,15 @@
           }
         }
       }
+    }
+
+    // Apply edits AFTER test history so manual edits take priority
+    const edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
+    for (const edit of edits) {
+      const athlete = rawCopy.athletes.find(function (a) {
+        return a.id === edit.id;
+      });
+      if (athlete) Object.assign(athlete, edit.changes);
     }
 
     window.CLUB = window._processData(rawCopy);
@@ -6906,6 +6920,7 @@
   /* ========== EDIT PANEL (slide-in) ========== */
   let editingAthleteId = null;
   let autoSaveTimer = null;
+  let _editPanelSnapshot = {}; // original field values when panel opened
 
   const EDITABLE_FIELDS = [
     {
@@ -7081,6 +7096,20 @@
     const body = document.getElementById("editPanelBody");
     if (!body) return;
 
+    // Capture snapshot of current values so autoSave only stores actual changes
+    _editPanelSnapshot = {};
+    for (let si = 0; si < EDITABLE_FIELDS.length; si++) {
+      const sf = EDITABLE_FIELDS[si];
+      const val = a[sf.key] !== undefined ? a[sf.key] : null;
+      if (sf.type === "number") {
+        _editPanelSnapshot[sf.jsonKey] = val !== null && val !== undefined ? parseFloat(val) : null;
+      } else if (sf.key === "grade") {
+        _editPanelSnapshot[sf.jsonKey] = val !== null && val !== undefined ? parseInt(val, 10) : null;
+      } else {
+        _editPanelSnapshot[sf.jsonKey] = val || null;
+      }
+    }
+
     // Get saved edits for this athlete to detect changes
     const edits = JSON.parse(localStorage.getItem("lc_edits") || "[]");
     const athleteEdits = edits.find(function (e) {
@@ -7154,7 +7183,7 @@
           '" class="' +
           changedCls.trim() +
           '" value="' +
-          (val !== null && val !== undefined ? val : "") +
+          esc(val !== null && val !== undefined ? String(val) : "") +
           '"' +
           (f.step ? ' step="' + f.step + '"' : "") +
           (f.min !== undefined ? ' min="' + f.min + '"' : "") +
@@ -7331,19 +7360,25 @@
   function doAutoSave() {
     if (!editingAthleteId) return;
 
-    // Gather current field values
+    // Gather only fields that actually changed from when the panel opened
     const changes = {};
     for (let i = 0; i < EDITABLE_FIELDS.length; i++) {
       const f = EDITABLE_FIELDS[i];
       const el = document.getElementById("edit_" + f.key);
       if (!el) continue;
       const rawVal = el.value.trim();
+      let newVal;
       if (f.type === "number") {
-        changes[f.jsonKey] = rawVal === "" ? null : parseFloat(rawVal);
+        newVal = rawVal === "" ? null : parseFloat(rawVal);
       } else if (f.key === "grade") {
-        changes[f.jsonKey] = rawVal === "" ? null : parseInt(rawVal, 10);
+        newVal = rawVal === "" ? null : parseInt(rawVal, 10);
       } else {
-        changes[f.jsonKey] = rawVal || null;
+        newVal = rawVal || null;
+      }
+      const origVal = _editPanelSnapshot[f.jsonKey];
+      // Only record if value actually differs from original
+      if (newVal !== origVal && !(newVal == null && origVal == null)) {
+        changes[f.jsonKey] = newVal;
       }
     }
 
@@ -7352,8 +7387,13 @@
     const existing = edits.find(function (e) {
       return e.id === editingAthleteId;
     });
-    if (existing) {
-      Object.assign(existing.changes, changes);
+    if (Object.keys(changes).length === 0) {
+      // No changes — remove any existing edit entry for this athlete
+      if (existing) {
+        edits = edits.filter(function (e) { return e.id !== editingAthleteId; });
+      }
+    } else if (existing) {
+      existing.changes = changes;
     } else {
       edits.push({ id: editingAthleteId, changes: changes });
     }

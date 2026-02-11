@@ -450,9 +450,9 @@
       const d2 = C.TEN_YD_M;
       const d3 = C.TEN_YD_M;
 
-      const v1 = s020 !== null ? rd(d1 / s020, 3) : null;
-      const v2 = s2030 !== null ? rd(d2 / s2030, 3) : null;
-      const v3 = s3040 !== null ? rd(d3 / s3040, 3) : null;
+      const v1 = s020 !== null && s020 > 0 ? rd(d1 / s020, 3) : null;
+      const v2 = s2030 !== null && s2030 > 0 ? rd(d2 / s2030, 3) : null;
+      const v3 = s3040 !== null && s3040 > 0 ? rd(d3 / s3040, 3) : null;
 
       const vMax =
         v1 !== null || v2 !== null || v3 !== null
@@ -500,9 +500,9 @@
       const pow3 = F3 !== null && v3 !== null ? rd(F3 * v3, 1) : null;
 
       // Derived Strength & Power
-      const relBench = bench !== null && wt ? rd(bench / wt, 2) : null;
-      const relSquat = squat !== null && wt ? rd(squat / wt, 2) : null;
-      const mbRel = medball !== null && wt ? rd(medball / wt, 2) : null;
+      const relBench = bench !== null && wt !== null && wt > 0 ? rd(bench / wt, 2) : null;
+      const relSquat = squat !== null && wt !== null && wt > 0 ? rd(squat / wt, 2) : null;
+      const mbRel = medball !== null && wt !== null && wt > 0 ? rd(medball / wt, 2) : null;
 
       const peakPower =
         vertCm !== null && massKg !== null
