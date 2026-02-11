@@ -304,6 +304,8 @@
     ];
     for (const t of tabs) _tabDirty[t] = true;
     invalidateNormCache();
+    _prevTestCache = null;
+    _staleKeysCache = null;
   }
   function renderIfDirty(tabId) {
     if (!_tabDirty[tabId]) return;
@@ -769,10 +771,16 @@
     // Scroll-to-top button
     const scrollBtn = document.getElementById("scrollTopBtn");
     if (scrollBtn) {
+      let _scrollTick = false;
       window.addEventListener(
         "scroll",
         function () {
-          scrollBtn.classList.toggle("visible", window.scrollY > 400);
+          if (_scrollTick) return;
+          _scrollTick = true;
+          requestAnimationFrame(function () {
+            scrollBtn.classList.toggle("visible", window.scrollY > 400);
+            _scrollTick = false;
+          });
         },
         { passive: true },
       );
@@ -1072,7 +1080,17 @@
 
     const total = list.length;
     // Compute summary stats in a single pass
-    const sumKeys = ["bench", "squat", "medball", "vert", "forty", "peakPower", "relBench", "relSquat", "relPeakPower"];
+    const sumKeys = [
+      "bench",
+      "squat",
+      "medball",
+      "vert",
+      "forty",
+      "peakPower",
+      "relBench",
+      "relSquat",
+      "relPeakPower",
+    ];
     const sums = {},
       counts = {};
     for (const k of sumKeys) {
@@ -1102,8 +1120,7 @@
     const avgRelPP = avgOf("relPeakPower");
     const completePct = total > 0 ? Math.round((fullyTested / total) * 100) : 0;
 
-    const showRel =
-      localStorage.getItem("lc_show_relatives") === "true";
+    const showRel = localStorage.getItem("lc_show_relatives") === "true";
 
     var cardsHtml = `
       <div class="summary-card"><div class="label">Athletes</div><div class="value">${total}</div><div class="sub">${D.positions.length} positions</div></div>
@@ -1153,38 +1170,66 @@
 
     // Dynamically build thead to reflect toggle state
     var thead = document.querySelector("#rosterTable thead");
-    var thRow = '<tr>';
+    var thRow = "<tr>";
     thRow += '<th data-sort="name">Athlete</th>';
     thRow += '<th data-sort="position" title="Playing position">Pos</th>';
-    thRow += '<th data-sort="group" title="Position group">' + (showRel ? 'Grp' : 'Group') + '</th>';
-    thRow += '<th data-sort="grade" title="Current grade level (6th–12th)">' + (showRel ? 'Gr' : 'Grade') + '</th>';
+    thRow +=
+      '<th data-sort="group" title="Position group">' +
+      (showRel ? "Grp" : "Group") +
+      "</th>";
+    thRow +=
+      '<th data-sort="grade" title="Current grade level (6th–12th)">' +
+      (showRel ? "Gr" : "Grade") +
+      "</th>";
     if (showRel) {
-      thRow += '<th data-sort="trainingAge" title="Training age = grade − 8 (years of development)">TA</th>';
+      thRow +=
+        '<th data-sort="trainingAge" title="Training age = grade − 8 (years of development)">TA</th>';
     }
-    thRow += '<th data-sort="height" title="Standing height in inches">' + (showRel ? 'Ht' : 'Ht (in)') + '</th>';
-    thRow += '<th data-sort="weight" title="Body weight in pounds">' + (showRel ? 'Wt' : 'Wt (lb)') + '</th>';
-    thRow += '<th data-sort="bench" title="Bench Press 1RM (lb)">' + (showRel ? 'BP' : 'Bench') + '</th>';
+    thRow +=
+      '<th data-sort="height" title="Standing height in inches">' +
+      (showRel ? "Ht" : "Ht (in)") +
+      "</th>";
+    thRow +=
+      '<th data-sort="weight" title="Body weight in pounds">' +
+      (showRel ? "Wt" : "Wt (lb)") +
+      "</th>";
+    thRow +=
+      '<th data-sort="bench" title="Bench Press 1RM (lb)">' +
+      (showRel ? "BP" : "Bench") +
+      "</th>";
     if (showRel) {
-      thRow += '<th data-sort="relBench" title="Bench Press / Body Weight (xBW)">rBP</th>';
+      thRow +=
+        '<th data-sort="relBench" title="Bench Press / Body Weight (xBW)">rBP</th>';
     }
-    thRow += '<th data-sort="squat" title="Back Squat 1RM (lb)">' + (showRel ? 'SQ' : 'Squat') + '</th>';
+    thRow +=
+      '<th data-sort="squat" title="Back Squat 1RM (lb)">' +
+      (showRel ? "SQ" : "Squat") +
+      "</th>";
     if (showRel) {
-      thRow += '<th data-sort="relSquat" title="Squat / Body Weight (xBW)">rSQ</th>';
+      thRow +=
+        '<th data-sort="relSquat" title="Squat / Body Weight (xBW)">rSQ</th>';
     }
-    thRow += '<th data-sort="medball" title="Seated Med Ball Throw (in)">MB</th>';
+    thRow +=
+      '<th data-sort="medball" title="Seated Med Ball Throw (in)">MB</th>';
     if (showRel) {
-      thRow += '<th data-sort="mbRel" title="Med Ball / Body Weight (in/lb)">rMB</th>';
+      thRow +=
+        '<th data-sort="mbRel" title="Med Ball / Body Weight (in/lb)">rMB</th>';
     }
     thRow += '<th data-sort="vert" title="Vertical Jump (in)">VJ</th>';
     thRow += '<th data-sort="broad" title="Broad Jump (in)">BJ</th>';
-    thRow += '<th data-sort="forty" title="40-Yard Dash (s). Lower is better.">' + (showRel ? '40' : '40 yd') + '</th>';
+    thRow +=
+      '<th data-sort="forty" title="40-Yard Dash (s). Lower is better.">' +
+      (showRel ? "40" : "40 yd") +
+      "</th>";
     if (showRel) {
-      thRow += '<th data-sort="peakPower" title="Peak Power via Sayers equation (W)">PP</th>';
-      thRow += '<th data-sort="relPeakPower" title="Peak Power / Mass (W/kg)">rPP</th>';
+      thRow +=
+        '<th data-sort="peakPower" title="Peak Power via Sayers equation (W)">PP</th>';
+      thRow +=
+        '<th data-sort="relPeakPower" title="Peak Power / Mass (W/kg)">rPP</th>';
     }
     thRow += '<th data-sort="zMB" title="Med Ball Z-Score">zMB</th>';
     thRow += '<th data-sort="overallGrade" title="Overall rating">Rating</th>';
-    thRow += '</tr>';
+    thRow += "</tr>";
     thead.innerHTML = thRow;
 
     tbody.innerHTML = list
@@ -1218,17 +1263,23 @@
         var relCols = "";
         if (showRel) {
           relCols =
-            '<td class="num">' + (a.trainingAge !== null ? a.trainingAge : "—") + "</td>";
+            '<td class="num">' +
+            (a.trainingAge !== null ? a.trainingAge : "—") +
+            "</td>";
         }
-        var relBenchCol = showRel ? cellG("relBench", 2, a.grades.relBench) : "";
-        var relSquatCol = showRel ? cellG("relSquat", 2, a.grades.relSquat) : "";
+        var relBenchCol = showRel
+          ? cellG("relBench", 2, a.grades.relBench)
+          : "";
+        var relSquatCol = showRel
+          ? cellG("relSquat", 2, a.grades.relSquat)
+          : "";
         var mbRelCol = showRel ? cellG("mbRel", 2, a.grades.mbRel) : "";
         var ppCols = showRel
           ? cellG("peakPower", 0, a.grades.peakPower) +
             cellG("relPeakPower", 1, a.grades.relPeakPower)
           : "";
         return `
-      <tr class="${rowCls}" tabindex="0" role="button" onclick="selectAthlete('${escJs(a.id)}')" onkeydown="if(event.key==='Enter')selectAthlete('${escJs(a.id)}')">
+      <tr class="${rowCls}" tabindex="0" role="button" onclick="selectAthlete('${escJs(a.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectAthlete('${escJs(a.id)}')}">
         <td><strong>${esc(a.name)}</strong>${!isTested ? ' <span class="untested-badge">Untested</span>' : ""}</td>
         <td>${esc(a.position) || "—"}</td>
         <td><span class="group-tag group-${(a.group || "").replace(/\s/g, "")}">${esc(a.group || "—")}</span></td>
@@ -2245,9 +2296,9 @@
     html += '<div class="history-actions">';
     html += '<span class="history-actions-label">Manage tests:</span>';
     for (var di = 0; di < shown.length; di++) {
-      var _eId = a.id.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-      var _eDate = shown[di].date.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-      var _eLabel = shown[di].label.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+      var _eId = escJs(a.id);
+      var _eDate = escJs(shown[di].date);
+      var _eLabel = escJs(shown[di].label);
       html += '<span class="history-action-group">';
       html +=
         '<button class="btn btn-xs btn-muted" onclick="openEditPanel(\'' +
@@ -2356,13 +2407,7 @@
   function buildTestMap() {
     var h = getTestHistory();
     var athleteIds = Object.keys(h);
-    var D = window.CLUB;
     var notes = getTestNotes();
-    // Build athlete lookup map for O(1) name resolution
-    var athleteMap = {};
-    for (var ai = 0; ai < D.athletes.length; ai++) {
-      athleteMap[D.athletes[ai].id] = D.athletes[ai];
-    }
     var testMap = {};
     for (var i = 0; i < athleteIds.length; i++) {
       var aid = athleteIds[i];
@@ -2382,7 +2427,7 @@
           };
         }
         testMap[key].count++;
-        var found = athleteMap[aid];
+        var found = getAthleteById(aid);
         var aName = found ? found.name : aid;
         testMap[key].athletes.push(aName);
         var mCount = 0;
@@ -2421,8 +2466,8 @@
       var test = tests[ci];
       var safeDate = esc(test.date);
       var rawLabelLower = test.label.toLowerCase();
-      var escapedDate = test.date.replace(/'/g, "\\'");
-      var escapedLabel = test.label.replace(/'/g, "\\'");
+      var escapedDate = escJs(test.date);
+      var escapedLabel = escJs(test.label);
 
       // Data completeness
       var totalMetricSlots =
@@ -2665,7 +2710,7 @@
     overlay.className = "modal-overlay test-history-modal";
     overlay.innerHTML =
       '<div class="modal-content th-modal-content">' +
-      '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' +
+      '<button class="modal-close" aria-label="Close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' +
       bodyHTML +
       "</div>";
     overlay.addEventListener("click", function (ev) {
@@ -2789,8 +2834,8 @@
           html += '<div class="cal-day-detail" style="display:none">';
           for (var dt2 = 0; dt2 < dayTests.length; dt2++) {
             var t = dayTests[dt2];
-            var eDate = t.date.replace(/'/g, "\\'");
-            var eLabel = t.label.replace(/'/g, "\\'");
+            var eDate = escJs(t.date);
+            var eLabel = escJs(t.label);
             html += '<div class="cal-test-item">';
             html += '<span class="cal-test-label">' + esc(t.label) + "</span>";
             html +=
@@ -2843,8 +2888,8 @@
     });
     for (var ti = 0; ti < sorted.length; ti++) {
       var st = sorted[ti];
-      var eDate2 = st.date.replace(/'/g, "\\'");
-      var eLabel2 = st.label.replace(/'/g, "\\'");
+      var eDate2 = escJs(st.date);
+      var eLabel2 = escJs(st.label);
       html += '<div class="cal-tl-item">';
       html += '<div class="cal-tl-dot"></div>';
       html += '<div class="cal-tl-content">';
@@ -3088,7 +3133,7 @@
     link.click();
     setTimeout(function () {
       URL.revokeObjectURL(link.href);
-    }, 10000);
+    }, 1000);
     showToast(
       'Exported "' + label + '" — ' + exportObj.entries.length + " athletes",
       "success",
@@ -3123,7 +3168,7 @@
     link.click();
     setTimeout(function () {
       URL.revokeObjectURL(link.href);
-    }, 10000);
+    }, 1000);
     showToast(
       "Exported full test history — " + ids.length + " athletes",
       "success",
@@ -3364,9 +3409,9 @@
       '<button class="btn btn-sm" onclick="document.querySelector(\'.te-modal\').remove(); viewSavedTests()">← Back to Test History</button>';
     bodyHTML +=
       '<button class="btn btn-sm" onclick="applyTestAsCurrent(\'' +
-      dateStr.replace(/\\/g, "\\\\").replace(/'/g, "\\'") +
+      escJs(dateStr) +
       "','" +
-      label.replace(/\\/g, "\\\\").replace(/'/g, "\\'") +
+      escJs(label) +
       '\')" title="Update all athlete current values from this test">🔄 Apply as Current Data</button>';
     bodyHTML +=
       '<button class="btn btn-sm btn-primary" onclick="document.querySelector(\'.te-modal\').remove(); viewSavedTests()">✅ Done</button>';
@@ -3376,7 +3421,7 @@
     overlay.className = "modal-overlay te-modal";
     overlay.innerHTML =
       '<div class="modal-content th-modal-content te-content">' +
-      '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' +
+      '<button class="modal-close" aria-label="Close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' +
       bodyHTML +
       "</div>";
     overlay.addEventListener("click", function (ev) {
@@ -3953,7 +3998,7 @@
     overlay.className = "modal-overlay cmp-modal";
     overlay.innerHTML =
       '<div class="modal-content th-modal-content">' +
-      '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' +
+      '<button class="modal-close" aria-label="Close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' +
       html +
       "</div>";
     overlay.addEventListener("click", function (ev) {
@@ -3992,7 +4037,7 @@
     tbody.innerHTML = top
       .map(
         (e, i) => `
-      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${escJs(e.id)}')" onkeydown="if(event.key==='Enter')selectAthlete('${escJs(e.id)}')">
+      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${escJs(e.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectAthlete('${escJs(e.id)}')}">
         <td class="num">${i + 1}</td>
         <td><strong>${esc(e.name)}</strong></td>
         <td>${esc(e.position)}</td>
@@ -4152,7 +4197,7 @@
       /* --- Sport selector --- */
       const sportSel = `<div style="margin-bottom:1rem">
         <label style="font-weight:600;margin-right:.5rem">Sport:</label>
-        <select id="${containerId}Sport" style="padding:.3rem .5rem;border-radius:4px;border:1px solid var(--border);background:var(--card-bg);color:var(--text)">
+        <select id="${containerId}Sport" style="padding:.3rem .5rem;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text)">
           ${sports.map((s) => `<option value="${s}"${s === selectedSport ? " selected" : ""}>${s}</option>`).join("")}
         </select>
       </div>`;
@@ -4301,10 +4346,10 @@
             ? tdNumColoredStale(a[key], dec)
             : tdNumColored(a[key], dec);
         return `
-      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${escJs(a.id)}')" onkeydown="if(event.key==='Enter')selectAthlete('${escJs(a.id)}')">
+      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${escJs(a.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectAthlete('${escJs(a.id)}')}">
         <td><strong>${esc(a.name)}</strong></td>
         <td>${esc(a.position) || "—"}</td>
-        ${sN("massKg", 1)}
+        <td class="num">${a.massKg ? a.massKg.toFixed(1) : "—"}</td>
         ${sN("sprint020", 2)}
         ${sN("sprint2030", 2)}
         ${sN("sprint3040", 2)}
@@ -4360,7 +4405,7 @@
             ? tdGradedStale(a[key], dec, grade)
             : tdGraded(a[key], dec, grade);
         return `
-      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${escJs(a.id)}')" onkeydown="if(event.key==='Enter')selectAthlete('${escJs(a.id)}')">
+      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${escJs(a.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectAthlete('${escJs(a.id)}')}">
         <td><strong>${esc(a.name)}</strong></td>
         <td>${esc(a.position) || "—"}</td>
         ${sN("weight", 0)}
@@ -6593,7 +6638,7 @@
     link.click();
     setTimeout(function () {
       URL.revokeObjectURL(link.href);
-    }, 10000);
+    }, 1000);
   };
 
   /* ========== SNAPSHOT MANAGEMENT ========== */
@@ -7451,9 +7496,9 @@
           "</div>" +
           "</div>";
         html += '<div class="edit-history-btns">';
-        var _heId = a.id.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-        var _heDate = he.date.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-        var _heLabel = he.label.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+        var _heId = escJs(a.id);
+        var _heDate = escJs(he.date);
+        var _heLabel = escJs(he.label);
         html +=
           '<button class="btn btn-xs btn-muted" onclick="editHistoryEntry(\'' +
           _heId +
@@ -8062,7 +8107,7 @@
     link.click();
     setTimeout(function () {
       URL.revokeObjectURL(link.href);
-    }, 10000);
+    }, 1000);
     showToast("JSON exported — " + D.athletes.length + " athletes", "success");
   };
 

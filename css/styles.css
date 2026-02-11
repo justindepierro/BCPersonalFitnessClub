@@ -367,13 +367,10 @@ select:focus,
   border: 1px solid var(--border);
   background: var(--surface);
   contain: layout style;
+  position: relative;
 }
 
-/* Roster table: allow horizontal scroll when extra columns are toggled on */
-.roster-table-wrap {
-  overflow-x: auto;
-}
-
+/* Roster table overrides */
 .roster-table-wrap .data-table thead th {
   z-index: 10;
 }
@@ -893,7 +890,6 @@ select:focus,
   }
 
   .tier-badge,
-  .band-segment,
   .pct-bar-fill {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -916,10 +912,7 @@ select:focus,
   letter-spacing: 0.03em;
 }
 
-.group-Skill,
-.group-Speed,
-.group-PositionPlayer,
-.group-Guard {
+.group-Skill {
   background: var(--green-bg);
   color: var(--green);
 }
@@ -929,8 +922,7 @@ select:focus,
   background: var(--blue-bg);
   color: var(--blue);
 }
-.group-Linemen,
-.group-Battery {
+.group-Linemen {
   background: var(--orange-bg);
   color: var(--orange);
 }
@@ -1434,10 +1426,6 @@ select:focus,
 }
 
 /* ---------- Wide table scroll hint ---------- */
-.table-wrap {
-  position: relative;
-}
-
 .table-wrap::after {
   content: "→";
   position: absolute;
@@ -3311,7 +3299,7 @@ select:focus,
   .toast-container,
   .edit-panel,
   .edit-panel-backdrop,
-  .data-mgmt,
+  .data-mgmt-bar,
   .modal-overlay {
     display: none !important;
   }
