@@ -678,6 +678,8 @@
     markTabsDirty();
     renderOverview();
     _tabDirty["overview"] = false;
+    renderConstants();
+    _tabDirty["constants"] = false;
     updateDataStatus();
 
     // Sortable bindings
@@ -1823,7 +1825,7 @@
             },
           },
           annotation:
-            typeof Chart.registry?.plugins?.get("annotation") !== "undefined"
+            Chart.registry?.plugins?.get("annotation")
               ? {
                   annotations: {
                     avgStr: {
@@ -2102,24 +2104,27 @@
     html += '<div class="history-actions">';
     html += '<span class="history-actions-label">Manage tests:</span>';
     for (var di = 0; di < shown.length; di++) {
+      var _eId = a.id.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+      var _eDate = shown[di].date.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+      var _eLabel = shown[di].label.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
       html += '<span class="history-action-group">';
       html +=
         '<button class="btn btn-xs btn-muted" onclick="openEditPanel(\'' +
-        esc(a.id) +
+        _eId +
         "'); setTimeout(function(){ editHistoryEntry('" +
-        esc(a.id) +
+        _eId +
         "','" +
-        esc(shown[di].date) +
+        _eDate +
         "','" +
-        esc(shown[di].label) +
+        _eLabel +
         '\')},300)" title="Edit this test">✏️</button>';
       html +=
         '<button class="btn btn-xs btn-muted" onclick="deleteHistoryEntry(\'' +
-        esc(a.id) +
+        _eId +
         "','" +
-        esc(shown[di].date) +
+        _eDate +
         "','" +
-        esc(shown[di].label) +
+        _eLabel +
         '\')" title="Delete this test">🗑</button>';
       html +=
         '<small class="history-action-name">' +
@@ -2135,7 +2140,13 @@
   window.deleteHistoryEntry = function (athleteId, date, label) {
     if (!confirm('Delete test entry "' + label + '" (' + date + ")?")) return;
     deleteTestEntry(athleteId, date, label);
-    renderProfile();
+    rebuildFromStorage();
+    reRenderAll();
+    // Refresh edit panel if open for this athlete
+    if (editingAthleteId === athleteId) {
+      var a = window.CLUB.athletes.find(function (x) { return x.id === athleteId; });
+      if (a) buildEditFields(a);
+    }
     showToast("Deleted test entry: " + label, "info");
   };
 
@@ -3648,7 +3659,7 @@
     );
     if (!pick1) return;
     var idx1 = parseInt(pick1.trim(), 10) - 1;
-    if (idx1 < 0 || idx1 >= tests.length) {
+    if (isNaN(idx1) || idx1 < 0 || idx1 >= tests.length) {
       showToast("Invalid selection.", "warn");
       return;
     }
@@ -3662,7 +3673,7 @@
     );
     if (!pick2) return;
     var idx2 = parseInt(pick2.trim(), 10) - 1;
-    if (idx2 < 0 || idx2 >= tests.length || idx2 === idx1) {
+    if (isNaN(idx2) || idx2 < 0 || idx2 >= tests.length || idx2 === idx1) {
       showToast("Invalid or same selection.", "warn");
       return;
     }
@@ -4800,9 +4811,11 @@
           sc.percentile +
           "th)",
       );
+    const strengthKeys = new Set(sorted.slice(0, 3).map(([k]) => k));
     const weaknesses = sorted
       .slice(-3)
       .reverse()
+      .filter(([k]) => !strengthKeys.has(k))
       .map(
         ([k, sc]) =>
           (metrics.find((m) => m.key === k)?.label || k) +
@@ -4942,7 +4955,8 @@
         .slice()
         .sort((x, y) => y[1].percentile - x[1].percentile);
       const top3 = sorted.slice(0, 3);
-      const bot3 = sorted.slice(-3).reverse();
+      const top3Keys = new Set(top3.map(([k]) => k));
+      const bot3 = sorted.slice(-3).reverse().filter(([k]) => !top3Keys.has(k));
       const tierCounts = {
         elite: 0,
         strong: 0,
@@ -5459,38 +5473,36 @@
         if (m.jsonKey) baseVal = baseline[m.jsonKey] ?? null;
         // Derived metrics from baseline sprint splits / body data
         if (m.derived && baseVal == null) {
+          const C = window.CLUB.constants;
           const s020 = baseline.sprint_020, s2030 = baseline.sprint_2030, s3040 = baseline.sprint_3040;
           const bWt = baseline.weight_lb, bBench = baseline.bench_1rm, bSquat = baseline.squat_1rm;
           const bVert = baseline.vert_in;
           const hasSprints = s020 != null && s2030 != null && s3040 != null;
+          const massKg = bWt != null ? +(bWt * C.LB_TO_KG).toFixed(2) : null;
           if (m.key === "forty" && hasSprints)
             baseVal = +(s020 + s2030 + s3040).toFixed(2);
           if (m.key === "vMax" && hasSprints) {
-            const v1 = 18.288 / s020, v2 = 9.144 / s2030, v3 = 9.144 / s3040;
-            baseVal = +Math.max(v1, v2, v3).toFixed(2);
+            const v1 = C.TWENTY_YD_M / s020, v2 = C.TEN_YD_M / s2030, v3 = C.TEN_YD_M / s3040;
+            baseVal = +Math.max(v1, v2, v3).toFixed(3);
           }
-          if (m.key === "F1" && hasSprints && bWt != null) {
-            const massKg = bWt * 0.453592;
-            const v1 = 18.288 / s020;
+          if (m.key === "F1" && hasSprints && massKg != null) {
+            const v1 = C.TWENTY_YD_M / s020;
             baseVal = +(massKg * (v1 / s020)).toFixed(1);
           }
-          if (m.key === "momMax" && hasSprints && bWt != null) {
-            const massKg = bWt * 0.453592;
-            const v2 = 9.144 / s2030, v3 = 9.144 / s3040;
+          if (m.key === "momMax" && hasSprints && massKg != null) {
+            const v2 = C.TEN_YD_M / s2030, v3 = C.TEN_YD_M / s3040;
             baseVal = +(massKg * Math.max(v2, v3)).toFixed(1);
           }
-          if (m.key === "peakPower" && bVert != null && bWt != null) {
-            const massKg = bWt * 0.453592;
-            baseVal = +(60.7 * (bVert * 2.54) + 45.3 * massKg - 2055).toFixed(0);
+          if (m.key === "peakPower" && bVert != null && massKg != null) {
+            baseVal = +(C.SAYERS_A * (bVert * C.IN_TO_CM) + C.SAYERS_B * massKg + C.SAYERS_C).toFixed(0);
           }
-          if (m.key === "relPeakPower" && bVert != null && bWt != null) {
-            const massKg = bWt * 0.453592;
-            const pp = 60.7 * (bVert * 2.54) + 45.3 * massKg - 2055;
+          if (m.key === "relPeakPower" && bVert != null && massKg != null) {
+            const pp = C.SAYERS_A * (bVert * C.IN_TO_CM) + C.SAYERS_B * massKg + C.SAYERS_C;
             baseVal = +(pp / massKg).toFixed(1);
           }
-          if (m.key === "relBench" && bBench != null && bWt != null)
+          if (m.key === "relBench" && bBench != null && bWt != null && bWt > 0)
             baseVal = +(bBench / bWt).toFixed(2);
-          if (m.key === "relSquat" && bSquat != null && bWt != null)
+          if (m.key === "relSquat" && bSquat != null && bWt != null && bWt > 0)
             baseVal = +(bSquat / bWt).toFixed(2);
         }
         if (curVal != null && baseVal != null) {
@@ -7256,21 +7268,24 @@
           "</div>" +
           "</div>";
         html += '<div class="edit-history-btns">';
+        var _heId = a.id.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+        var _heDate = he.date.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+        var _heLabel = he.label.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
         html +=
           '<button class="btn btn-xs btn-muted" onclick="editHistoryEntry(\'' +
-          esc(a.id) +
+          _heId +
           "','" +
-          esc(he.date) +
+          _heDate +
           "','" +
-          esc(he.label) +
+          _heLabel +
           '\')" title="Edit this test entry">✏️</button> ';
         html +=
           '<button class="btn btn-xs btn-muted" onclick="deleteHistoryEntry(\'' +
-          esc(a.id) +
+          _heId +
           "','" +
-          esc(he.date) +
+          _heDate +
           "','" +
-          esc(he.label) +
+          _heLabel +
           '\')" title="Delete this test entry">🗑</button>';
         html += "</div>";
         html += "</div>";
@@ -7593,6 +7608,8 @@
     );
 
     // Refresh edit panel & profile
+    rebuildFromStorage();
+    markTabsDirty();
     var a = window.CLUB.athletes.find(function (x) {
       return x.id === editingAthleteId;
     });
@@ -7634,12 +7651,14 @@
   };
 
   window.closeEditPanel = function () {
-    document.getElementById("editPanel").classList.remove("open");
-    document.getElementById("editPanelBackdrop").classList.remove("open");
+    // Flush any pending auto-save before closing
     if (autoSaveTimer) {
       clearTimeout(autoSaveTimer);
       autoSaveTimer = null;
+      doAutoSave();
     }
+    document.getElementById("editPanel").classList.remove("open");
+    document.getElementById("editPanelBackdrop").classList.remove("open");
     editingAthleteId = null;
   };
 
