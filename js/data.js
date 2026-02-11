@@ -363,7 +363,8 @@
 
     // Apply age-adjustment: scale thresholds down for younger grades
     if (ageAdj && grade !== null && grade !== undefined) {
-      const factor = HS_STANDARDS._ageFactors[grade];
+      const clampedGrade = Math.max(6, Math.min(12, grade));
+      const factor = HS_STANDARDS._ageFactors[clampedGrade];
       if (factor !== undefined && factor !== 1.0) {
         thresholds = thresholds.map((t) =>
           inverted ? rd(t / factor, 2) : rd(t * factor, 2),
@@ -505,12 +506,14 @@
       const relSquat = squat !== null && wt !== null && wt > 0 ? rd(squat / wt, 2) : null;
       const mbRel = medball !== null && wt !== null && wt > 0 ? rd(medball / wt, 2) : null;
 
-      const peakPower =
+      const peakPowerRaw =
         vertCm !== null && massKg !== null
-          ? rd(C.SAYERS_A * vertCm + C.SAYERS_B * massKg + C.SAYERS_C, 0)
+          ? C.SAYERS_A * vertCm + C.SAYERS_B * massKg + C.SAYERS_C
           : null;
+      // Clamp to 0 — Sayers formula can go negative for very light/young athletes
+      const peakPower = peakPowerRaw !== null ? rd(Math.max(0, peakPowerRaw), 0) : null;
       const relPeakPower =
-        peakPower !== null && massKg !== null && massKg > 0
+        peakPower !== null && peakPower > 0 && massKg !== null && massKg > 0
           ? rd(peakPower / massKg, 1)
           : null;
       const strengthUtil =
@@ -780,19 +783,19 @@
 
     // Testing Log
     const testingLog = (raw.testing_log || []).map((e) => ({
-      date: e.date,
+      date: txt(e.date),
       athleteId: e.athlete_id,
-      name: e.name,
-      test: e.test,
-      sprint020: e.split_020 ?? null,
-      sprint2030: e.split_2030 ?? null,
-      sprint3040: e.split_3040 ?? null,
-      location: e.location ?? null,
-      vert: e.vert ?? null,
-      broad: e.broad ?? null,
-      bench: e.bench ?? null,
-      squat: e.squat ?? null,
-      medball: e.medball ?? null,
+      name: txt(e.name),
+      test: txt(e.test),
+      sprint020: num(e.split_020),
+      sprint2030: num(e.split_2030),
+      sprint3040: num(e.split_3040),
+      location: txt(e.location),
+      vert: num(e.vert),
+      broad: num(e.broad),
+      bench: num(e.bench),
+      squat: num(e.squat),
+      medball: num(e.medball),
     }));
 
     // Data quality warnings
@@ -936,13 +939,11 @@
               if (tEntries[tk].date !== latestDate) continue;
               const vals = tEntries[tk].values;
               for (const vk in vals) {
-                if (
-                  vals[vk] !== null &&
-                  vals[vk] !== undefined &&
-                  vals[vk] !== ""
-                ) {
-                  tAthlete[vk] = vals[vk];
-                }
+                const v = vals[vk];
+                if (v === null || v === undefined || v === "") continue;
+                // Guard against NaN/Infinity from corrupted localStorage
+                if (typeof v === "number" && !isFinite(v)) continue;
+                tAthlete[vk] = v;
               }
             }
           }

@@ -1412,6 +1412,9 @@ select:focus,
   .constants-grid {
     grid-template-columns: 1fr;
   }
+  .cmp-summary-banner {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ---------- Absolute Grade System ---------- */
@@ -2063,9 +2066,9 @@ select:focus,
 /* ---------- Toast Notifications ---------- */
 .toast-container {
   position: fixed;
-  bottom: 1.5rem;
+  bottom: 4.5rem;
   right: 1.5rem;
-  z-index: 2000;
+  z-index: 10001;
   display: flex;
   flex-direction: column-reverse;
   gap: 0.5rem;
@@ -2096,6 +2099,9 @@ select:focus,
 .toast.toast-warn {
   border-left: 3px solid var(--yellow);
 }
+.toast.toast-error {
+  border-left: 3px solid var(--red);
+}
 @keyframes toastIn {
   from {
     opacity: 0;
@@ -2113,6 +2119,7 @@ select:focus,
   to {
     opacity: 0;
     transform: translateY(-5px);
+    pointer-events: none;
   }
 }
 
@@ -2690,7 +2697,7 @@ select:focus,
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  overflow: hidden;
+  overflow: visible;
 }
 .cal-month-header {
   display: flex;
@@ -2699,6 +2706,7 @@ select:focus,
   padding: 0.65rem 1rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  border-radius: var(--radius) var(--radius) 0 0;
 }
 .cal-month-name {
   font-weight: 700;
@@ -3249,4 +3257,17 @@ select:focus,
   .tab-panel {
     overflow: visible !important;
   }
+}
+
+/* Utility: screen-reader-only (visually hidden, accessible to AT) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

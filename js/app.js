@@ -30,6 +30,11 @@
     });
   }
 
+  /** Escape a value for embedding inside onclick="fn('VALUE')" */
+  function escJs(s) {
+    return esc(String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'"));
+  }
+
   /* ---------- Debounce helper ---------- */
   function debounce(fn, ms) {
     let t;
@@ -839,7 +844,7 @@
     }
     _prevTestCache[athleteId] = vals;
     // Derive forty from sprint splits if available
-    if (vals.sprint020 && vals.sprint2030 && vals.sprint3040 && !vals.forty) {
+    if (vals.sprint020 != null && vals.sprint2030 != null && vals.sprint3040 != null && !vals.forty) {
       vals.forty = +(
         vals.sprint020 +
         vals.sprint2030 +
@@ -1111,7 +1116,7 @@
           return '<td class="num na">—</td>';
         }
         return `
-      <tr class="${rowCls}" tabindex="0" role="button" onclick="selectAthlete('${a.id}')" onkeydown="if(event.key==='Enter')selectAthlete('${a.id}')">
+      <tr class="${rowCls}" tabindex="0" role="button" onclick="selectAthlete('${escJs(a.id)}')" onkeydown="if(event.key==='Enter')selectAthlete('${escJs(a.id)}')">
         <td><strong>${esc(a.name)}</strong>${!isTested ? ' <span class="untested-badge">Untested</span>' : ""}</td>
         <td>${esc(a.position) || "—"}</td>
         <td><span class="group-tag group-${(a.group || "").replace(/\s/g, "")}">${esc(a.group || "—")}</span></td>
@@ -2002,7 +2007,7 @@
     var curForty = a.forty;
     html +=
       '<tr class="progress-composite"><td><strong>40 yd Total</strong> <small>s</small></td>';
-    html += '<td class="num">' + (curForty !== null ? curForty : "—") + "</td>";
+    html += '<td class="num">' + (curForty != null ? curForty : "—") + "</td>";
     for (var fi = 0; fi < shown.length; fi++) {
       var fv = shown[fi].values;
       var hForty =
@@ -2285,7 +2290,7 @@
     for (var ci = 0; ci < tests.length; ci++) {
       var test = tests[ci];
       var safeDate = esc(test.date);
-      var safeLabel = esc(test.label);
+      var rawLabelLower = test.label.toLowerCase();
       var escapedDate = test.date.replace(/'/g, "\\'");
       var escapedLabel = test.label.replace(/'/g, "\\'");
 
@@ -2312,13 +2317,13 @@
         '" data-date="' +
         safeDate +
         '" data-label="' +
-        safeLabel.toLowerCase() +
+        rawLabelLower +
         '">';
       cards += '<div class="th-card-header">';
       cards += '<div class="th-card-title">';
       cards +=
         '<span class="th-label">' +
-        safeLabel +
+        esc(test.label) +
         (isLatest ? ' <span class="th-badge-latest">CURRENT</span>' : "") +
         "</span>";
       cards += '<span class="th-date">' + safeDate + "</span>";
@@ -2448,7 +2453,7 @@
             '" data-date="' +
             safeDate +
             '" data-label="' +
-            safeLabel +
+            esc(test.label) +
             '" data-key="' +
             jsonKey +
             '" onclick="inlineEditCell(this)" title="Click to edit">' +
@@ -3858,7 +3863,7 @@
     tbody.innerHTML = top
       .map(
         (e, i) => `
-      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${e.id}')" onkeydown="if(event.key==='Enter')selectAthlete('${e.id}')">
+      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${escJs(e.id)}')" onkeydown="if(event.key==='Enter')selectAthlete('${escJs(e.id)}')">
         <td class="num">${i + 1}</td>
         <td><strong>${esc(e.name)}</strong></td>
         <td>${esc(e.position)}</td>
@@ -4166,7 +4171,7 @@
             ? tdNumColoredStale(a[key], dec)
             : tdNumColored(a[key], dec);
         return `
-      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${a.id}')" onkeydown="if(event.key==='Enter')selectAthlete('${a.id}')">
+      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${escJs(a.id)}')" onkeydown="if(event.key==='Enter')selectAthlete('${escJs(a.id)}')">
         <td><strong>${esc(a.name)}</strong></td>
         <td>${esc(a.position) || "—"}</td>
         ${sN("massKg", 1)}
@@ -4225,7 +4230,7 @@
             ? tdGradedStale(a[key], dec, grade)
             : tdGraded(a[key], dec, grade);
         return `
-      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${a.id}')" onkeydown="if(event.key==='Enter')selectAthlete('${a.id}')">
+      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${escJs(a.id)}')" onkeydown="if(event.key==='Enter')selectAthlete('${escJs(a.id)}')">
         <td><strong>${esc(a.name)}</strong></td>
         <td>${esc(a.position) || "—"}</td>
         ${sN("weight", 0)}
@@ -5435,18 +5440,10 @@
     const sessions = _getTestSessions();
     sel.innerHTML = '<option value="">— pick baseline test —</option>';
     for (const s of sessions) {
-      sel.innerHTML +=
-        '<option value="' +
-        esc(s.date) +
-        "|" +
-        esc(s.label) +
-        '">' +
-        esc(s.label) +
-        " (" +
-        esc(s.date) +
-        ") — " +
-        s.count +
-        " athletes</option>";
+      const opt = document.createElement('option');
+      opt.value = s.date + '|' + s.label;
+      opt.textContent = s.label + ' (' + s.date + ') — ' + s.count + ' athletes';
+      sel.appendChild(opt);
     }
     if (curVal) sel.value = curVal;
   }

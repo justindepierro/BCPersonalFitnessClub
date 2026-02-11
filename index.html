@@ -187,16 +187,17 @@
               id="rosterSearch"
               class="input"
               placeholder="Search athletes…"
+              aria-label="Search athletes"
               oninput="debouncedOverview()"
               style="min-width: 160px"
             />
-            <select id="overviewPosFilter" onchange="renderOverview()">
+            <select id="overviewPosFilter" aria-label="Filter by position" onchange="renderOverview()">
               <option value="all">All Positions</option>
             </select>
-            <select id="overviewGroupFilter" onchange="renderOverview()">
+            <select id="overviewGroupFilter" aria-label="Filter by group" onchange="renderOverview()">
               <option value="all">All Groups</option>
             </select>
-            <select id="overviewGradeFilter" onchange="renderOverview()">
+            <select id="overviewGradeFilter" aria-label="Filter by grade tier" onchange="renderOverview()">
               <option value="all">All Grades</option>
               <option value="elite">Elite Only</option>
               <option value="excellent">Excellent+</option>
@@ -217,6 +218,7 @@
         <div id="dataWarnings"></div>
         <div class="table-wrap roster-table-wrap">
           <table id="rosterTable" class="data-table sortable">
+            <caption class="sr-only">Team roster with athlete metrics and ratings</caption>
             <thead>
               <tr>
                 <th data-sort="name">Athlete</th>
@@ -307,7 +309,7 @@
         <div class="section-header">
           <h2>Athlete Profiles</h2>
           <div class="filters">
-            <select id="athleteSelect" onchange="renderProfile()">
+            <select id="athleteSelect" aria-label="Select athlete" onchange="renderProfile()">
               <option value="">— Select Athlete —</option>
             </select>
             <button
@@ -357,7 +359,7 @@
         <div class="section-header">
           <h2>Leaderboards</h2>
           <div class="filters">
-            <select id="lbMetric" onchange="renderLeaderboards()">
+            <select id="lbMetric" aria-label="Leaderboard metric" onchange="renderLeaderboards()">
               <option value="bench">Bench 1RM (lb)</option>
               <option value="squat">Squat 1RM (lb)</option>
               <option value="relBench">Relative Bench (xBW)</option>
@@ -375,10 +377,10 @@
               <option value="relPeakPower">Rel Peak Power (W/kg)</option>
               <option value="zMB">MB Z-Score</option>
             </select>
-            <select id="lbPosFilter" onchange="renderLeaderboards()">
+            <select id="lbPosFilter" aria-label="Filter by position" onchange="renderLeaderboards()">
               <option value="all">All Positions</option>
             </select>
-            <select id="lbGroupFilter" onchange="renderLeaderboards()">
+            <select id="lbGroupFilter" aria-label="Filter by group" onchange="renderLeaderboards()">
               <option value="all">All Groups</option>
             </select>
           </div>
@@ -387,6 +389,7 @@
           <div class="chart-card"><canvas id="lbChart"></canvas></div>
           <div class="table-wrap">
             <table id="lbTable" class="data-table">
+              <caption class="sr-only">Leaderboard rankings</caption>
               <thead>
                 <tr>
                   <th>#</th>
@@ -949,6 +952,7 @@
 
         <div class="table-wrap">
           <table id="sprintTable" class="data-table sortable">
+            <caption class="sr-only">Sprint analysis with velocity, acceleration, force, and power metrics</caption>
             <thead>
               <tr>
                 <th data-sort="name">Athlete</th>
@@ -1643,6 +1647,7 @@
 
         <div class="table-wrap">
           <table id="strengthTable" class="data-table sortable">
+            <caption class="sr-only">Strength and power metrics with relative measures</caption>
             <thead>
               <tr>
                 <th data-sort="name">Athlete</th>
@@ -1736,7 +1741,7 @@
         <div class="section-header">
           <h2>Athlete Scorecard</h2>
           <div class="filters">
-            <select id="scorecardFilter" onchange="renderScorecard()">
+            <select id="scorecardFilter" aria-label="Filter scorecard athletes" onchange="renderScorecard()">
               <option value="all">All Athletes</option>
             </select>
             <button
@@ -1761,6 +1766,7 @@
         </div>
         <div class="table-wrap" id="scorecardContent">
           <table id="scorecardTable" class="data-table">
+            <caption class="sr-only">Athlete scorecard with percentile-based tier assignments</caption>
             <thead>
               <tr id="scorecardHeader"></tr>
             </thead>
@@ -1779,7 +1785,7 @@
         <div class="section-header">
           <h2>Compare &amp; Improvement Tracker</h2>
           <div class="filters">
-            <select id="cmpMode" onchange="switchCompareMode()">
+            <select id="cmpMode" aria-label="Comparison mode" onchange="switchCompareMode()">
               <option value="club">Whole Club</option>
               <option value="group">By Group</option>
               <option value="h2h">Head-to-Head</option>
@@ -1789,21 +1795,21 @@
 
         <!-- Sub-filters: Group mode -->
         <div id="cmpGroupFilters" class="cmp-sub-filters" style="display: none">
-          <select id="cmpGroupSel" onchange="renderComparison()">
+          <select id="cmpGroupSel" aria-label="Compare by group" onchange="renderComparison()">
             <option value="all">All Groups</option>
           </select>
         </div>
 
         <!-- Sub-filters: Head-to-Head mode -->
         <div id="cmpH2HFilters" class="cmp-sub-filters" style="display: none">
-          <select id="cmpA" onchange="renderComparison()">
+          <select id="cmpA" aria-label="Select athlete A" onchange="renderComparison()">
             <option value="">— Athlete A —</option>
           </select>
           <span style="color: var(--text-muted); font-weight: 700">vs</span>
-          <select id="cmpB" onchange="renderComparison()">
+          <select id="cmpB" aria-label="Select athlete B" onchange="renderComparison()">
             <option value="">— Athlete B —</option>
           </select>
-          <select id="cmpC" onchange="renderComparison()">
+          <select id="cmpC" aria-label="Select athlete C (optional)" onchange="renderComparison()">
             <option value="">— Athlete C (opt) —</option>
           </select>
         </div>
@@ -1811,6 +1817,7 @@
         <!-- Sub-filter: Test session selector (all modes) -->
         <div class="cmp-sub-filters">
           <label
+            for="cmpBaselineSession"
             style="font-weight: 600; margin-right: 0.5rem; font-size: 0.82rem"
             >Compare against:</label
           >
@@ -1846,7 +1853,7 @@
         <div class="section-header">
           <h2>Position Group Dashboard</h2>
           <div class="filters">
-            <select id="grpDash" onchange="renderGroupDashboard()">
+            <select id="grpDash" aria-label="Select position group" onchange="renderGroupDashboard()">
               <option value="all">All Groups</option>
             </select>
           </div>
@@ -1873,6 +1880,7 @@
         <div class="filters">
           <select
             id="bmSport"
+            aria-label="Sport"
             onchange="updateBmGroupOptions(); renderBenchmarks()"
           >
             <option value="Football">Football</option>
@@ -1880,10 +1888,10 @@
             <option value="Baseball">Baseball</option>
             <option value="Basketball">Basketball</option>
           </select>
-          <select id="bmGroup" onchange="renderBenchmarks()">
+          <select id="bmGroup" aria-label="Position group" onchange="renderBenchmarks()">
             <option value="all">All Groups</option>
           </select>
-          <select id="bmMetric" onchange="renderBenchmarks()">
+          <select id="bmMetric" aria-label="Metric" onchange="renderBenchmarks()">
             <option value="all">All Metrics</option>
             <option value="forty">40-Yard Dash</option>
             <option value="bench">Bench 1RM</option>
@@ -1915,7 +1923,7 @@
         <div class="section-header">
           <h2>Testing Log</h2>
           <div class="filters">
-            <select id="logFilter" onchange="renderTestingLog()">
+            <select id="logFilter" aria-label="Filter test type" onchange="renderTestingLog()">
               <option value="all">All Tests</option>
               <option value="Sprint">Sprint</option>
               <option value="Jump">Jump</option>
@@ -1929,6 +1937,7 @@
         </p>
         <div class="table-wrap">
           <table id="logTable" class="data-table sortable">
+            <caption class="sr-only">Testing log with chronological test results</caption>
             <thead>
               <tr>
                 <th data-sort="date">Date</th>
@@ -1972,7 +1981,7 @@
           >
             Save Snapshot
           </button>
-          <select id="snapshotSelect" class="input" style="min-width: 150px">
+          <select id="snapshotSelect" aria-label="Select snapshot" class="input" style="min-width: 150px">
             <option value="">— Load Snapshot —</option>
           </select>
           <button
@@ -2061,7 +2070,7 @@
     </section>
 
     <!-- ===== EDIT PANEL (slide-in) ===== -->
-    <div id="editPanel" class="edit-panel">
+    <div id="editPanel" class="edit-panel" role="dialog" aria-modal="true" aria-labelledby="editPanelTitle">
       <div class="edit-panel-header">
         <h3 id="editPanelTitle">Edit Athlete</h3>
         <div class="edit-panel-actions">
@@ -2083,6 +2092,7 @@
         <select
           id="editAthleteSelect"
           class="input"
+          aria-label="Select athlete to edit"
           onchange="editPanelSelectAthlete(this.value)"
           style="flex: 1; min-width: 0"
         ></select>
@@ -2123,6 +2133,7 @@
       id="editPanelBackdrop"
       class="edit-panel-backdrop"
       onclick="closeEditPanel()"
+      role="presentation"
     ></div>
 
     <!-- ===== TOAST NOTIFICATION ===== -->
