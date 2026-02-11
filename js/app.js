@@ -15,6 +15,30 @@
   let profileDonutInstance = null;
   let profileQuadrantInstance = null;
 
+  /* ---------- Athlete Map (O(1) lookups by id) ---------- */
+  let _athleteMap = null;
+  function getAthleteMap() {
+    if (_athleteMap) return _athleteMap;
+    _athleteMap = new Map();
+    var athletes = window.CLUB ? window.CLUB.athletes : [];
+    for (var i = 0; i < athletes.length; i++) {
+      _athleteMap.set(athletes[i].id, athletes[i]);
+    }
+    return _athleteMap;
+  }
+  function getAthleteById(id) {
+    return getAthleteMap().get(id) || null;
+  }
+  function invalidateAthleteMap() {
+    _athleteMap = null;
+  }
+
+  /* ---------- Chart animation control ---------- */
+  let _skipChartAnimation = false;
+  function chartAnimOpts() {
+    return _skipChartAnimation ? { animation: false } : {};
+  }
+
   /* ---------- HTML Escaping (XSS protection) ---------- */
   const ESC_MAP = {
     "&": "&amp;",
@@ -1147,9 +1171,7 @@
   };
 
   window.selectAthlete = function (id) {
-    const a = window.CLUB.athletes.find(function (x) {
-      return x.id === id;
-    });
+    const a = getAthleteById(id);
     if (!a) {
       showToast("Athlete not found — data may have changed.", "warn");
       renderOverview();
@@ -1172,7 +1194,7 @@
         '<p class="placeholder-text">Select an athlete to view their profile.</p>';
       return;
     }
-    const a = D.athletes.find((x) => x.id === id);
+    const a = getAthleteById(id);
     if (!a) {
       container.innerHTML =
         '<p class="placeholder-text">Athlete not found.</p>';
@@ -1415,6 +1437,7 @@
         ],
       },
       options: {
+        ...chartAnimOpts(),
         responsive: true,
         maintainAspectRatio: true,
         scales: {
@@ -1507,6 +1530,7 @@
         ],
       },
       options: {
+        ...chartAnimOpts(),
         indexAxis: "y",
         responsive: true,
         maintainAspectRatio: false,
@@ -1618,6 +1642,7 @@
         ],
       },
       options: {
+        ...chartAnimOpts(),
         responsive: true,
         maintainAspectRatio: true,
         scales: {
@@ -1720,6 +1745,7 @@
         ],
       },
       options: {
+        ...chartAnimOpts(),
         responsive: true,
         maintainAspectRatio: true,
         cutout: "55%",
@@ -1811,6 +1837,7 @@
         ],
       },
       options: {
+        ...chartAnimOpts(),
         responsive: true,
         maintainAspectRatio: true,
         scales: {
@@ -2172,9 +2199,7 @@
     reRenderAll();
     // Refresh edit panel if open for this athlete
     if (editingAthleteId === athleteId) {
-      var a = window.CLUB.athletes.find(function (x) {
-        return x.id === athleteId;
-      });
+      var a = getAthleteById(athleteId);
       if (a) buildEditFields(a);
     }
     showToast("Deleted test entry: " + label, "info");
@@ -2951,9 +2976,7 @@
     for (var i = 0; i < ids.length; i++) {
       for (var j = 0; j < h[ids[i]].length; j++) {
         if (h[ids[i]][j].date === date && h[ids[i]][j].label === label) {
-          var found = D.athletes.find(function (x) {
-            return x.id === ids[i];
-          });
+          var found = getAthleteById(ids[i]);
           exportObj.entries.push({
             athleteId: ids[i],
             athleteName: found ? found.name : ids[i],
@@ -2996,9 +3019,7 @@
     };
     var ids = Object.keys(h);
     for (var i = 0; i < ids.length; i++) {
-      var found = D.athletes.find(function (x) {
-        return x.id === ids[i];
-      });
+      var found = getAthleteById(ids[i]);
       if (found) exportObj.athlete_names[ids[i]] = found.name;
     }
     var json = JSON.stringify(exportObj, null, 2);
@@ -3274,6 +3295,16 @@
 
   /* --- Apply a test session's data as current athlete values --- */
   window.applyTestAsCurrent = function (date, label) {
+    if (
+      !confirm(
+        'Apply "' +
+          label +
+          '" (' +
+          date +
+          ") as current values for all athletes? This will overwrite existing data.",
+      )
+    )
+      return;
     var h = getTestHistory();
     var ids = Object.keys(h);
     var edits = safeLSGet("lc_edits", []);
@@ -3546,9 +3577,7 @@
     for (var i = 0; i < ids.length; i++) {
       for (var j = 0; j < h[ids[i]].length; j++) {
         if (h[ids[i]][j].date === date && h[ids[i]][j].label === label) {
-          var found = D.athletes.find(function (x) {
-            return x.id === ids[i];
-          });
+          var found = getAthleteById(ids[i]);
           inTest.push({ id: ids[i], name: found ? found.name : ids[i] });
           break;
         }
@@ -3763,26 +3792,14 @@
     html += "</tr></thead><tbody>";
 
     var sortedIds = Object.keys(allIds).sort(function (a, b) {
-      var na =
-        (
-          D.athletes.find(function (x) {
-            return x.id === a;
-          }) || {}
-        ).name || a;
-      var nb =
-        (
-          D.athletes.find(function (x) {
-            return x.id === b;
-          }) || {}
-        ).name || b;
+      var na = (getAthleteById(a) || {}).name || a;
+      var nb = (getAthleteById(b) || {}).name || b;
       return na.localeCompare(nb);
     });
 
     for (var si = 0; si < sortedIds.length; si++) {
       var aid = sortedIds[si];
-      var found = D.athletes.find(function (x) {
-        return x.id === aid;
-      });
+      var found = getAthleteById(aid);
       var name = found ? found.name : aid;
       var oEntry = olderMap[aid];
       var nEntry = newerMap[aid];
@@ -3931,6 +3948,7 @@
         ],
       },
       options: {
+        ...chartAnimOpts(),
         indexAxis: "y",
         responsive: true,
         maintainAspectRatio: false,
@@ -4785,7 +4803,7 @@
       showToast("Select an athlete first.", "warn");
       return;
     }
-    const a = D.athletes.find((x) => x.id === id);
+    const a = getAthleteById(id);
     if (!a) {
       showToast("Athlete not found.", "error");
       return;
@@ -5946,7 +5964,7 @@
       return;
     }
     const athletes = ids
-      .map((id) => D.athletes.find((a) => a.id === id))
+      .map((id) => getAthleteById(id))
       .filter(Boolean);
     if (athletes.length < 2) {
       container.innerHTML =
@@ -6130,6 +6148,7 @@
       type: "radar",
       data: { labels: radarLabels, datasets },
       options: {
+        ...chartAnimOpts(),
         responsive: true,
         maintainAspectRatio: true,
         scales: {
@@ -6225,6 +6244,7 @@
         ],
       },
       options: {
+        ...chartAnimOpts(),
         responsive: true,
         maintainAspectRatio: false,
         indexAxis: "y",
@@ -6818,6 +6838,7 @@
     }
 
     window.CLUB = window._processData(rawCopy);
+    invalidateAthleteMap();
   }
 
   /* ========== NEXT ATHLETE ID ========== */
@@ -6933,9 +6954,7 @@
       return;
     }
 
-    const a = window.CLUB.athletes.find(function (x) {
-      return x.id === id;
-    });
+    const a = getAthleteById(id);
     const displayName = a ? a.name : id;
 
     if (
@@ -7422,7 +7441,7 @@
   /* ---------- Auto-save ---------- */
   function scheduleAutoSave() {
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
-    autoSaveTimer = setTimeout(doAutoSave, 500);
+    autoSaveTimer = setTimeout(doAutoSave, 800);
 
     // Show typing indicator
     const statusEl = document.getElementById("autoSaveStatus");
@@ -7480,6 +7499,9 @@
     // Reprocess data
     rebuildFromStorage();
 
+    // Skip chart animations during auto-save re-renders
+    _skipChartAnimation = true;
+
     // Re-render only active tab + profile
     markTabsDirty();
     const activeTab = document.querySelector(".tab.active");
@@ -7492,6 +7514,8 @@
     if (!activeTab || activeTab.dataset.tab !== "profiles") {
       renderProfile();
     }
+
+    _skipChartAnimation = false;
 
     // Update the edit panel nav dropdown
     populateEditAthleteSelect();
@@ -7534,9 +7558,7 @@
   window.saveCurrentAsTest = function () {
     if (!editingAthleteId) return;
     const D = window.CLUB;
-    const a = D.athletes.find(function (x) {
-      return x.id === editingAthleteId;
-    });
+    const a = getAthleteById(editingAthleteId);
     if (!a) return;
 
     var dateStr = prompt(
@@ -7682,9 +7704,7 @@
     // Refresh edit panel & profile
     rebuildFromStorage();
     markTabsDirty();
-    var a = window.CLUB.athletes.find(function (x) {
-      return x.id === editingAthleteId;
-    });
+    var a = getAthleteById(editingAthleteId);
     if (a) buildEditFields(a);
     renderProfile();
   };
@@ -7697,9 +7717,7 @@
       showToast("Select an athlete first.", "warn");
       return;
     }
-    const a = D.athletes.find(function (x) {
-      return x.id === id;
-    });
+    const a = getAthleteById(id);
     if (!a) return;
     editingAthleteId = id;
 
@@ -7790,9 +7808,7 @@
     updateDataStatus();
 
     // Refresh the panel with original data
-    const a = window.CLUB.athletes.find(function (x) {
-      return x.id === editingAthleteId;
-    });
+    const a = getAthleteById(editingAthleteId);
     if (a) {
       buildEditFields(a);
       document.getElementById("editPanelTitle").textContent = "Edit: " + a.name;
@@ -7804,9 +7820,7 @@
 
   window.exportAthleteJSON = function () {
     if (!editingAthleteId) return;
-    const a = window.CLUB.athletes.find(function (x) {
-      return x.id === editingAthleteId;
-    });
+    const a = getAthleteById(editingAthleteId);
     if (!a) return;
 
     const exported = {
@@ -7846,6 +7860,13 @@
   // Close panel on Escape key
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
+      // Close topmost modal overlay first
+      var modals = document.querySelectorAll(".modal-overlay");
+      if (modals.length > 0) {
+        modals[modals.length - 1].remove();
+        return;
+      }
+      // Then close edit panel
       const panel = document.getElementById("editPanel");
       if (panel && panel.classList.contains("open")) {
         closeEditPanel();
