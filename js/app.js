@@ -1745,7 +1745,7 @@
         ) {
           var delta = newerVal - olderVal;
           var pctChange =
-            lastVal !== 0 ? Math.round((delta / Math.abs(lastVal)) * 100) : 0;
+            olderVal !== 0 ? Math.round((delta / Math.abs(olderVal)) * 100) : 0;
           var improved = mk.lower ? delta < 0 : delta > 0;
           var declined = mk.lower ? delta > 0 : delta < 0;
           var cls = improved
