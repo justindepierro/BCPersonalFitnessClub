@@ -316,6 +316,18 @@ select:focus,
   contain: layout style;
 }
 
+/* Roster table: let thead stick to viewport top on scroll */
+.roster-table-wrap {
+  overflow-x: auto;
+  overflow-y: visible;
+  contain: style;
+}
+
+.roster-table-wrap .data-table thead th {
+  top: 100px; /* header (56px) + tabs (44px) */
+  z-index: 10;
+}
+
 .data-table {
   width: 100%;
   border-collapse: collapse;
