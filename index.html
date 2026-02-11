@@ -1769,7 +1769,7 @@
         </div>
       </section>
 
-      <!-- ——— TAB: Head-to-Head Compare ——— -->
+      <!-- ——— TAB: Compare ——— -->
       <section
         id="tab-compare"
         class="tab-panel"
@@ -1777,23 +1777,49 @@
         aria-labelledby="tab-btn-compare"
       >
         <div class="section-header">
-          <h2>Head-to-Head Comparison</h2>
+          <h2>Compare &amp; Improvement Tracker</h2>
           <div class="filters">
-            <select id="cmpA" onchange="renderComparison()">
-              <option value="">— Athlete A —</option>
-            </select>
-            <span style="color: var(--text-muted); font-weight: 700">vs</span>
-            <select id="cmpB" onchange="renderComparison()">
-              <option value="">— Athlete B —</option>
-            </select>
-            <select id="cmpC" onchange="renderComparison()">
-              <option value="">— Athlete C (opt) —</option>
+            <select id="cmpMode" onchange="switchCompareMode()">
+              <option value="club">Whole Club</option>
+              <option value="group">By Group</option>
+              <option value="h2h">Head-to-Head</option>
             </select>
           </div>
         </div>
+
+        <!-- Sub-filters: Group mode -->
+        <div id="cmpGroupFilters" class="cmp-sub-filters" style="display:none">
+          <select id="cmpGroupSel" onchange="renderComparison()">
+            <option value="all">All Groups</option>
+          </select>
+        </div>
+
+        <!-- Sub-filters: Head-to-Head mode -->
+        <div id="cmpH2HFilters" class="cmp-sub-filters" style="display:none">
+          <select id="cmpA" onchange="renderComparison()">
+            <option value="">— Athlete A —</option>
+          </select>
+          <span style="color: var(--text-muted); font-weight: 700">vs</span>
+          <select id="cmpB" onchange="renderComparison()">
+            <option value="">— Athlete B —</option>
+          </select>
+          <select id="cmpC" onchange="renderComparison()">
+            <option value="">— Athlete C (opt) —</option>
+          </select>
+        </div>
+
+        <!-- Sub-filter: Test session selector (all modes) -->
+        <div class="cmp-sub-filters">
+          <label style="font-weight:600;margin-right:.5rem;font-size:.82rem">Compare against:</label>
+          <select id="cmpBaselineSession" onchange="renderComparison()" style="min-width:170px">
+            <option value="">— pick baseline test —</option>
+          </select>
+          <span style="font-size:.72rem;color:var(--text-muted);margin-left:.5rem" id="cmpBaselineInfo"></span>
+        </div>
+
         <div id="compareContent">
           <p class="placeholder-text">
-            Select two or three athletes to compare.
+            Select a comparison mode to begin.
           </p>
         </div>
       </section>
@@ -1828,12 +1854,15 @@
         </div>
         <p class="section-desc">
           Absolute HS performance standards by sport and position group. Grades
-          are based on published norms (NSCA, state combine data, S&amp;C literature) with 5 tiers:
-          Elite, Excellent, Good, Average, Below Avg. Filter by sport, group, and metric
-          to drill down.
+          are based on published norms (NSCA, state combine data, S&amp;C
+          literature) with 5 tiers: Elite, Excellent, Good, Average, Below Avg.
+          Filter by sport, group, and metric to drill down.
         </p>
         <div class="filters">
-          <select id="bmSport" onchange="updateBmGroupOptions(); renderBenchmarks()">
+          <select
+            id="bmSport"
+            onchange="updateBmGroupOptions(); renderBenchmarks()"
+          >
             <option value="Football">Football</option>
             <option value="Soccer">Soccer</option>
             <option value="Baseball">Baseball</option>
@@ -2085,7 +2114,12 @@
     ></div>
 
     <!-- ===== TOAST NOTIFICATION ===== -->
-    <div id="toastContainer" class="toast-container" aria-live="polite" role="status"></div>
+    <div
+      id="toastContainer"
+      class="toast-container"
+      aria-live="polite"
+      role="status"
+    ></div>
 
     <!-- ===== SCROLL TO TOP ===== -->
     <button

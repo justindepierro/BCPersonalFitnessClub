@@ -126,7 +126,10 @@ body {
   border-radius: var(--radius-sm);
   cursor: pointer;
   white-space: nowrap;
-  transition: color 0.15s, background-color 0.15s, box-shadow 0.15s;
+  transition:
+    color 0.15s,
+    background-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .tab:hover {
@@ -225,7 +228,9 @@ select:focus,
   border-radius: var(--radius-sm);
   border: none;
   cursor: pointer;
-  transition: background-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
 
 .btn-primary {
@@ -1784,6 +1789,122 @@ select:focus,
 .cmp-radar-wrap {
   max-width: 500px;
   margin: 1rem auto;
+}
+
+/* ---------- Compare & Improvement Tracker ---------- */
+.cmp-sub-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.cmp-summary-banner {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.cmp-stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  text-align: center;
+}
+.cmp-stat-num {
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1;
+}
+.cmp-stat-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 0.25rem;
+}
+.cmp-stat-up .cmp-stat-num {
+  color: var(--green);
+}
+.cmp-stat-same .cmp-stat-num {
+  color: var(--text-muted);
+}
+.cmp-stat-down .cmp-stat-num {
+  color: var(--red);
+}
+
+.cmp-section-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin: 1.5rem 0 0.75rem;
+  color: var(--text);
+}
+
+.cmp-metric-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+.cmp-metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem 0.6rem;
+  text-align: center;
+}
+.cmp-mc-label {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.3rem;
+}
+.cmp-mc-delta {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+.cmp-mc-pct {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.cmp-mc-counts {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
+.delta-up {
+  color: var(--green);
+}
+.delta-down {
+  color: var(--red);
+}
+
+.cmp-bar-wrap {
+  height: 320px;
+  max-width: 700px;
+  margin: 0.75rem auto 1rem;
+}
+
+.cmp-group-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+.cmp-group-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* ---------- Position Group Dashboard ---------- */
