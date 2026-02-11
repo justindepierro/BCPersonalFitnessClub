@@ -200,6 +200,20 @@ body {
   flex-wrap: wrap;
 }
 
+.filter-sep {
+  color: var(--border);
+  font-size: 0.85rem;
+  user-select: none;
+}
+
+.overview-toggle {
+  white-space: nowrap;
+}
+.overview-toggle input:checked + span {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 select,
 .input {
   font-family: var(--font);
@@ -315,7 +329,9 @@ select:focus,
   border-radius: var(--radius);
   padding: 1rem 1.15rem;
   border-top: 3px solid var(--accent);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 .summary-card:hover {
   transform: translateY(-2px);
@@ -414,7 +430,7 @@ select:focus,
   background: rgba(255, 255, 255, 0.015);
 }
 .data-table tbody tr:hover {
-  background: rgba(108, 99, 255, 0.10);
+  background: rgba(108, 99, 255, 0.1);
 }
 
 .data-table tbody tr.clickable {

@@ -651,6 +651,17 @@
     if (ageToggle) {
       ageToggle.checked = localStorage.getItem("lc_age_adjusted") === "true";
     }
+    // Sync overview duplicates
+    const overviewAgeToggle = document.getElementById("overviewAgeToggle");
+    if (overviewAgeToggle) {
+      overviewAgeToggle.checked =
+        localStorage.getItem("lc_age_adjusted") === "true";
+    }
+    const overviewRelToggle = document.getElementById("overviewRelToggle");
+    if (overviewRelToggle) {
+      overviewRelToggle.checked =
+        localStorage.getItem("lc_show_relatives") === "true";
+    }
 
     // Populate position filter
     const posSel = document.getElementById("overviewPosFilter");
@@ -724,13 +735,12 @@
     _tabDirty["constants"] = false;
     updateDataStatus();
 
-    // Sortable bindings
-    document.querySelectorAll(".data-table.sortable thead th").forEach((th) => {
-      th.addEventListener("click", function () {
-        const table = this.closest("table");
-        const col = this.dataset.sort;
-        if (!col) return;
-        handleSort(table, col, this);
+    // Sortable bindings (delegated to survive thead rebuilds)
+    document.querySelectorAll(".data-table.sortable").forEach((table) => {
+      table.addEventListener("click", function (ev) {
+        var th = ev.target.closest("th[data-sort]");
+        if (!th) return;
+        handleSort(table, th.dataset.sort, th);
       });
     });
 
@@ -759,9 +769,13 @@
     // Scroll-to-top button
     const scrollBtn = document.getElementById("scrollTopBtn");
     if (scrollBtn) {
-      window.addEventListener("scroll", function () {
-        scrollBtn.classList.toggle("visible", window.scrollY > 400);
-      }, { passive: true });
+      window.addEventListener(
+        "scroll",
+        function () {
+          scrollBtn.classList.toggle("visible", window.scrollY > 400);
+        },
+        { passive: true },
+      );
       scrollBtn.addEventListener("click", function () {
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
@@ -1058,7 +1072,7 @@
 
     const total = list.length;
     // Compute summary stats in a single pass
-    const sumKeys = ["bench", "squat", "medball", "vert", "forty", "peakPower"];
+    const sumKeys = ["bench", "squat", "medball", "vert", "forty", "peakPower", "relBench", "relSquat", "relPeakPower"];
     const sums = {},
       counts = {};
     for (const k of sumKeys) {
@@ -1069,7 +1083,7 @@
     let fullyTested = 0;
     for (const a of list) {
       for (const k of sumKeys) {
-        if (a[k] !== null) {
+        if (a[k] !== null && a[k] !== undefined) {
           sums[k] += a[k];
           counts[k]++;
         }
@@ -1083,18 +1097,32 @@
     const avg40 = avgOf("forty");
     const avgVert = avgOf("vert");
     const avgPP = avgOf("peakPower");
+    const avgRelB = avgOf("relBench");
+    const avgRelS = avgOf("relSquat");
+    const avgRelPP = avgOf("relPeakPower");
     const completePct = total > 0 ? Math.round((fullyTested / total) * 100) : 0;
 
-    document.getElementById("summaryCards").innerHTML = `
+    const showRel =
+      localStorage.getItem("lc_show_relatives") === "true";
+
+    var cardsHtml = `
       <div class="summary-card"><div class="label">Athletes</div><div class="value">${total}</div><div class="sub">${D.positions.length} positions</div></div>
-      <div class="summary-card"><div class="label">Avg Bench</div><div class="value">${avgBench ? avgBench.toFixed(0) : "—"}<small> lb</small></div><div class="sub">${counts.bench} tested</div></div>
-      <div class="summary-card"><div class="label">Avg Squat</div><div class="value">${avgSquat ? avgSquat.toFixed(0) : "—"}<small> lb</small></div><div class="sub">${counts.squat} tested</div></div>
+      <div class="summary-card"><div class="label">Avg Bench</div><div class="value">${avgBench ? avgBench.toFixed(0) : "—"}<small> lb</small></div><div class="sub">${counts.bench} tested${showRel && avgRelB ? " · " + avgRelB.toFixed(2) + " xBW" : ""}</div></div>
+      <div class="summary-card"><div class="label">Avg Squat</div><div class="value">${avgSquat ? avgSquat.toFixed(0) : "—"}<small> lb</small></div><div class="sub">${counts.squat} tested${showRel && avgRelS ? " · " + avgRelS.toFixed(2) + " xBW" : ""}</div></div>
       <div class="summary-card"><div class="label">Avg MB Throw</div><div class="value">${avgMB ? avgMB.toFixed(0) : "—"}<small> in</small></div><div class="sub">${counts.medball} tested</div></div>
       <div class="summary-card"><div class="label">Avg Vert</div><div class="value">${avgVert ? avgVert.toFixed(1) : "—"}<small> in</small></div><div class="sub">${counts.vert} tested</div></div>
       <div class="summary-card"><div class="label">Avg 40 yd</div><div class="value">${avg40 ? avg40.toFixed(2) : "—"}<small> s</small></div><div class="sub">${counts.forty} tested</div></div>
-      <div class="summary-card"><div class="label">Avg Peak Power</div><div class="value">${avgPP ? avgPP.toFixed(0) : "—"}<small> W</small></div><div class="sub">${counts.peakPower} tested</div></div>
+      <div class="summary-card"><div class="label">Avg Peak Power</div><div class="value">${avgPP ? avgPP.toFixed(0) : "—"}<small> W</small></div><div class="sub">${counts.peakPower} tested${showRel && avgRelPP ? " · " + avgRelPP.toFixed(1) + " W/kg" : ""}</div></div>
       <div class="summary-card"><div class="label">Data Completeness</div><div class="value">${completePct}<small>%</small></div><div class="sub">${fullyTested}/${total} fully tested</div></div>
     `;
+    if (showRel) {
+      cardsHtml += `
+        <div class="summary-card"><div class="label">Avg Rel Bench</div><div class="value">${avgRelB ? avgRelB.toFixed(2) : "—"}<small> xBW</small></div><div class="sub">${counts.relBench} tested</div></div>
+        <div class="summary-card"><div class="label">Avg Rel Squat</div><div class="value">${avgRelS ? avgRelS.toFixed(2) : "—"}<small> xBW</small></div><div class="sub">${counts.relSquat} tested</div></div>
+        <div class="summary-card"><div class="label">Avg Rel PP</div><div class="value">${avgRelPP ? avgRelPP.toFixed(1) : "—"}<small> W/kg</small></div><div class="sub">${counts.relPeakPower} tested</div></div>
+      `;
+    }
+    document.getElementById("summaryCards").innerHTML = cardsHtml;
 
     // Data quality warnings & flags
     const warnContainer = document.getElementById("dataWarnings");
@@ -1120,6 +1148,43 @@
     }
 
     const tbody = document.querySelector("#rosterTable tbody");
+
+    // Dynamically build thead to reflect toggle state
+    var thead = document.querySelector("#rosterTable thead");
+    var thRow = '<tr>';
+    thRow += '<th data-sort="name">Athlete</th>';
+    thRow += '<th data-sort="position" title="Playing position">Pos</th>';
+    thRow += '<th data-sort="group" title="Position group">Group</th>';
+    thRow += '<th data-sort="grade" title="Current grade level (6th–12th)">Grade</th>';
+    if (showRel) {
+      thRow += '<th data-sort="trainingAge" title="Training age = grade − 8 (years of development)">T-Age</th>';
+    }
+    thRow += '<th data-sort="height" title="Standing height in inches">Ht (in)</th>';
+    thRow += '<th data-sort="weight" title="Body weight in pounds">Wt (lb)</th>';
+    thRow += '<th data-sort="bench" title="Bench Press 1RM (lb)">Bench</th>';
+    if (showRel) {
+      thRow += '<th data-sort="relBench" title="Bench Press / Body Weight (xBW)">Rel B</th>';
+    }
+    thRow += '<th data-sort="squat" title="Back Squat 1RM (lb)">Squat</th>';
+    if (showRel) {
+      thRow += '<th data-sort="relSquat" title="Squat / Body Weight (xBW)">Rel S</th>';
+    }
+    thRow += '<th data-sort="medball" title="Seated Med Ball Throw (in)">MB</th>';
+    if (showRel) {
+      thRow += '<th data-sort="mbRel" title="Med Ball / Body Weight (in/lb)">MB/BW</th>';
+    }
+    thRow += '<th data-sort="vert" title="Vertical Jump (in)">VJ</th>';
+    thRow += '<th data-sort="broad" title="Broad Jump (in)">BJ</th>';
+    thRow += '<th data-sort="forty" title="40-Yard Dash (s). Lower is better.">40 yd</th>';
+    if (showRel) {
+      thRow += '<th data-sort="peakPower" title="Peak Power via Sayers equation (W)">PP (W)</th>';
+      thRow += '<th data-sort="relPeakPower" title="Peak Power / Mass (W/kg)">Rel PP</th>';
+    }
+    thRow += '<th data-sort="zMB" title="Med Ball Z-Score">z(MB)</th>';
+    thRow += '<th data-sort="overallGrade" title="Overall rating">Rating</th>';
+    thRow += '</tr>';
+    thead.innerHTML = thRow;
+
     tbody.innerHTML = list
       .map((a) => {
         const isTested = coreFields.some((k) => a[k] !== null);
@@ -1148,20 +1213,37 @@
             return tdNumStale(prev[key], dec);
           return '<td class="num na">—</td>';
         }
+        var relCols = "";
+        if (showRel) {
+          relCols =
+            '<td class="num">' + (a.trainingAge !== null ? a.trainingAge : "—") + "</td>";
+        }
+        var relBenchCol = showRel ? cellG("relBench", 2, a.grades.relBench) : "";
+        var relSquatCol = showRel ? cellG("relSquat", 2, a.grades.relSquat) : "";
+        var mbRelCol = showRel ? cellG("mbRel", 2, a.grades.mbRel) : "";
+        var ppCols = showRel
+          ? cellG("peakPower", 0, a.grades.peakPower) +
+            cellG("relPeakPower", 1, a.grades.relPeakPower)
+          : "";
         return `
       <tr class="${rowCls}" tabindex="0" role="button" onclick="selectAthlete('${escJs(a.id)}')" onkeydown="if(event.key==='Enter')selectAthlete('${escJs(a.id)}')">
         <td><strong>${esc(a.name)}</strong>${!isTested ? ' <span class="untested-badge">Untested</span>' : ""}</td>
         <td>${esc(a.position) || "—"}</td>
         <td><span class="group-tag group-${(a.group || "").replace(/\s/g, "")}">${esc(a.group || "—")}</span></td>
         <td class="num">${a.grade ? ordGrade(a.grade) : "—"}</td>
+        ${relCols}
         ${cellN("height", 0)}
         ${cellN("weight", 0)}
         ${cellG("bench", 0, a.grades.bench)}
+        ${relBenchCol}
         ${cellG("squat", 0, a.grades.squat)}
+        ${relSquatCol}
         ${cellG("medball", 0, a.grades.medball)}
+        ${mbRelCol}
         ${cellG("vert", 1, a.grades.vert)}
         ${cellG("broad", 0, a.grades.broad)}
         ${cellG("forty", 2, a.grades.forty)}
+        ${ppCols}
         <td class="num">${fmtZ(a.zMB)}</td>
         ${overallGradeCell(a.overallGrade)}
       </tr>
@@ -1356,7 +1438,8 @@
       _normCache.set(key, { min: 0, max: 0 });
       return { min: 0, max: 0 };
     }
-    let min = vals[0], max = vals[0];
+    let min = vals[0],
+      max = vals[0];
     for (let i = 1; i < vals.length; i++) {
       if (vals[i] < min) min = vals[i];
       if (vals[i] > max) max = vals[i];
@@ -1931,7 +2014,8 @@
         : [...vals].sort((a, b) => b - a);
       const rank = sorted.indexOf(a[m.key]) + 1;
       const total = sorted.length;
-      const pct = total <= 1 ? 100 : Math.round(((total - rank) / (total - 1)) * 100);
+      const pct =
+        total <= 1 ? 100 : Math.round(((total - rank) / (total - 1)) * 100);
       const col =
         pct >= 75
           ? "var(--purple)"
@@ -2871,7 +2955,10 @@
           h[aid][i].values[key] = null;
         } else {
           var parsed = parseFloat(newVal);
-          if (isNaN(parsed)) { td.textContent = original || "—"; return; }
+          if (isNaN(parsed)) {
+            td.textContent = original || "—";
+            return;
+          }
           h[aid][i].values[key] = parsed;
         }
         found = true;
@@ -2880,7 +2967,10 @@
     }
     if (!found) {
       var parsedNew = newVal === "" ? null : parseFloat(newVal);
-      if (parsedNew !== null && isNaN(parsedNew)) { td.textContent = original || "—"; return; }
+      if (parsedNew !== null && isNaN(parsedNew)) {
+        td.textContent = original || "—";
+        return;
+      }
       var newEntry = { date: date, label: label, values: {} };
       newEntry.values[key] = parsedNew;
       h[aid].push(newEntry);
@@ -5583,7 +5673,10 @@
           const rawDelta = curVal - baseVal;
           const pctDelta =
             baseVal !== 0
-              ? Math.max(-500, Math.min(500, (rawDelta / Math.abs(baseVal)) * 100))
+              ? Math.max(
+                  -500,
+                  Math.min(500, (rawDelta / Math.abs(baseVal)) * 100),
+                )
               : 0;
           deltas[m.key] = {
             cur: curVal,
@@ -5963,9 +6056,7 @@
         '<p class="placeholder-text">Select two or three athletes to compare.</p>';
       return;
     }
-    const athletes = ids
-      .map((id) => getAthleteById(id))
-      .filter(Boolean);
+    const athletes = ids.map((id) => getAthleteById(id)).filter(Boolean);
     if (athletes.length < 2) {
       container.innerHTML =
         '<p class="placeholder-text">Athletes not found.</p>';
@@ -6642,6 +6733,11 @@
   /* ---------- Age-Adjusted Standards Toggle ---------- */
   window.toggleAgeAdjusted = function (on) {
     safeLSSet("lc_age_adjusted", on ? "true" : "false");
+    // Sync both age-adj toggles
+    var ageT1 = document.getElementById("ageAdjToggle");
+    var ageT2 = document.getElementById("overviewAgeToggle");
+    if (ageT1) ageT1.checked = on;
+    if (ageT2) ageT2.checked = on;
     rebuildFromStorage();
     markTabsDirty();
     const activeTab = document.querySelector(".tab.active");
@@ -6653,6 +6749,12 @@
         : "Age-adjusted standards disabled — using senior (12th grade) standards",
       "info",
     );
+  };
+
+  /* ---------- Overview Relatives Toggle ---------- */
+  window.toggleOverviewRelatives = function (on) {
+    safeLSSet("lc_show_relatives", on ? "true" : "false");
+    renderOverview();
   };
 
   window.resetToOriginal = function () {

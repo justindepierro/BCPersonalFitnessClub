@@ -22,9 +22,20 @@
   </head>
   <body>
     <noscript>
-      <div style="padding:2rem;text-align:center;font-family:system-ui,sans-serif;color:#e2e4ec;background:#181a20;">
+      <div
+        style="
+          padding: 2rem;
+          text-align: center;
+          font-family: system-ui, sans-serif;
+          color: #e2e4ec;
+          background: #181a20;
+        "
+      >
         <h2>JavaScript Required</h2>
-        <p>This dashboard requires JavaScript to function. Please enable JavaScript in your browser settings.</p>
+        <p>
+          This dashboard requires JavaScript to function. Please enable
+          JavaScript in your browser settings.
+        </p>
       </div>
     </noscript>
     <!-- ===== HEADER ===== -->
@@ -230,6 +241,29 @@
             >
               📥 CSV
             </button>
+            <span class="filter-sep">|</span>
+            <label
+              class="toggle-label overview-toggle"
+              title="Show relative (body-weight-normalized) metrics and training age"
+            >
+              <input
+                type="checkbox"
+                id="overviewRelToggle"
+                onchange="toggleOverviewRelatives(this.checked)"
+              />
+              <span>Relatives</span>
+            </label>
+            <label
+              class="toggle-label overview-toggle"
+              title="Adjust performance standards based on each athlete's grade level (training age)"
+            >
+              <input
+                type="checkbox"
+                id="overviewAgeToggle"
+                onchange="toggleAgeAdjusted(this.checked)"
+              />
+              <span>Age-Adj</span>
+            </label>
           </div>
         </div>
         <div class="card-row" id="summaryCards"></div>
@@ -239,81 +273,7 @@
             <caption class="sr-only">
               Team roster with athlete metrics and ratings
             </caption>
-            <thead>
-              <tr>
-                <th data-sort="name">Athlete</th>
-                <th data-sort="position" title="Playing position">Pos</th>
-                <th
-                  data-sort="group"
-                  title="Position group based on sport (e.g. Skill, Linemen, Speed, Guard)"
-                >
-                  Group
-                </th>
-                <th data-sort="grade" title="Current grade level (6th–12th)">
-                  Grade
-                </th>
-                <th
-                  data-sort="height"
-                  title="Standing height in inches. Affects leverage, reach, and position suitability."
-                >
-                  Ht (in)
-                </th>
-                <th
-                  data-sort="weight"
-                  title="Body weight in pounds. Affects force production, momentum, and position fit."
-                >
-                  Wt (lb)
-                </th>
-                <th
-                  data-sort="bench"
-                  title="Bench Press 1RM (lb). Max upper-body pressing strength — key for blocking and stiff-arms."
-                >
-                  Bench
-                </th>
-                <th
-                  data-sort="squat"
-                  title="Back Squat 1RM (lb). Max lower-body strength — foundational for sprinting, jumping, and COD."
-                >
-                  Squat
-                </th>
-                <th
-                  data-sort="medball"
-                  title="Seated Med Ball Throw (in). Upper-body explosive power — great predictor of hitting/throwing power."
-                >
-                  MB
-                </th>
-                <th
-                  data-sort="vert"
-                  title="Vertical Jump (in). Lower-body explosive power — correlates with acceleration and COD."
-                >
-                  VJ
-                </th>
-                <th
-                  data-sort="broad"
-                  title="Broad Jump (in). Horizontal explosive power — good general athleticism indicator."
-                >
-                  BJ
-                </th>
-                <th
-                  data-sort="forty"
-                  title="40-Yard Dash (s). Linear sprint speed. Lower is better."
-                >
-                  40 yd
-                </th>
-                <th
-                  data-sort="zMB"
-                  title="Med Ball Z-Score. Standard deviations from team mean. Positive = above average."
-                >
-                  z(MB)
-                </th>
-                <th
-                  data-sort="overallGrade"
-                  title="Overall rating based on HS performance standards. Average of all available metric grades."
-                >
-                  Rating
-                </th>
-              </tr>
-            </thead>
+            <thead></thead>
             <tbody></tbody>
           </table>
         </div>
