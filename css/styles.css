@@ -316,15 +316,15 @@ select:focus,
   contain: layout style;
 }
 
-/* Roster table: let thead stick to viewport top on scroll */
+/* Roster table: let thead stick to viewport top on scroll.
+   overflow must be visible so sticky is relative to the viewport,
+   not the scroll container. */
 .roster-table-wrap {
-  overflow-x: auto;
-  overflow-y: visible;
-  contain: style;
+  overflow: visible;
 }
 
 .roster-table-wrap .data-table thead th {
-  top: 100px; /* header (56px) + tabs (44px) */
+  top: 102px; /* header (~56px) + tabs (~46px) */
   z-index: 10;
 }
 
