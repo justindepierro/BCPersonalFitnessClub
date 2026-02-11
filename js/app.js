@@ -804,6 +804,7 @@
 
   /* Get the most recent previous test value for a given metric key (jsonKey) */
   let _prevTestCache = null;
+  let _staleKeysCache = null;
   function getPrevTestValues(athleteId) {
     if (!_prevTestCache) _prevTestCache = {};
     if (_prevTestCache[athleteId]) return _prevTestCache[athleteId];
@@ -826,6 +827,55 @@
     return vals;
   }
 
+  /**
+   * Return a Set of metric KEYS whose current value exists but was NOT part of
+   * the athlete's most recent test entry.  These are "stale" — carried over from
+   * an older session and should render in italics.
+   */
+  function getStaleKeys(athleteId) {
+    if (!_staleKeysCache) _staleKeysCache = {};
+    if (_staleKeysCache[athleteId]) return _staleKeysCache[athleteId];
+    const entries = getAthleteHistory(athleteId); // newest-first
+    const stale = new Set();
+    if (!entries || entries.length === 0) {
+      _staleKeysCache[athleteId] = stale;
+      return stale;
+    }
+    const latest = entries[0]; // most recent test snapshot
+    for (const mk of TEST_METRIC_KEYS) {
+      const inLatest = latest.values.hasOwnProperty(mk.jsonKey) &&
+        latest.values[mk.jsonKey] !== null && latest.values[mk.jsonKey] !== undefined;
+      if (!inLatest) stale.add(mk.key);
+    }
+    // Derived keys: forty is stale if all sprint splits are stale
+    if (stale.has("sprint020") && stale.has("sprint2030") && stale.has("sprint3040")) {
+      stale.add("forty");
+    } else {
+      stale.delete("forty");
+    }
+    // Derived keys from weight + primary metrics
+    if (stale.has("bench")) { stale.add("relBench"); }
+    if (stale.has("squat")) { stale.add("relSquat"); }
+    if (stale.has("medball")) { stale.add("mbRel"); }
+    // vert drives peakPower
+    if (stale.has("vert")) { stale.add("peakPower"); stale.add("relPeakPower"); }
+    // Sprint-derived metrics stale if sprint splits are stale
+    if (stale.has("sprint020")) {
+      for (const k of ["v1","a1","F1","mom1","pow1","massKg"]) stale.add(k);
+    }
+    if (stale.has("sprint2030")) {
+      for (const k of ["v2","a2","F2","pow2"]) stale.add(k);
+    }
+    if (stale.has("sprint3040")) {
+      for (const k of ["v3","a3","F3","pow3"]) stale.add(k);
+    }
+    if (stale.has("sprint020") && stale.has("sprint2030") && stale.has("sprint3040")) {
+      for (const k of ["vMax","v10Max","topMph","momMax"]) stale.add(k);
+    }
+    _staleKeysCache[athleteId] = stale;
+    return stale;
+  }
+
   function tdNum(val, decimals) {
     if (val === null || val === undefined) return '<td class="num na">—</td>';
     return `<td class="num">${fmt(val, decimals)}</td>`;
@@ -841,6 +891,20 @@
     const v = typeof decimals === "number" ? val.toFixed(decimals) : val;
     if (!grade) return `<td class="num">${v}</td>`;
     return `<td class="num grade-text-${grade.tier}" title="${grade.label}">${v}</td>`;
+  }
+
+  function tdGradedStale(val, decimals, grade) {
+    if (val === null || val === undefined) return '<td class="num na">—</td>';
+    const v = typeof decimals === "number" ? val.toFixed(decimals) : val;
+    if (!grade) return `<td class="num stale-val" title="Previous test data">${v}</td>`;
+    return `<td class="num stale-val grade-text-${grade.tier}" title="${grade.label} (previous test data)">${v}</td>`;
+  }
+
+  function tdNumColoredStale(val, decimals) {
+    if (val === null || val === undefined) return '<td class="num na">—</td>';
+    const v = typeof decimals === "number" ? val.toFixed(decimals) : val;
+    const cls = val < 0 ? "z-neg" : val > 0 ? "z-pos" : "";
+    return `<td class="num stale-val ${cls}" title="Previous test data">${v}</td>`;
   }
 
   function tdNumColored(val, decimals) {
@@ -961,6 +1025,7 @@
 
     // Clear previous-test cache so it rebuilds with current history
     _prevTestCache = null;
+    _staleKeysCache = null;
 
     const tbody = document.querySelector("#rosterTable tbody");
     tbody.innerHTML = list
@@ -969,14 +1034,19 @@
         const rowCls = isTested ? "clickable" : "clickable untested-row";
         // Look up previous test values for missing cells
         const prev = getPrevTestValues(a.id);
-        // Helper: render current value or fall back to stale previous
+        const staleKeys = getStaleKeys(a.id);
+        // Helper: render current value (stale-styled if from older test) or fall back to previous
         function cellG(key, dec, grade) {
-          if (a[key] !== null && a[key] !== undefined) return tdGraded(a[key], dec, grade);
+          if (a[key] !== null && a[key] !== undefined) {
+            return staleKeys.has(key) ? tdGradedStale(a[key], dec, grade) : tdGraded(a[key], dec, grade);
+          }
           if (prev[key] !== null && prev[key] !== undefined) return tdNumStale(prev[key], dec);
           return '<td class="num na">—</td>';
         }
         function cellN(key, dec) {
-          if (a[key] !== null && a[key] !== undefined) return tdNum(a[key], dec);
+          if (a[key] !== null && a[key] !== undefined) {
+            return staleKeys.has(key) ? tdNumStale(a[key], dec) : tdNum(a[key], dec);
+          }
           if (prev[key] !== null && prev[key] !== undefined) return tdNumStale(prev[key], dec);
           return '<td class="num na">—</td>';
         }
@@ -3993,36 +4063,40 @@
     const sprinters = D.athletes.filter((a) => a.sprint020 !== null);
 
     tbody.innerHTML = sprinters
-      .map(
-        (a) => `
+      .map((a) => {
+        const sk = getStaleKeys(a.id);
+        const sN = (key, dec) => sk.has(key) ? tdNumStale(a[key], dec) : tdNum(a[key], dec);
+        const sG = (key, dec, grade) => sk.has(key) ? tdGradedStale(a[key], dec, grade) : tdGraded(a[key], dec, grade);
+        const sC = (key, dec) => sk.has(key) ? tdNumColoredStale(a[key], dec) : tdNumColored(a[key], dec);
+        return `
       <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${a.id}')" onkeydown="if(event.key==='Enter')selectAthlete('${a.id}')">
         <td><strong>${esc(a.name)}</strong></td>
         <td>${esc(a.position) || "—"}</td>
-        ${tdNum(a.massKg, 1)}
-        ${tdNum(a.sprint020, 2)}
-        ${tdNum(a.sprint2030, 2)}
-        ${tdNum(a.sprint3040, 2)}
-        ${tdGraded(a.forty, 2, a.grades.forty)}
-        ${tdNum(a.v1, 2)}
-        ${tdNum(a.v2, 2)}
-        ${tdNum(a.v3, 2)}
-        ${tdGraded(a.vMax, 2, a.grades.vMax)}
-        ${tdGraded(a.v10Max, 2, a.grades.v10Max)}
-        ${tdNum(a.topMph, 1)}
-        ${tdNum(a.a1, 2)}
-        ${tdNumColored(a.a2, 2)}
-        ${tdNumColored(a.a3, 2)}
-        ${tdGraded(a.F1, 1, a.grades.F1)}
-        ${tdNumColored(a.F2, 1)}
-        ${tdNumColored(a.F3, 1)}
-        ${tdGraded(a.momMax, 1, a.grades.momMax)}
-        ${tdNum(a.mom1, 1)}
-        ${tdNum(a.pow1, 0)}
-        ${tdNumColored(a.pow2, 0)}
-        ${tdNumColored(a.pow3, 0)}
+        ${sN("massKg", 1)}
+        ${sN("sprint020", 2)}
+        ${sN("sprint2030", 2)}
+        ${sN("sprint3040", 2)}
+        ${sG("forty", 2, a.grades.forty)}
+        ${sN("v1", 2)}
+        ${sN("v2", 2)}
+        ${sN("v3", 2)}
+        ${sG("vMax", 2, a.grades.vMax)}
+        ${sG("v10Max", 2, a.grades.v10Max)}
+        ${sN("topMph", 1)}
+        ${sN("a1", 2)}
+        ${sC("a2", 2)}
+        ${sC("a3", 2)}
+        ${sG("F1", 1, a.grades.F1)}
+        ${sC("F2", 1)}
+        ${sC("F3", 1)}
+        ${sG("momMax", 1, a.grades.momMax)}
+        ${sN("mom1", 1)}
+        ${sN("pow1", 0)}
+        ${sC("pow2", 0)}
+        ${sC("pow3", 0)}
       </tr>
-    `,
-      )
+    `;
+      })
       .join("");
 
     if (sprinters.length === 0) {
@@ -4045,26 +4119,29 @@
     );
 
     tbody.innerHTML = list
-      .map(
-        (a) => `
+      .map((a) => {
+        const sk = getStaleKeys(a.id);
+        const sN = (key, dec) => sk.has(key) ? tdNumStale(a[key], dec) : tdNum(a[key], dec);
+        const sG = (key, dec, grade) => sk.has(key) ? tdGradedStale(a[key], dec, grade) : tdGraded(a[key], dec, grade);
+        return `
       <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${a.id}')" onkeydown="if(event.key==='Enter')selectAthlete('${a.id}')">
         <td><strong>${esc(a.name)}</strong></td>
         <td>${esc(a.position) || "—"}</td>
-        ${tdNum(a.weight)}
-        ${tdNum(a.massKg, 1)}
-        ${tdGraded(a.bench, 0, a.grades.bench)}
-        ${tdGraded(a.squat, 0, a.grades.squat)}
-        ${tdGraded(a.relBench, 2, a.grades.relBench)}
-        ${tdGraded(a.relSquat, 2, a.grades.relSquat)}
-        ${tdGraded(a.vert, 1, a.grades.vert)}
-        ${tdGraded(a.peakPower, 0, a.grades.peakPower)}
-        ${tdGraded(a.relPeakPower, 1, a.grades.relPeakPower)}
-        ${tdGraded(a.medball, 0, a.grades.medball)}
-        ${tdGraded(a.mbRel, 2, a.grades.mbRel)}
-        ${tdNum(a.strengthUtil, 3)}
+        ${sN("weight", 0)}
+        ${sN("massKg", 1)}
+        ${sG("bench", 0, a.grades.bench)}
+        ${sG("squat", 0, a.grades.squat)}
+        ${sG("relBench", 2, a.grades.relBench)}
+        ${sG("relSquat", 2, a.grades.relSquat)}
+        ${sG("vert", 1, a.grades.vert)}
+        ${sG("peakPower", 0, a.grades.peakPower)}
+        ${sG("relPeakPower", 1, a.grades.relPeakPower)}
+        ${sG("medball", 0, a.grades.medball)}
+        ${sG("mbRel", 2, a.grades.mbRel)}
+        ${sN("strengthUtil", 3)}
       </tr>
-    `,
-      )
+    `;
+      })
       .join("");
 
     if (list.length === 0) {
