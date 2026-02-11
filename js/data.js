@@ -77,7 +77,7 @@
     const sp = SPORT_POSITIONS[sport || "Football"];
     if (!sp) return "Other";
     for (const g in sp.groups) {
-      if (sp.groups[g].map((x) => x.toUpperCase()).includes(p)) return g;
+      if (sp.groups[g].some((x) => x.toUpperCase() === p)) return g;
     }
     return "Other";
   }
@@ -347,6 +347,9 @@
     },
   };
 
+  // Pre-build lookup map for O(1) _meta access in gradeValue
+  const _META_MAP = new Map(HS_STANDARDS._meta.map((m) => [m.key, m]));
+
   /* Grade a single value against absolute HS standards.
      sport = "Football"|"Soccer"|"Baseball"|"Basketball"
      grade = 6–12 (null = no adjustment)
@@ -357,9 +360,7 @@
     const gs = sportStds[group];
     if (!gs || !gs[metricKey] || val === null || val === undefined) return null;
     let thresholds = gs[metricKey];
-    const inverted = HS_STANDARDS._meta.find(
-      (m) => m.key === metricKey,
-    )?.invert;
+    const inverted = _META_MAP.get(metricKey)?.invert;
 
     // Apply age-adjustment: scale thresholds down for younger grades
     if (ageAdj && grade !== null && grade !== undefined) {
@@ -502,16 +503,20 @@
       const pow3 = F3 !== null && v3 !== null ? rd(F3 * v3, 1) : null;
 
       // Derived Strength & Power
-      const relBench = bench !== null && wt !== null && wt > 0 ? rd(bench / wt, 2) : null;
-      const relSquat = squat !== null && wt !== null && wt > 0 ? rd(squat / wt, 2) : null;
-      const mbRel = medball !== null && wt !== null && wt > 0 ? rd(medball / wt, 2) : null;
+      const relBench =
+        bench !== null && wt !== null && wt > 0 ? rd(bench / wt, 2) : null;
+      const relSquat =
+        squat !== null && wt !== null && wt > 0 ? rd(squat / wt, 2) : null;
+      const mbRel =
+        medball !== null && wt !== null && wt > 0 ? rd(medball / wt, 2) : null;
 
       const peakPowerRaw =
         vertCm !== null && massKg !== null
           ? C.SAYERS_A * vertCm + C.SAYERS_B * massKg + C.SAYERS_C
           : null;
       // Clamp to 0 — Sayers formula can go negative for very light/young athletes
-      const peakPower = peakPowerRaw !== null ? rd(Math.max(0, peakPowerRaw), 0) : null;
+      const peakPower =
+        peakPowerRaw !== null ? rd(Math.max(0, peakPowerRaw), 0) : null;
       const relPeakPower =
         peakPower !== null && peakPower > 0 && massKg !== null && massKg > 0
           ? rd(peakPower / massKg, 1)

@@ -191,10 +191,14 @@
     return avgRow + bestRow + worstRow;
   }
 
+  let _testHistoryCache = null;
   function getTestHistory() {
-    return safeLSGet("lc_test_history", {});
+    if (_testHistoryCache !== null) return _testHistoryCache;
+    _testHistoryCache = safeLSGet("lc_test_history", {});
+    return _testHistoryCache;
   }
   function setTestHistory(h) {
+    _testHistoryCache = null; // invalidate cache
     safeLSSet("lc_test_history", JSON.stringify(h));
     // Invalidate stale/prev caches when test data changes
     _prevTestCache = null;
@@ -733,7 +737,7 @@
     if (scrollBtn) {
       window.addEventListener("scroll", function () {
         scrollBtn.classList.toggle("visible", window.scrollY > 400);
-      });
+      }, { passive: true });
       scrollBtn.addEventListener("click", function () {
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
@@ -844,7 +848,12 @@
     }
     _prevTestCache[athleteId] = vals;
     // Derive forty from sprint splits if available
-    if (vals.sprint020 != null && vals.sprint2030 != null && vals.sprint3040 != null && !vals.forty) {
+    if (
+      vals.sprint020 != null &&
+      vals.sprint2030 != null &&
+      vals.sprint3040 != null &&
+      !vals.forty
+    ) {
       vals.forty = +(
         vals.sprint020 +
         vals.sprint2030 +
@@ -872,7 +881,7 @@
     // Skip completely empty entries (e.g. new test worksheet opened but not filled)
     let latestWithData = latest;
     for (let ei = 0; ei < entries.length; ei++) {
-      if (Object.values(entries[ei].values).some(v => v != null)) {
+      if (Object.values(entries[ei].values).some((v) => v != null)) {
         latestWithData = entries[ei];
         break;
       }
@@ -1321,10 +1330,16 @@
     const vals = window.CLUB.athletes
       .map((x) => x[key])
       .filter((v) => v !== null);
-    const result =
-      vals.length > 0
-        ? { min: Math.min(...vals), max: Math.max(...vals) }
-        : { min: 0, max: 0 };
+    if (vals.length === 0) {
+      _normCache.set(key, { min: 0, max: 0 });
+      return { min: 0, max: 0 };
+    }
+    let min = vals[0], max = vals[0];
+    for (let i = 1; i < vals.length; i++) {
+      if (vals[i] < min) min = vals[i];
+      if (vals[i] > max) max = vals[i];
+    }
+    const result = { min, max };
     _normCache.set(key, result);
     return result;
   }
@@ -1838,27 +1853,26 @@
               },
             },
           },
-          annotation:
-            Chart.registry?.plugins?.get("annotation")
-              ? {
-                  annotations: {
-                    avgStr: {
-                      type: "line",
-                      xMin: avgStr,
-                      xMax: avgStr,
-                      borderColor: "rgba(255,255,255,.15)",
-                      borderDash: [4, 4],
-                    },
-                    avgSpd: {
-                      type: "line",
-                      yMin: avgSpd,
-                      yMax: avgSpd,
-                      borderColor: "rgba(255,255,255,.15)",
-                      borderDash: [4, 4],
-                    },
+          annotation: Chart.registry?.plugins?.get("annotation")
+            ? {
+                annotations: {
+                  avgStr: {
+                    type: "line",
+                    xMin: avgStr,
+                    xMax: avgStr,
+                    borderColor: "rgba(255,255,255,.15)",
+                    borderDash: [4, 4],
                   },
-                }
-              : undefined,
+                  avgSpd: {
+                    type: "line",
+                    yMin: avgSpd,
+                    yMax: avgSpd,
+                    borderColor: "rgba(255,255,255,.15)",
+                    borderDash: [4, 4],
+                  },
+                },
+              }
+            : undefined,
         },
       },
     });
@@ -1890,7 +1904,7 @@
         : [...vals].sort((a, b) => b - a);
       const rank = sorted.indexOf(a[m.key]) + 1;
       const total = sorted.length;
-      const pct = Math.round(((total - rank) / (total - 1 || 1)) * 100);
+      const pct = total <= 1 ? 100 : Math.round(((total - rank) / (total - 1)) * 100);
       const col =
         pct >= 75
           ? "var(--purple)"
@@ -2158,7 +2172,9 @@
     reRenderAll();
     // Refresh edit panel if open for this athlete
     if (editingAthleteId === athleteId) {
-      var a = window.CLUB.athletes.find(function (x) { return x.id === athleteId; });
+      var a = window.CLUB.athletes.find(function (x) {
+        return x.id === athleteId;
+      });
       if (a) buildEditFields(a);
     }
     showToast("Deleted test entry: " + label, "info");
@@ -2219,7 +2235,7 @@
     return safeLSGet("lc_test_notes", {});
   }
   function setTestNotes(n) {
-    safeLSSet("lc_test_notes", JSON.stringify(n));
+    safeLSSet("lc_test_notes", n);
   }
   function noteKey(date, label) {
     return date + "|" + label;
@@ -2231,6 +2247,11 @@
     var athleteIds = Object.keys(h);
     var D = window.CLUB;
     var notes = getTestNotes();
+    // Build athlete lookup map for O(1) name resolution
+    var athleteMap = {};
+    for (var ai = 0; ai < D.athletes.length; ai++) {
+      athleteMap[D.athletes[ai].id] = D.athletes[ai];
+    }
     var testMap = {};
     for (var i = 0; i < athleteIds.length; i++) {
       var aid = athleteIds[i];
@@ -2250,9 +2271,7 @@
           };
         }
         testMap[key].count++;
-        var found = D.athletes.find(function (x) {
-          return x.id === aid;
-        });
+        var found = athleteMap[aid];
         var aName = found ? found.name : aid;
         testMap[key].athletes.push(aName);
         var mCount = 0;
@@ -2826,15 +2845,19 @@
         if (newVal === "") {
           h[aid][i].values[key] = null;
         } else {
-          h[aid][i].values[key] = parseFloat(newVal);
+          var parsed = parseFloat(newVal);
+          if (isNaN(parsed)) { td.textContent = original || "—"; return; }
+          h[aid][i].values[key] = parsed;
         }
         found = true;
         break;
       }
     }
     if (!found) {
+      var parsedNew = newVal === "" ? null : parseFloat(newVal);
+      if (parsedNew !== null && isNaN(parsedNew)) { td.textContent = original || "—"; return; }
       var newEntry = { date: date, label: label, values: {} };
-      newEntry.values[key] = newVal === "" ? null : parseFloat(newVal);
+      newEntry.values[key] = parsedNew;
       h[aid].push(newEntry);
     }
     setTestHistory(h);
@@ -3120,9 +3143,6 @@
       }
     }
     setTestHistory(h);
-
-    // Re-read after creating entries
-    h = getTestHistory();
 
     // Build the worksheet table
     var safeDate = esc(dateStr);
@@ -4323,13 +4343,16 @@
     const STD = window.CLUB?.hsStandards;
     if (!STD || !STD[sport]) return;
     const sp = window.CLUB.sportPositions[sport];
-    sel.innerHTML = '<option value="all">All Groups</option>';
+    const curVal = sel.value;
+    let opts = '<option value="all">All Groups</option>';
     for (const g of Object.keys(STD[sport])) {
       const posInGroup = sp?.groups[g] || [];
       const lbl =
         g + (posInGroup.length ? " (" + posInGroup.join("/") + ")" : "");
-      sel.innerHTML += '<option value="' + g + '">' + lbl + "</option>";
+      opts += '<option value="' + g + '">' + lbl + "</option>";
     }
+    sel.innerHTML = opts;
+    if (curVal) sel.value = curVal;
   };
 
   window.renderBenchmarks = function () {
@@ -4979,7 +5002,10 @@
         .sort((x, y) => y[1].percentile - x[1].percentile);
       const top3 = sorted.slice(0, 3);
       const top3Keys = new Set(top3.map(([k]) => k));
-      const bot3 = sorted.slice(-3).reverse().filter(([k]) => !top3Keys.has(k));
+      const bot3 = sorted
+        .slice(-3)
+        .reverse()
+        .filter(([k]) => !top3Keys.has(k));
       const tierCounts = {
         elite: 0,
         strong: 0,
@@ -5440,9 +5466,10 @@
     const sessions = _getTestSessions();
     sel.innerHTML = '<option value="">— pick baseline test —</option>';
     for (const s of sessions) {
-      const opt = document.createElement('option');
-      opt.value = s.date + '|' + s.label;
-      opt.textContent = s.label + ' (' + s.date + ') — ' + s.count + ' athletes';
+      const opt = document.createElement("option");
+      opt.value = s.date + "|" + s.label;
+      opt.textContent =
+        s.label + " (" + s.date + ") — " + s.count + " athletes";
       sel.appendChild(opt);
     }
     if (curVal) sel.value = curVal;
@@ -5489,15 +5516,21 @@
         // Derived metrics from baseline sprint splits / body data
         if (m.derived && baseVal == null) {
           const C = window.CLUB.constants;
-          const s020 = baseline.sprint_020, s2030 = baseline.sprint_2030, s3040 = baseline.sprint_3040;
-          const bWt = baseline.weight_lb, bBench = baseline.bench_1rm, bSquat = baseline.squat_1rm;
+          const s020 = baseline.sprint_020,
+            s2030 = baseline.sprint_2030,
+            s3040 = baseline.sprint_3040;
+          const bWt = baseline.weight_lb,
+            bBench = baseline.bench_1rm,
+            bSquat = baseline.squat_1rm;
           const bVert = baseline.vert_in;
           const hasSprints = s020 != null && s2030 != null && s3040 != null;
           const massKg = bWt != null ? +(bWt * C.LB_TO_KG).toFixed(2) : null;
           if (m.key === "forty" && hasSprints)
             baseVal = +(s020 + s2030 + s3040).toFixed(2);
           if (m.key === "vMax" && hasSprints) {
-            const v1 = C.TWENTY_YD_M / s020, v2 = C.TEN_YD_M / s2030, v3 = C.TEN_YD_M / s3040;
+            const v1 = C.TWENTY_YD_M / s020,
+              v2 = C.TEN_YD_M / s2030,
+              v3 = C.TEN_YD_M / s3040;
             baseVal = +Math.max(v1, v2, v3).toFixed(3);
           }
           if (m.key === "F1" && hasSprints && massKg != null) {
@@ -5505,14 +5538,22 @@
             baseVal = +(massKg * (v1 / s020)).toFixed(1);
           }
           if (m.key === "momMax" && hasSprints && massKg != null) {
-            const v2 = C.TEN_YD_M / s2030, v3 = C.TEN_YD_M / s3040;
+            const v2 = C.TEN_YD_M / s2030,
+              v3 = C.TEN_YD_M / s3040;
             baseVal = +(massKg * Math.max(v2, v3)).toFixed(1);
           }
           if (m.key === "peakPower" && bVert != null && massKg != null) {
-            baseVal = +(C.SAYERS_A * (bVert * C.IN_TO_CM) + C.SAYERS_B * massKg + C.SAYERS_C).toFixed(0);
+            baseVal = +(
+              C.SAYERS_A * (bVert * C.IN_TO_CM) +
+              C.SAYERS_B * massKg +
+              C.SAYERS_C
+            ).toFixed(0);
           }
           if (m.key === "relPeakPower" && bVert != null && massKg != null) {
-            const pp = C.SAYERS_A * (bVert * C.IN_TO_CM) + C.SAYERS_B * massKg + C.SAYERS_C;
+            const pp =
+              C.SAYERS_A * (bVert * C.IN_TO_CM) +
+              C.SAYERS_B * massKg +
+              C.SAYERS_C;
             baseVal = +(pp / massKg).toFixed(1);
           }
           if (m.key === "relBench" && bBench != null && bWt != null && bWt > 0)
@@ -5523,7 +5564,9 @@
         if (curVal != null && baseVal != null) {
           const rawDelta = curVal - baseVal;
           const pctDelta =
-            baseVal !== 0 ? (rawDelta / Math.abs(baseVal)) * 100 : 0;
+            baseVal !== 0
+              ? Math.max(-500, Math.min(500, (rawDelta / Math.abs(baseVal)) * 100))
+              : 0;
           deltas[m.key] = {
             cur: curVal,
             base: baseVal,
@@ -5645,7 +5688,7 @@
     if (Object.keys(summaryData).length === 0) {
       container.innerHTML =
         '<p class="placeholder-text">No comparable data found between current and "' +
-        sessionLabel +
+        esc(sessionLabel) +
         '".</p>';
       return;
     }
@@ -7129,9 +7172,11 @@
       const sf = EDITABLE_FIELDS[si];
       const val = a[sf.key] !== undefined ? a[sf.key] : null;
       if (sf.type === "number") {
-        _editPanelSnapshot[sf.jsonKey] = val !== null && val !== undefined ? parseFloat(val) : null;
+        _editPanelSnapshot[sf.jsonKey] =
+          val !== null && val !== undefined ? parseFloat(val) : null;
       } else if (sf.key === "grade") {
-        _editPanelSnapshot[sf.jsonKey] = val !== null && val !== undefined ? parseInt(val, 10) : null;
+        _editPanelSnapshot[sf.jsonKey] =
+          val !== null && val !== undefined ? parseInt(val, 10) : null;
       } else {
         _editPanelSnapshot[sf.jsonKey] = val || null;
       }
@@ -7400,7 +7445,7 @@
       let newVal;
       if (f.type === "number") {
         const parsed = parseFloat(rawVal);
-        newVal = rawVal === "" ? null : (isNaN(parsed) ? null : parsed);
+        newVal = rawVal === "" ? null : isNaN(parsed) ? null : parsed;
       } else if (f.key === "grade") {
         newVal = rawVal === "" ? null : parseInt(rawVal, 10);
       } else {
@@ -7421,7 +7466,9 @@
     if (Object.keys(changes).length === 0) {
       // No changes — remove any existing edit entry for this athlete
       if (existing) {
-        edits = edits.filter(function (e) { return e.id !== editingAthleteId; });
+        edits = edits.filter(function (e) {
+          return e.id !== editingAthleteId;
+        });
       }
     } else if (existing) {
       existing.changes = changes;
@@ -7442,7 +7489,9 @@
     // Keep athlete selected & profile visible
     const athSel = document.getElementById("athleteSelect");
     if (athSel) athSel.value = editingAthleteId;
-    renderProfile();
+    if (!activeTab || activeTab.dataset.tab !== "profiles") {
+      renderProfile();
+    }
 
     // Update the edit panel nav dropdown
     populateEditAthleteSelect();
@@ -7495,7 +7544,10 @@
       new Date().toISOString().slice(0, 10),
     );
     if (!dateStr) return;
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr) || isNaN(new Date(dateStr + "T00:00:00").getTime())) {
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(dateStr) ||
+      isNaN(new Date(dateStr + "T00:00:00").getTime())
+    ) {
       showToast("Invalid date format. Please use YYYY-MM-DD.", "warn");
       return;
     }
@@ -7694,7 +7746,11 @@
   };
 
   window.editPanelPrev = function () {
-    if (autoSaveTimer) { clearTimeout(autoSaveTimer); autoSaveTimer = null; doAutoSave(); }
+    if (autoSaveTimer) {
+      clearTimeout(autoSaveTimer);
+      autoSaveTimer = null;
+      doAutoSave();
+    }
     const sorted = sortedAthletes();
     if (sorted.length === 0) return;
     let idx = sorted.findIndex(function (a) {
@@ -7705,7 +7761,11 @@
   };
 
   window.editPanelNext = function () {
-    if (autoSaveTimer) { clearTimeout(autoSaveTimer); autoSaveTimer = null; doAutoSave(); }
+    if (autoSaveTimer) {
+      clearTimeout(autoSaveTimer);
+      autoSaveTimer = null;
+      doAutoSave();
+    }
     const sorted = sortedAthletes();
     if (sorted.length === 0) return;
     let idx = sorted.findIndex(function (a) {
@@ -8023,5 +8083,4 @@
     };
     reader.readAsText(file);
   };
-
 })();
