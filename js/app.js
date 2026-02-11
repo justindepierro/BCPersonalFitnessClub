@@ -928,7 +928,7 @@
         <td><strong>${esc(a.name)}</strong>${!isTested ? ' <span class="untested-badge">Untested</span>' : ""}</td>
         <td>${esc(a.position) || "—"}</td>
         <td><span class="group-tag group-${a.group.replace(/\s/g, "")}">${esc(a.group)}</span></td>
-        ${tdNum(a.height, 1)}
+        ${tdNum(a.height, 0)}
         ${tdNum(a.weight)}
         ${tdGraded(a.bench, 0, a.grades.bench)}
         ${tdGraded(a.squat, 0, a.grades.squat)}
@@ -3874,7 +3874,7 @@
 
     if (list.length === 0) {
       document.querySelector("#scorecardTable tbody").innerHTML =
-        '<tr><td colspan="20" class="placeholder-text">No scorecard data available.</td></tr>';
+        '<tr><td colspan="18" class="placeholder-text">No scorecard data available.</td></tr>';
       return;
     }
 
