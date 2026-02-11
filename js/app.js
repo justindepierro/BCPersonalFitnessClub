@@ -3795,8 +3795,200 @@
   };
 
   /* ========== SPRINT ANALYSIS ========== */
+  /* ========== DYNAMIC GRADING REFERENCE TABLES ========== */
+  const SPRINT_GRADE_KEYS = ["forty", "vMax", "v10Max", "F1", "momMax"];
+  const STRENGTH_GRADE_KEYS = [
+    "bench",
+    "squat",
+    "relBench",
+    "relSquat",
+    "vert",
+    "broad",
+    "medball",
+    "mbRel",
+    "peakPower",
+    "relPeakPower",
+  ];
+
+  const _gradingSportCache = {};
+
+  function renderGradingSection(containerId, category) {
+    const D = window.CLUB;
+    const container = document.getElementById(containerId);
+    if (!container || !D) return;
+
+    const STD = D.hsStandards;
+    const SP = D.sportPositions;
+    const meta = STD._meta;
+    const labels = STD._labels;
+    const ageFactors = STD._ageFactors;
+    const metricKeys =
+      category === "sprint" ? SPRINT_GRADE_KEYS : STRENGTH_GRADE_KEYS;
+    const metricMeta = metricKeys
+      .map((k) => meta.find((m) => m.key === k))
+      .filter(Boolean);
+
+    const sports = Object.keys(STD).filter((k) => !k.startsWith("_"));
+    const storageKey = `lc_gradingSport_${category}`;
+    let selectedSport =
+      _gradingSportCache[category] ||
+      localStorage.getItem(storageKey) ||
+      "Football";
+    if (!sports.includes(selectedSport)) selectedSport = sports[0];
+
+    function build() {
+      _gradingSportCache[category] = selectedSport;
+      const sportStds = STD[selectedSport];
+      const groupNames = Object.keys(sportStds);
+      const sp = SP[selectedSport];
+      const catLabel =
+        category === "sprint" ? "Sprint" : "Strength &amp; power";
+
+      /* --- Intro --- */
+      const intro = `<p class="ref-intro">
+        ${catLabel} metrics are graded against sport-specific published norms
+        (NSCA, state combine databases, S&amp;C literature). Thresholds vary by
+        position group because physical demands differ by role. When the
+        <strong>Age-Adjusted</strong> toggle is enabled, thresholds are scaled
+        by grade level so younger athletes are compared to developmentally
+        appropriate standards.
+      </p>`;
+
+      /* --- Sport selector --- */
+      const sportSel = `<div style="margin-bottom:1rem">
+        <label style="font-weight:600;margin-right:.5rem">Sport:</label>
+        <select id="${containerId}Sport" style="padding:.3rem .5rem;border-radius:4px;border:1px solid var(--border);background:var(--card-bg);color:var(--text)">
+          ${sports.map((s) => `<option value="${s}"${s === selectedSport ? " selected" : ""}>${s}</option>`).join("")}
+        </select>
+      </div>`;
+
+      /* --- Group tables --- */
+      const tables = groupNames
+        .map((group) => {
+          const stds = sportStds[group];
+          const positions = sp?.groups?.[group]?.join(", ") || group;
+          const rows = metricMeta
+            .map((m) => {
+              const thresholds = stds[m.key];
+              if (!thresholds) return "";
+              const dir = m.invert ? "≤" : "≥";
+              const belowDir = m.invert ? "&gt;" : "&lt;";
+              const last = thresholds[thresholds.length - 1];
+              return `<tr>
+              <td>${m.label} (${m.unit})</td>
+              ${thresholds.map((t) => `<td>${dir} ${t}</td>`).join("")}
+              <td>${belowDir} ${last}</td>
+            </tr>`;
+            })
+            .filter(Boolean)
+            .join("");
+          return `<div class="grade-table-block">
+          <h4>${group} (${positions})</h4>
+          <table class="grade-std-table">
+            <thead><tr><th>Metric</th>${labels.map((l) => `<th>${l}</th>`).join("")}</tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+        })
+        .join("");
+
+      /* --- Diagnostics --- */
+      let diag = "";
+      if (category === "sprint") {
+        diag = `<div class="ref-category" style="margin-top:1rem">
+          <h4>📊 Ungraded Diagnostic Columns</h4>
+          <p style="font-size:.8rem;color:var(--text-muted)">These columns don't have formal HS standards but are valuable for coaching diagnostics:</p>
+          <ul class="ref-diag-list">
+            <li><strong>Individual splits (0–20, 20–30, 30–40):</strong> Identify WHERE in the sprint an athlete is strong or weak.</li>
+            <li><strong>v1, v2, v3:</strong> Compare velocity across phases — are they still building speed or dropping off?</li>
+            <li><strong>a2, a3:</strong> Positive = still accelerating, negative = decelerating. Diagnose speed endurance issues.</li>
+            <li><strong>F2, F3:</strong> Force in later phases — typically small. Large negative F3 means significant deceleration.</li>
+            <li><strong>p1:</strong> Momentum after acceleration phase — compare to pₑ to see how much momentum they gain in the last 20 yards.</li>
+            <li><strong>P1, P2, P3:</strong> Sprint power by phase — P1 is the key performance metric; P2/P3 are diagnostic.</li>
+          </ul>
+        </div>`;
+      } else {
+        diag = `<div class="ref-category" style="margin-top:1rem">
+          <h4>📊 Ungraded Diagnostic Columns</h4>
+          <p style="font-size:.8rem;color:var(--text-muted)">These columns don't have formal grading thresholds but provide important context:</p>
+          <ul class="ref-diag-list">
+            <li><strong>Wt (lb) / Mass (kg):</strong> Body composition context. Not graded because optimal weight varies drastically by position.</li>
+            <li><strong>Strength Utilisation:</strong> Diagnostic ratio comparing sprint force to squat strength. Low values flag athletes who are strong in the weight room but aren't expressing it on the field — a coaching target for sprint mechanics and rate-of-force development training.</li>
+          </ul>
+        </div>`;
+      }
+
+      /* --- Age-adjustment docs --- */
+      const ageRows = Object.entries(ageFactors)
+        .sort((a, b) => b[0] - a[0])
+        .map(
+          ([g, f]) =>
+            `<tr><td>${g}th</td><td>${f.toFixed(2)}</td><td>${f === 1 ? "Full standard (baseline)" : "Thresholds × " + f.toFixed(2)}</td></tr>`,
+        )
+        .join("");
+      const ageDoc = `<div class="ref-category" style="margin-top:1rem">
+        <h4>📐 Age-Adjustment Factors</h4>
+        <p style="font-size:.8rem;color:var(--text-muted)">
+          When the <strong>Age-Adjusted</strong> toggle is on, thresholds are scaled by a
+          grade-based factor. For normal metrics (higher = better), thresholds are
+          <em>multiplied</em> by the factor. For inverted metrics like 40yd time
+          (lower = better), thresholds are <em>divided</em> by the factor. This means
+          younger athletes don't need to hit 12th-grade benchmarks to earn top grades.
+        </p>
+        <table class="grade-std-table" style="max-width:400px">
+          <thead><tr><th>Grade</th><th>Factor</th><th>Effect</th></tr></thead>
+          <tbody>${ageRows}</tbody>
+        </table>
+      </div>`;
+
+      /* --- Scoring methodology --- */
+      const scoring = `<div class="ref-category" style="margin-top:1rem">
+        <h4>🧮 How Grades Are Calculated</h4>
+        <p style="font-size:.8rem;color:var(--text-muted)">
+          Each graded metric is compared against the thresholds above to assign a
+          <strong>tier score</strong>: Elite = 5, Excellent = 4, Good = 3, Average = 2,
+          Below Avg = 1. An athlete's <strong>Overall Grade</strong> is the average of
+          all individual tier scores. The overall average maps to a final tier:
+        </p>
+        <table class="grade-std-table" style="max-width:360px">
+          <thead><tr><th>Overall Score</th><th>Tier</th></tr></thead>
+          <tbody>
+            <tr><td>≥ 4.50</td><td>Elite</td></tr>
+            <tr><td>≥ 3.50</td><td>Excellent</td></tr>
+            <tr><td>≥ 2.50</td><td>Good</td></tr>
+            <tr><td>≥ 1.50</td><td>Average</td></tr>
+            <tr><td>&lt; 1.50</td><td>Below Avg</td></tr>
+          </tbody>
+        </table>
+      </div>`;
+
+      container.innerHTML =
+        intro +
+        sportSel +
+        '<div class="grade-tables-wrap">' +
+        tables +
+        "</div>" +
+        diag +
+        ageDoc +
+        scoring;
+
+      /* Wire sport selector */
+      const sel = document.getElementById(`${containerId}Sport`);
+      if (sel) {
+        sel.onchange = function () {
+          selectedSport = this.value;
+          localStorage.setItem(storageKey, selectedSport);
+          build();
+        };
+      }
+    }
+
+    build();
+  }
+
   function renderSprintAnalysis() {
     const D = window.CLUB;
+    renderGradingSection("sprintGradingBody", "sprint");
     const tbody = document.querySelector("#sprintTable tbody");
     const sprinters = D.athletes.filter((a) => a.sprint020 !== null);
 
@@ -3842,6 +4034,7 @@
   /* ========== STRENGTH & POWER ========== */
   function renderStrengthPower() {
     const D = window.CLUB;
+    renderGradingSection("strengthGradingBody", "strength");
     const tbody = document.querySelector("#strengthTable tbody");
     const list = D.athletes.filter(
       (a) =>
@@ -4228,6 +4421,7 @@
     const constDefs = [
       { key: "LB_TO_KG", unit: "kg/lb", desc: "Pounds to kilograms" },
       { key: "IN_TO_CM", unit: "cm/in", desc: "Inches to centimeters" },
+      { key: "MS_TO_MPH", unit: "mph/(m/s)", desc: "Metres/sec to miles/hr" },
       { key: "TEN_YD_M", unit: "m", desc: "10 yards in meters" },
       { key: "TWENTY_YD_M", unit: "m", desc: "20 yards in meters" },
       { key: "G", unit: "m/s²", desc: "Gravity constant" },
@@ -4249,6 +4443,27 @@
       )
       .join("");
 
+    /* --- Build sport / position group reference --- */
+    const SP = D.sportPositions;
+    const sportRows = Object.entries(SP)
+      .map(([sport, info]) => {
+        const groups = Object.entries(info.groups)
+          .map(([g, positions]) => `${g} (${positions.join(", ")})`)
+          .join("; ");
+        return `<tr><td>${sport}</td><td>${info.positions.join(", ")}</td><td>${groups}</td></tr>`;
+      })
+      .join("");
+
+    /* --- Build age-adjustment factor reference --- */
+    const ageFactors = D.hsStandards._ageFactors;
+    const ageRows = Object.entries(ageFactors)
+      .sort((a, b) => b[0] - a[0])
+      .map(
+        ([g, f]) =>
+          `<tr><td>${g}th</td><td>${f.toFixed(2)}</td><td>${f === 1 ? "Full standard (12th-grade baseline)" : "Thresholds × " + f.toFixed(2)}</td></tr>`,
+      )
+      .join("");
+
     notes.innerHTML = `
       <h4>Derived Sprint Formulas</h4>
       <ul>
@@ -4258,19 +4473,55 @@
         <li><strong>Impulse:</strong> J = F × t (N·s)</li>
         <li><strong>Momentum:</strong> p = mass × velocity (kg·m/s). Peak Momentum uses the best 10-yard split velocity.</li>
         <li><strong>Power:</strong> P = F × v (W)</li>
+        <li><strong>Top Speed (mph):</strong> vMax × MS_TO_MPH (${D.constants.MS_TO_MPH})</li>
       </ul>
       <h4>Derived Strength & Power</h4>
       <ul>
-        <li><strong>Sayers Peak Power:</strong> P = 60.7 × VJ(cm) + 45.3 × mass(kg) − 2055</li>
-        <li><strong>Relative Strength:</strong> Bench/BW or Squat/BW</li>
+        <li><strong>Sayers Peak Power:</strong> P = ${D.constants.SAYERS_A} × VJ(cm) + ${D.constants.SAYERS_B} × mass(kg) − ${Math.abs(D.constants.SAYERS_C)}</li>
+        <li><strong>Relative Strength:</strong> Bench/BW or Squat/BW (body-weight ratio)</li>
+        <li><strong>Relative Med Ball:</strong> Med Ball distance / Body weight (in/lb)</li>
+        <li><strong>Relative Peak Power:</strong> Peak Power / mass (W/kg)</li>
         <li><strong>Strength Utilisation:</strong> F₁ / (Squat_kg × g) — ratio of sprint force to max strength</li>
       </ul>
-      <h4>Scoring</h4>
+      <h4>Composite Scoring</h4>
       <ul>
         <li><strong>Explosive Upper Index:</strong> 0.6 × z(MB_rel) + 0.4 × z(RelBench)</li>
         <li><strong>Total Explosive Index:</strong> 0.45 × ExplosiveUpper + 0.30 × z(PeakPower) + 0.25 × z(vMax)</li>
-        <li><strong>Tiers:</strong> Elite ≥90th, Strong 75–90th, Solid 50–75th, Competitive 25–50th, Developing &lt;25th</li>
+        <li><strong>Percentile Tiers:</strong> Elite ≥90th, Strong 75–90th, Solid 50–75th, Competitive 25–50th, Developing &lt;25th</li>
       </ul>
+      <h4>HS Performance Grading (Absolute Standards)</h4>
+      <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.5rem">
+        In addition to percentile-based tiers (relative to teammates), each athlete
+        is graded against <strong>published high-school norms</strong> sourced from
+        NSCA, state combine databases, and S&amp;C literature. These are
+        <em>absolute</em> thresholds — independent of team size or teammate
+        performance.
+      </p>
+      <ul>
+        <li>Each graded metric earns a <strong>tier score</strong>: Elite = 5, Excellent = 4, Good = 3, Average = 2, Below Avg = 1.</li>
+        <li><strong>Overall Grade</strong> = mean of all individual tier scores. Mapped to a final tier:
+          ≥4.5 → Elite, ≥3.5 → Excellent, ≥2.5 → Good, ≥1.5 → Average, &lt;1.5 → Below Avg.</li>
+        <li>Thresholds are <strong>sport- and position-group-specific</strong> (see table below).</li>
+        <li>15 metrics are graded: 40yd, vMax, v10Best, F1, Peak Momentum, Bench, Squat, Rel Bench, Rel Squat,
+          Vertical, Broad Jump, Med Ball, MB Relative, Peak Power, Rel Peak Power.</li>
+      </ul>
+      <h4>Sport &amp; Position Groups</h4>
+      <table class="grade-std-table" style="max-width:660px">
+        <thead><tr><th>Sport</th><th>Positions</th><th>Grading Groups</th></tr></thead>
+        <tbody>${sportRows}</tbody>
+      </table>
+      <h4>Age-Adjustment System</h4>
+      <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.5rem">
+        Base thresholds reflect 12th-grade (senior) expectations. When the
+        <strong>Age-Adjusted</strong> toggle is enabled, thresholds scale by grade
+        level. For normal metrics (higher = better), thresholds are <em>multiplied</em>
+        by the factor; for inverted metrics like 40yd time (lower = better),
+        thresholds are <em>divided</em> by the factor.
+      </p>
+      <table class="grade-std-table" style="max-width:400px">
+        <thead><tr><th>Grade</th><th>Factor</th><th>Effect</th></tr></thead>
+        <tbody>${ageRows}</tbody>
+      </table>
       <p style="margin-top:.75rem"><em>${D.notes.join(" ")}</em></p>
     `;
   }
