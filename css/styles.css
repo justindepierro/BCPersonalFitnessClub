@@ -413,6 +413,12 @@ select:focus,
   font-style: italic;
 }
 
+/* Stale / previous-test data shown in italics */
+.data-table td.stale-val {
+  font-style: italic;
+  opacity: 0.6;
+}
+
 /* Positive / Negative z-score colouring */
 .z-pos {
   color: var(--green);

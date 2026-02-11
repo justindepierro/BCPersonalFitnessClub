@@ -802,9 +802,38 @@
     return `<div class="pct-bar-wrap"><div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${pct}%;background:${col}"></div></div></div>`;
   }
 
+  /* Get the most recent previous test value for a given metric key (jsonKey) */
+  let _prevTestCache = null;
+  function getPrevTestValues(athleteId) {
+    if (!_prevTestCache) _prevTestCache = {};
+    if (_prevTestCache[athleteId]) return _prevTestCache[athleteId];
+    const entries = getAthleteHistory(athleteId); // sorted newest-first
+    const vals = {};
+    // Walk newest-to-oldest; first non-null value for each key wins
+    for (const e of entries) {
+      for (const mk of TEST_METRIC_KEYS) {
+        if (vals[mk.key] === undefined) {
+          const v = e.values[mk.jsonKey];
+          if (v !== null && v !== undefined) vals[mk.key] = v;
+        }
+      }
+    }
+    _prevTestCache[athleteId] = vals;
+    // Derive forty from sprint splits if available
+    if (vals.sprint020 && vals.sprint2030 && vals.sprint3040 && !vals.forty) {
+      vals.forty = +(vals.sprint020 + vals.sprint2030 + vals.sprint3040).toFixed(2);
+    }
+    return vals;
+  }
+
   function tdNum(val, decimals) {
     if (val === null || val === undefined) return '<td class="num na">—</td>';
     return `<td class="num">${fmt(val, decimals)}</td>`;
+  }
+
+  function tdNumStale(val, decimals) {
+    if (val === null || val === undefined) return '<td class="num na">—</td>';
+    return `<td class="num stale-val" title="Previous test data">${fmt(val, decimals)}</td>`;
   }
 
   function tdGraded(val, decimals, grade) {
@@ -930,25 +959,41 @@
       warnContainer.innerHTML = warnHtml;
     }
 
+    // Clear previous-test cache so it rebuilds with current history
+    _prevTestCache = null;
+
     const tbody = document.querySelector("#rosterTable tbody");
     tbody.innerHTML = list
       .map((a) => {
         const isTested = coreFields.some((k) => a[k] !== null);
         const rowCls = isTested ? "clickable" : "clickable untested-row";
+        // Look up previous test values for missing cells
+        const prev = getPrevTestValues(a.id);
+        // Helper: render current value or fall back to stale previous
+        function cellG(key, dec, grade) {
+          if (a[key] !== null && a[key] !== undefined) return tdGraded(a[key], dec, grade);
+          if (prev[key] !== null && prev[key] !== undefined) return tdNumStale(prev[key], dec);
+          return '<td class="num na">—</td>';
+        }
+        function cellN(key, dec) {
+          if (a[key] !== null && a[key] !== undefined) return tdNum(a[key], dec);
+          if (prev[key] !== null && prev[key] !== undefined) return tdNumStale(prev[key], dec);
+          return '<td class="num na">—</td>';
+        }
         return `
       <tr class="${rowCls}" tabindex="0" role="button" onclick="selectAthlete('${a.id}')" onkeydown="if(event.key==='Enter')selectAthlete('${a.id}')">
         <td><strong>${esc(a.name)}</strong>${!isTested ? ' <span class="untested-badge">Untested</span>' : ""}</td>
         <td>${esc(a.position) || "—"}</td>
         <td><span class="group-tag group-${a.group.replace(/\s/g, "")}">${esc(a.group)}</span></td>
         <td class="num">${a.grade ? ordGrade(a.grade) : "—"}</td>
-        ${tdNum(a.height, 0)}
-        ${tdNum(a.weight)}
-        ${tdGraded(a.bench, 0, a.grades.bench)}
-        ${tdGraded(a.squat, 0, a.grades.squat)}
-        ${tdGraded(a.medball, 0, a.grades.medball)}
-        ${tdGraded(a.vert, 1, a.grades.vert)}
-        ${tdGraded(a.broad, 0, a.grades.broad)}
-        ${tdGraded(a.forty, 2, a.grades.forty)}
+        ${cellN("height", 0)}
+        ${cellN("weight", 0)}
+        ${cellG("bench", 0, a.grades.bench)}
+        ${cellG("squat", 0, a.grades.squat)}
+        ${cellG("medball", 0, a.grades.medball)}
+        ${cellG("vert", 1, a.grades.vert)}
+        ${cellG("broad", 0, a.grades.broad)}
+        ${cellG("forty", 2, a.grades.forty)}
         <td class="num">${fmtZ(a.zMB)}</td>
         ${overallGradeCell(a.overallGrade)}
       </tr>
