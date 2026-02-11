@@ -369,16 +369,23 @@ select:focus,
   contain: layout style;
 }
 
-/* Roster table: let thead stick to viewport top on scroll.
-   overflow must be visible so sticky is relative to the viewport,
-   not the scroll container. */
+/* Roster table: allow horizontal scroll when extra columns are toggled on */
 .roster-table-wrap {
-  overflow: visible;
+  overflow-x: auto;
 }
 
 .roster-table-wrap .data-table thead th {
-  top: 102px; /* header (~56px) + tabs (~46px) */
   z-index: 10;
+}
+
+/* Compact cells when relative columns are visible */
+.roster-table-wrap.has-rel-cols .data-table th,
+.roster-table-wrap.has-rel-cols .data-table td {
+  padding: 0.45rem 0.45rem;
+  font-size: 0.74rem;
+}
+.roster-table-wrap.has-rel-cols .data-table th {
+  font-size: 0.68rem;
 }
 
 .data-table {

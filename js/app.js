@@ -1148,6 +1148,8 @@
     }
 
     const tbody = document.querySelector("#rosterTable tbody");
+    const rosterWrap = document.querySelector(".roster-table-wrap");
+    if (rosterWrap) rosterWrap.classList.toggle("has-rel-cols", !!showRel);
 
     // Dynamically build thead to reflect toggle state
     var thead = document.querySelector("#rosterTable thead");
