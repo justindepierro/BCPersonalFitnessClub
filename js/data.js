@@ -350,11 +350,78 @@
   // Pre-build lookup map for O(1) _meta access in gradeValue
   const _META_MAP = new Map(HS_STANDARDS._meta.map((m) => [m.key, m]));
 
+  /* ---------- Body-Profile Adjustment Factors ---------- */
+  /* Weight tiers: scale absolute-strength thresholds so lighter athletes
+     aren't penalised and heavier athletes aren't over-rewarded.
+     Factors multiply the baseline threshold for absolute metrics;
+     relative/BW-normalised metrics use inverse factors. */
+  const WEIGHT_TIERS = [
+    { label: "<120 lb",   max: 120, absF: 0.65, relF: 1.12 },
+    { label: "120–145 lb", max: 145, absF: 0.78, relF: 1.06 },
+    { label: "145–175 lb", max: 175, absF: 0.90, relF: 1.00 },
+    { label: "175–210 lb", max: 210, absF: 1.00, relF: 0.95 },
+    { label: "210+ lb",    max: Infinity, absF: 1.08, relF: 0.90 },
+  ];
+
+  /* Height tiers: taller athletes tend to jump higher and generate
+     more power at the same weight, shorter athletes accelerate faster. */
+  const HEIGHT_TIERS = [
+    { label: '<64"',   max: 64, jumpF: 0.88, speedF: 1.04 },
+    { label: '64–67"', max: 67, jumpF: 0.94, speedF: 1.02 },
+    { label: '67–71"', max: 71, jumpF: 1.00, speedF: 1.00 },
+    { label: '71"+',   max: Infinity, jumpF: 1.06, speedF: 0.97 },
+  ];
+
+  /* Metric classification for body-adjustment factor selection */
+  const BODY_METRIC_CATEGORY = {
+    bench: "abs", squat: "abs", medball: "abs",
+    peakPower: "abs", F1: "abs", momMax: "abs",
+    relBench: "rel", relSquat: "rel", mbRel: "rel", relPeakPower: "rel",
+    vert: "jump", broad: "jump",
+    forty: "speed", vMax: "speed", v10Max: "speed",
+  };
+
+  function getWeightTier(wt) {
+    if (wt === null || wt === undefined) return null;
+    for (const t of WEIGHT_TIERS) { if (wt <= t.max) return t; }
+    return WEIGHT_TIERS[WEIGHT_TIERS.length - 1];
+  }
+
+  function getHeightTier(ht) {
+    if (ht === null || ht === undefined) return null;
+    for (const t of HEIGHT_TIERS) { if (ht <= t.max) return t; }
+    return HEIGHT_TIERS[HEIGHT_TIERS.length - 1];
+  }
+
+  /** Apply combined weight + height body-adjustment to thresholds */
+  function bodyAdjustThresholds(thresholds, metricKey, weight, height, inverted) {
+    const cat = BODY_METRIC_CATEGORY[metricKey];
+    if (!cat) return thresholds; // unknown metric — no adjustment
+    const wt = getWeightTier(weight);
+    const ht = getHeightTier(height);
+    let factor = 1.0;
+    if (cat === "abs") {
+      if (wt) factor *= wt.absF;
+    } else if (cat === "rel") {
+      if (wt) factor *= wt.relF;
+    } else if (cat === "jump") {
+      if (ht) factor *= ht.jumpF;
+    } else if (cat === "speed") {
+      if (ht) factor *= ht.speedF;
+    }
+    if (factor === 1.0) return thresholds;
+    return thresholds.map(function (t) {
+      return inverted ? rd(t / factor, 2) : rd(t * factor, 2);
+    });
+  }
+
   /* Grade a single value against absolute HS standards.
      sport = "Football"|"Soccer"|"Baseball"|"Basketball"
      grade = 6–12 (null = no adjustment)
-     ageAdj = true to apply grade-based scaling */
-  function gradeValue(val, metricKey, sport, group, grade, ageAdj) {
+     ageAdj = true to apply grade-based scaling
+     bodyAdj = true to apply weight/height scaling
+     weight/height = athlete body metrics (used when bodyAdj=true) */
+  function gradeValue(val, metricKey, sport, group, grade, ageAdj, bodyAdj, weight, height) {
     const sportStds = HS_STANDARDS[sport || "Football"];
     if (!sportStds) return null;
     const gs = sportStds[group];
@@ -371,6 +438,11 @@
           inverted ? rd(t / factor, 2) : rd(t * factor, 2),
         );
       }
+    }
+
+    // Body-profile adjustment (weight + height)
+    if (bodyAdj) {
+      thresholds = bodyAdjustThresholds(thresholds, metricKey, weight, height, inverted);
     }
 
     for (let i = 0; i < thresholds.length; i++) {
@@ -407,6 +479,10 @@
 
     // Check for age-adjusted standards toggle
     const ageAdj = localStorage.getItem("lc_age_adjusted") === "true";
+    // Check for body-profile-adjusted standards toggle
+    const bodyAdj = localStorage.getItem("lc_body_adjusted") === "true";
+    // Check for cohort percentile ranking toggle
+    const cohortMode = localStorage.getItem("lc_cohort_mode") === "true";
 
     const athletes = [];
     const positions = new Set();
@@ -730,7 +806,7 @@
       const scores = [];
       for (const mk of gradeableKeys) {
         if (a[mk] !== null && a[mk] !== undefined) {
-          const g = gradeValue(a[mk], mk, a.sport, a.group, a.grade, ageAdj);
+          const g = gradeValue(a[mk], mk, a.sport, a.group, a.grade, ageAdj, bodyAdj, a.weight, a.height);
           if (g) {
             a.grades[mk] = g;
             scores.push(g.score);
@@ -784,6 +860,58 @@
         };
       }
       groupStandards[grp] = stds;
+    }
+
+    // Cohort percentile ranking
+    // Cohort = same position-group + weight tier + height tier + grade band
+    // Provides "how does this athlete compare to peers with a similar body profile?"
+    const cohortMetricKeys = gradeableKeys;
+    if (cohortMode) {
+      // Build cohort key for each athlete
+      for (const a of athletes) {
+        const wt = getWeightTier(a.weight);
+        const ht = getHeightTier(a.height);
+        const gradeBand = a.grade != null ? (a.grade <= 8 ? "MS" : "HS") : "UNK";
+        a._cohortKey = [a.group, wt ? wt.label : "?wt", ht ? ht.label : "?ht", gradeBand].join("|");
+      }
+      // Group athletes by cohort
+      const cohorts = {};
+      for (const a of athletes) {
+        (cohorts[a._cohortKey] || (cohorts[a._cohortKey] = [])).push(a);
+      }
+      // Compute per-metric percentiles within each cohort
+      for (const key of Object.keys(cohorts)) {
+        const members = cohorts[key];
+        if (members.length < 2) {
+          for (const m of members) { m.cohort = { key: key, size: 1, percentiles: {} }; }
+          continue;
+        }
+        const metricPercentiles = {};
+        for (const mk of cohortMetricKeys) {
+          const inverted = _META_MAP.get(mk)?.invert;
+          const vals = members.map(m => m[mk]).filter(v => v !== null && v !== undefined).sort((a, b) => a - b);
+          if (vals.length < 2) continue;
+          for (const m of members) {
+            if (m[mk] === null || m[mk] === undefined) continue;
+            let pct = percentileOf(m[mk], vals);
+            if (inverted) pct = 100 - pct;
+            if (!m.cohort) m.cohort = { key: key, size: members.length, percentiles: {} };
+            m.cohort.percentiles[mk] = rd(pct, 0);
+          }
+        }
+        // Ensure all members have cohort object
+        for (const m of members) {
+          if (!m.cohort) m.cohort = { key: key, size: members.length, percentiles: {} };
+        }
+        // Compute average cohort percentile
+        for (const m of members) {
+          const pcts = Object.values(m.cohort.percentiles);
+          m.cohort.avgPct = pcts.length >= 2 ? rd(pcts.reduce((s, v) => s + v, 0) / pcts.length, 0) : null;
+          m.cohort.metricsUsed = pcts.length;
+        }
+      }
+    } else {
+      for (const a of athletes) { a.cohort = null; }
     }
 
     // Testing Log
@@ -857,6 +985,8 @@
       hsStandards: HS_STANDARDS,
       sportPositions: SPORT_POSITIONS,
       ageAdjusted: ageAdj,
+      bodyAdjusted: bodyAdj,
+      cohortMode: cohortMode,
       positions: [...positions].sort(),
       groupStandards,
       stats: statsSummary,

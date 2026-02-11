@@ -609,6 +609,22 @@ select:focus,
   color: var(--text);
 }
 
+.profile-cohort-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+  font-size: 0.78rem;
+}
+.profile-cohort-bar .cohort-label {
+  font-weight: 600;
+  color: var(--text);
+}
+.profile-cohort-bar .cohort-detail {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
 .profile-section-title {
   font-size: 0.9rem;
   font-weight: 700;

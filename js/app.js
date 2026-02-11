@@ -664,6 +664,26 @@
       overviewRelToggle.checked =
         localStorage.getItem("lc_show_relatives") === "true";
     }
+    // Restore body-adjusted toggle state
+    const bodyToggle = document.getElementById("bodyAdjToggle");
+    if (bodyToggle) {
+      bodyToggle.checked = localStorage.getItem("lc_body_adjusted") === "true";
+    }
+    const overviewBodyToggle = document.getElementById("overviewBodyToggle");
+    if (overviewBodyToggle) {
+      overviewBodyToggle.checked =
+        localStorage.getItem("lc_body_adjusted") === "true";
+    }
+    // Restore cohort toggle state
+    const cohortToggle = document.getElementById("cohortToggle");
+    if (cohortToggle) {
+      cohortToggle.checked = localStorage.getItem("lc_cohort_mode") === "true";
+    }
+    const overviewCohortToggle = document.getElementById("overviewCohortToggle");
+    if (overviewCohortToggle) {
+      overviewCohortToggle.checked =
+        localStorage.getItem("lc_cohort_mode") === "true";
+    }
 
     // Populate position filter
     const posSel = document.getElementById("overviewPosFilter");
@@ -1229,6 +1249,10 @@
     }
     thRow += '<th data-sort="zMB" title="Med Ball Z-Score">zMB</th>';
     thRow += '<th data-sort="overallGrade" title="Overall rating">Rating</th>';
+    const showCohort = localStorage.getItem("lc_cohort_mode") === "true";
+    if (showCohort) {
+      thRow += '<th data-sort="cohortPct" title="Avg percentile within body-profile & position cohort">Cohort&nbsp;%</th>';
+    }
     thRow += "</tr>";
     thead.innerHTML = thRow;
 
@@ -1299,6 +1323,7 @@
         ${ppCols}
         <td class="num">${fmtZ(a.zMB)}</td>
         ${overallGradeCell(a.overallGrade)}
+        ${showCohort ? '<td class="num">' + (a.cohort && a.cohort.avgPct !== null ? a.cohort.avgPct + '<small>% <span title="' + esc(a.cohort.key) + ' (n=' + a.cohort.size + ', ' + a.cohort.metricsUsed + ' metrics)">(' + a.cohort.size + ')</span></small>' : '—') + '</td>' : ''}
       </tr>
     `;
       })
@@ -1352,7 +1377,14 @@
             <span class="meta-item"><strong>Weight:</strong> ${a.weight ? a.weight + " lb (" + a.massKg + " kg)" : "N/A"}</span>
             <span class="meta-item"><strong>ID:</strong> ${a.id}</span>
             ${D.ageAdjusted ? '<span class="meta-item"><span class="grade-badge grade-bg-good" style="font-size:.65rem">Age-Adjusted</span></span>' : ""}
+            ${D.bodyAdjusted ? '<span class="meta-item"><span class="grade-badge grade-bg-good" style="font-size:.65rem">Body-Adjusted</span></span>' : ""}
           </div>
+          ${a.cohort && a.cohort.avgPct !== null ? `
+          <div class="profile-cohort-bar">
+            <span class="cohort-label">Cohort Rank:</span>
+            <span class="grade-badge grade-bg-${a.cohort.avgPct >= 90 ? 'elite' : a.cohort.avgPct >= 75 ? 'excellent' : a.cohort.avgPct >= 50 ? 'good' : a.cohort.avgPct >= 25 ? 'average' : 'below'}" style="font-size:.65rem">${a.cohort.avgPct}th pctl</span>
+            <span class="cohort-detail">${esc(a.cohort.key)} (n=${a.cohort.size}, ${a.cohort.metricsUsed} metrics)</span>
+          </div>` : ""}
         </div>
       </div>
 
@@ -6802,6 +6834,48 @@
   window.toggleOverviewRelatives = function (on) {
     safeLSSet("lc_show_relatives", on ? "true" : "false");
     renderOverview();
+  };
+
+  /* ---------- Body-Adjusted Standards Toggle ---------- */
+  window.toggleBodyAdjusted = function (on) {
+    safeLSSet("lc_body_adjusted", on ? "true" : "false");
+    // Sync both body-adj toggles
+    var bt1 = document.getElementById("bodyAdjToggle");
+    var bt2 = document.getElementById("overviewBodyToggle");
+    if (bt1) bt1.checked = on;
+    if (bt2) bt2.checked = on;
+    rebuildFromStorage();
+    markTabsDirty();
+    const activeTab = document.querySelector(".tab.active");
+    if (activeTab) renderIfDirty(activeTab.dataset.tab);
+    renderProfile();
+    showToast(
+      on
+        ? "Body-adjusted standards enabled — thresholds scaled by weight class & height"
+        : "Body-adjusted standards disabled — using baseline thresholds",
+      "info",
+    );
+  };
+
+  /* ---------- Cohort Percentile Toggle ---------- */
+  window.toggleCohortMode = function (on) {
+    safeLSSet("lc_cohort_mode", on ? "true" : "false");
+    // Sync both cohort toggles
+    var ct1 = document.getElementById("cohortToggle");
+    var ct2 = document.getElementById("overviewCohortToggle");
+    if (ct1) ct1.checked = on;
+    if (ct2) ct2.checked = on;
+    rebuildFromStorage();
+    markTabsDirty();
+    const activeTab = document.querySelector(".tab.active");
+    if (activeTab) renderIfDirty(activeTab.dataset.tab);
+    renderProfile();
+    showToast(
+      on
+        ? "Cohort percentiles enabled — ranking against peers with same body profile & position"
+        : "Cohort percentiles disabled",
+      "info",
+    );
   };
 
   window.resetToOriginal = function () {

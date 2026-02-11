@@ -268,6 +268,28 @@
               />
               <span>Age-Adj</span>
             </label>
+            <label
+              class="toggle-label overview-toggle"
+              title="Adjust performance thresholds based on weight class and height bracket"
+            >
+              <input
+                type="checkbox"
+                id="overviewBodyToggle"
+                onchange="toggleBodyAdjusted(this.checked)"
+              />
+              <span>Body-Adj</span>
+            </label>
+            <label
+              class="toggle-label overview-toggle"
+              title="Rank athletes against peers with the same position, weight, height, and grade band"
+            >
+              <input
+                type="checkbox"
+                id="overviewCohortToggle"
+                onchange="toggleCohortMode(this.checked)"
+              />
+              <span>Cohort</span>
+            </label>
           </div>
         </div>
         <div class="card-row" id="summaryCards"></div>
@@ -2118,6 +2140,28 @@
               onchange="toggleAgeAdjusted(this.checked)"
             />
             <span>Age-Adjusted Standards</span>
+          </label>
+          <label
+            class="toggle-label"
+            title="Adjust performance thresholds based on weight class and height bracket"
+          >
+            <input
+              type="checkbox"
+              id="bodyAdjToggle"
+              onchange="toggleBodyAdjusted(this.checked)"
+            />
+            <span>Body-Adjusted Standards</span>
+          </label>
+          <label
+            class="toggle-label"
+            title="Rank athletes against peers with the same position, weight, height, and grade band"
+          >
+            <input
+              type="checkbox"
+              id="cohortToggle"
+              onchange="toggleCohortMode(this.checked)"
+            />
+            <span>Cohort Percentiles</span>
           </label>
         </div>
         <div class="data-mgmt-right">
