@@ -11,10 +11,13 @@
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏋️</text></svg>"
     />
     <link rel="stylesheet" href="css/styles.css" />
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <script
       src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
       integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
       crossorigin="anonymous"
+      defer
     ></script>
   </head>
   <body>
@@ -2088,7 +2091,7 @@
     ></div>
 
     <!-- ===== TOAST NOTIFICATION ===== -->
-    <div id="toastContainer" class="toast-container"></div>
+    <div id="toastContainer" class="toast-container" aria-live="polite" role="status"></div>
 
     <!-- ===== SCROLL TO TOP ===== -->
     <button

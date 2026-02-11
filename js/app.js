@@ -250,6 +250,7 @@
       "compare",
     ];
     for (const t of tabs) _tabDirty[t] = true;
+    invalidateNormCache();
   }
   function renderIfDirty(tabId) {
     if (!_tabDirty[tabId]) return;
@@ -639,17 +640,10 @@
     // Populate snapshot selector
     refreshSnapshotList();
 
-    // Render all tabs
+    // Only render the visible tab; mark the rest dirty for lazy rendering
+    markTabsDirty();
     renderOverview();
-    renderLeaderboards();
-    renderSprintAnalysis();
-    renderStrengthPower();
-    renderScorecard();
-    renderBenchmarks();
-    renderTestingLog();
-    renderTestingWeekPlan();
-    renderConstants();
-    renderGroupDashboard();
+    _tabDirty["overview"] = false;
     updateDataStatus();
 
     // Sortable bindings
@@ -697,39 +691,23 @@
   });
 
   /* ========== TAB SWITCHING ========== */
+
+  function destroyChart(ref) { if (ref) ref.destroy(); return null; }
+
   window.showTab = function (tabId) {
     /* Destroy chart instances when leaving their tabs to free GPU memory */
     const prevTab = document.querySelector(".tab.active");
     if (prevTab) {
       const prevId = prevTab.dataset.tab;
-      if (prevId === "profiles" && profileChartInstance) {
-        profileChartInstance.destroy();
-        profileChartInstance = null;
+      if (prevId === "profiles") {
+        profileChartInstance = destroyChart(profileChartInstance);
+        profilePctChartInstance = destroyChart(profilePctChartInstance);
+        profileSprintChartInstance = destroyChart(profileSprintChartInstance);
+        profileDonutInstance = destroyChart(profileDonutInstance);
+        profileQuadrantInstance = destroyChart(profileQuadrantInstance);
       }
-      if (prevId === "profiles" && profilePctChartInstance) {
-        profilePctChartInstance.destroy();
-        profilePctChartInstance = null;
-      }
-      if (prevId === "profiles" && profileSprintChartInstance) {
-        profileSprintChartInstance.destroy();
-        profileSprintChartInstance = null;
-      }
-      if (prevId === "profiles" && profileDonutInstance) {
-        profileDonutInstance.destroy();
-        profileDonutInstance = null;
-      }
-      if (prevId === "profiles" && profileQuadrantInstance) {
-        profileQuadrantInstance.destroy();
-        profileQuadrantInstance = null;
-      }
-      if (prevId === "leaderboards" && lbChartInstance) {
-        lbChartInstance.destroy();
-        lbChartInstance = null;
-      }
-      if (prevId === "compare" && cmpChartInstance) {
-        cmpChartInstance.destroy();
-        cmpChartInstance = null;
-      }
+      if (prevId === "leaderboards") lbChartInstance = destroyChart(lbChartInstance);
+      if (prevId === "compare") cmpChartInstance = destroyChart(cmpChartInstance);
     }
     document.querySelectorAll(".tab").forEach((t) => {
       const isActive = t.dataset.tab === tabId;
@@ -866,32 +844,35 @@
     }
 
     const total = list.length;
-    const avg = (key) => {
-      const v = list.filter((a) => a[key] !== null);
-      return v.length ? v.reduce((s, a) => s + a[key], 0) / v.length : null;
-    };
-    const avgBench = avg("bench");
-    const avgSquat = avg("squat");
-    const avgMB = avg("medball");
-    const avg40 = avg("forty");
-    const avgVert = avg("vert");
-    const avgPP = avg("peakPower");
-
-    // Data completeness
+    // Compute summary stats in a single pass
+    const sumKeys = ["bench", "squat", "medball", "vert", "forty", "peakPower"];
+    const sums = {}, counts = {};
+    for (const k of sumKeys) { sums[k] = 0; counts[k] = 0; }
     const coreFields = ["bench", "squat", "medball", "vert", "broad", "forty"];
-    const fullyTested = list.filter((a) =>
-      coreFields.every((k) => a[k] !== null),
-    ).length;
+    let fullyTested = 0;
+    for (const a of list) {
+      for (const k of sumKeys) {
+        if (a[k] !== null) { sums[k] += a[k]; counts[k]++; }
+      }
+      if (coreFields.every((k) => a[k] !== null)) fullyTested++;
+    }
+    const avgOf = (k) => counts[k] > 0 ? sums[k] / counts[k] : null;
+    const avgBench = avgOf("bench");
+    const avgSquat = avgOf("squat");
+    const avgMB = avgOf("medball");
+    const avg40 = avgOf("forty");
+    const avgVert = avgOf("vert");
+    const avgPP = avgOf("peakPower");
     const completePct = total > 0 ? Math.round((fullyTested / total) * 100) : 0;
 
     document.getElementById("summaryCards").innerHTML = `
       <div class="summary-card"><div class="label">Athletes</div><div class="value">${total}</div><div class="sub">${D.positions.length} positions</div></div>
-      <div class="summary-card"><div class="label">Avg Bench</div><div class="value">${avgBench ? avgBench.toFixed(0) : "—"}<small> lb</small></div><div class="sub">${list.filter((a) => a.bench !== null).length} tested</div></div>
-      <div class="summary-card"><div class="label">Avg Squat</div><div class="value">${avgSquat ? avgSquat.toFixed(0) : "—"}<small> lb</small></div><div class="sub">${list.filter((a) => a.squat !== null).length} tested</div></div>
-      <div class="summary-card"><div class="label">Avg MB Throw</div><div class="value">${avgMB ? avgMB.toFixed(0) : "—"}<small> in</small></div><div class="sub">${list.filter((a) => a.medball !== null).length} tested</div></div>
-      <div class="summary-card"><div class="label">Avg Vert</div><div class="value">${avgVert ? avgVert.toFixed(1) : "—"}<small> in</small></div><div class="sub">${list.filter((a) => a.vert !== null).length} tested</div></div>
-      <div class="summary-card"><div class="label">Avg 40 yd</div><div class="value">${avg40 ? avg40.toFixed(2) : "—"}<small> s</small></div><div class="sub">${list.filter((a) => a.forty !== null).length} tested</div></div>
-      <div class="summary-card"><div class="label">Avg Peak Power</div><div class="value">${avgPP ? avgPP.toFixed(0) : "—"}<small> W</small></div><div class="sub">${list.filter((a) => a.peakPower !== null).length} tested</div></div>
+      <div class="summary-card"><div class="label">Avg Bench</div><div class="value">${avgBench ? avgBench.toFixed(0) : "—"}<small> lb</small></div><div class="sub">${counts.bench} tested</div></div>
+      <div class="summary-card"><div class="label">Avg Squat</div><div class="value">${avgSquat ? avgSquat.toFixed(0) : "—"}<small> lb</small></div><div class="sub">${counts.squat} tested</div></div>
+      <div class="summary-card"><div class="label">Avg MB Throw</div><div class="value">${avgMB ? avgMB.toFixed(0) : "—"}<small> in</small></div><div class="sub">${counts.medball} tested</div></div>
+      <div class="summary-card"><div class="label">Avg Vert</div><div class="value">${avgVert ? avgVert.toFixed(1) : "—"}<small> in</small></div><div class="sub">${counts.vert} tested</div></div>
+      <div class="summary-card"><div class="label">Avg 40 yd</div><div class="value">${avg40 ? avg40.toFixed(2) : "—"}<small> s</small></div><div class="sub">${counts.forty} tested</div></div>
+      <div class="summary-card"><div class="label">Avg Peak Power</div><div class="value">${avgPP ? avgPP.toFixed(0) : "—"}<small> W</small></div><div class="sub">${counts.peakPower} tested</div></div>
       <div class="summary-card"><div class="label">Data Completeness</div><div class="value">${completePct}<small>%</small></div><div class="sub">${fullyTested}/${total} fully tested</div></div>
     `;
 
@@ -1118,21 +1099,24 @@
   }
 
   /* ---------- Shared normalization (used by radar + comparison) ---------- */
+  const _normCache = new Map();
+  function _getMinMax(key) {
+    if (_normCache.has(key)) return _normCache.get(key);
+    const vals = window.CLUB.athletes.map((x) => x[key]).filter((v) => v !== null);
+    const result = vals.length > 0 ? { min: Math.min(...vals), max: Math.max(...vals) } : { min: 0, max: 0 };
+    _normCache.set(key, result);
+    return result;
+  }
+  function invalidateNormCache() { _normCache.clear(); }
+
   function normMetric(val, key) {
     if (val === null) return 0;
-    const D = window.CLUB;
-    const vals = D.athletes.map((x) => x[key]).filter((v) => v !== null);
-    if (vals.length === 0) return 0;
-    const max = Math.max(...vals);
+    const { max } = _getMinMax(key);
     return max > 0 ? Math.round((val / max) * 100) : 0;
   }
   function normMetricInv(val, key) {
     if (val === null) return 0;
-    const D = window.CLUB;
-    const vals = D.athletes.map((x) => x[key]).filter((v) => v !== null);
-    if (vals.length === 0) return 0;
-    const min = Math.min(...vals);
-    const max = Math.max(...vals);
+    const { min, max } = _getMinMax(key);
     if (max === min) return 100;
     return Math.round(((max - val) / (max - min)) * 100);
   }
@@ -1753,75 +1737,28 @@
           (hVal !== null && hVal !== undefined ? hVal : "—") +
           "</td>";
       }
-      // Delta: compare two most recent tests, or current vs single test
+      // Delta column
+      var newV = null, oldV = null;
       if (shown.length >= 2) {
-        var newerVal = shown[0].values[mk.jsonKey];
-        var olderVal = shown[1].values[mk.jsonKey];
-        if (
-          newerVal !== null &&
-          newerVal !== undefined &&
-          olderVal !== null &&
-          olderVal !== undefined
-        ) {
-          var delta = newerVal - olderVal;
-          var pctChange =
-            olderVal !== 0 ? Math.round((delta / Math.abs(olderVal)) * 100) : 0;
+        newV = shown[0].values[mk.jsonKey];
+        oldV = shown[1].values[mk.jsonKey];
+      } else if (shown.length === 1) {
+        newV = curVal;
+        oldV = shown[0].values[mk.jsonKey];
+      }
+      if (shown.length >= 1) {
+        if (newV != null && oldV != null) {
+          var delta = newV - oldV;
+          var pctChange = oldV !== 0 ? Math.round((delta / Math.abs(oldV)) * 100) : 0;
           var improved = mk.lower ? delta < 0 : delta > 0;
           var declined = mk.lower ? delta > 0 : delta < 0;
-          var cls = improved
-            ? "delta-up"
-            : declined
-              ? "delta-down"
-              : "delta-flat";
+          var cls = improved ? "delta-up" : declined ? "delta-down" : "delta-flat";
           var arrow = improved ? "▲" : declined ? "▼" : "—";
           var sign = delta > 0 ? "+" : "";
           html +=
-            '<td class="num ' +
-            cls +
-            '">' +
-            arrow +
-            " " +
-            sign +
+            '<td class="num ' + cls + '">' + arrow + " " + sign +
             (Number.isInteger(delta) ? delta : delta.toFixed(2)) +
-            " <small>(" +
-            sign +
-            pctChange +
-            "%)</small></td>";
-        } else {
-          html += '<td class="na">—</td>';
-        }
-      } else if (shown.length === 1) {
-        var lastVal = shown[0].values[mk.jsonKey];
-        if (
-          curVal !== null &&
-          curVal !== undefined &&
-          lastVal !== null &&
-          lastVal !== undefined
-        ) {
-          var delta1 = curVal - lastVal;
-          var pctChange1 =
-            lastVal !== 0 ? Math.round((delta1 / Math.abs(lastVal)) * 100) : 0;
-          var improved1 = mk.lower ? delta1 < 0 : delta1 > 0;
-          var declined1 = mk.lower ? delta1 > 0 : delta1 < 0;
-          var cls1 = improved1
-            ? "delta-up"
-            : declined1
-              ? "delta-down"
-              : "delta-flat";
-          var arrow1 = improved1 ? "▲" : declined1 ? "▼" : "—";
-          var sign1 = delta1 > 0 ? "+" : "";
-          html +=
-            '<td class="num ' +
-            cls1 +
-            '">' +
-            arrow1 +
-            " " +
-            sign1 +
-            (Number.isInteger(delta1) ? delta1 : delta1.toFixed(2)) +
-            " <small>(" +
-            sign1 +
-            pctChange1 +
-            "%)</small></td>";
+            " <small>(" + sign + pctChange + "%)</small></td>";
         } else {
           html += '<td class="na">—</td>';
         }
@@ -4996,25 +4933,18 @@
     ];
     const radarLabels = radarKeys.map((k) => METRIC_INFO[k]?.name || k);
 
-    function normVal(val, key) {
-      return normMetric(val, key);
-    }
-    function normInv(val, key) {
-      return normMetricInv(val, key);
-    }
-
     const datasets = athletes.map((a, i) => ({
       label: a.name,
       data: [
-        normVal(a.bench, "bench"),
-        normVal(a.squat, "squat"),
-        normVal(a.medball, "medball"),
-        normVal(a.vert, "vert"),
-        normVal(a.broad, "broad"),
-        normInv(a.forty, "forty"),
-        normVal(a.F1, "F1"),
-        normVal(a.peakPower, "peakPower"),
-        normVal(a.momMax, "momMax"),
+        normMetric(a.bench, "bench"),
+        normMetric(a.squat, "squat"),
+        normMetric(a.medball, "medball"),
+        normMetric(a.vert, "vert"),
+        normMetric(a.broad, "broad"),
+        normMetricInv(a.forty, "forty"),
+        normMetric(a.F1, "F1"),
+        normMetric(a.peakPower, "peakPower"),
+        normMetric(a.momMax, "momMax"),
       ],
       fill: true,
       backgroundColor: paletteBg[i],

@@ -55,6 +55,16 @@ body {
   min-height: 100vh;
 }
 
+/* ---------- Focus-visible (keyboard accessibility) ---------- */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* ---------- Header ---------- */
 .site-header {
   background: var(--surface);
@@ -116,7 +126,7 @@ body {
   border-radius: var(--radius-sm);
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.15s;
+  transition: color 0.15s, background-color 0.15s, box-shadow 0.15s;
 }
 
 .tab:hover {
@@ -215,7 +225,7 @@ select:focus,
   border-radius: var(--radius-sm);
   border: none;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background-color 0.15s, color 0.15s;
 }
 
 .btn-primary {
@@ -303,6 +313,7 @@ select:focus,
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: var(--surface);
+  contain: layout style;
 }
 
 .data-table {
@@ -365,7 +376,6 @@ select:focus,
 .data-table td.num,
 .data-table th.num {
   text-align: right;
-  font-variant-numeric: tabular-nums;
   font-family: var(--mono);
   font-size: 0.78rem;
 }
@@ -377,7 +387,6 @@ select:focus,
 #lbTable thead th:first-child,
 #lbTable thead th:last-child {
   text-align: right;
-  font-variant-numeric: tabular-nums;
 }
 
 /* Center Grade column header and scorecard metric headers */
@@ -2086,7 +2095,7 @@ select:focus,
   justify-content: center;
   gap: 1rem;
   padding: 4rem 1rem;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 1.05rem;
 }
 .loading-spinner {
