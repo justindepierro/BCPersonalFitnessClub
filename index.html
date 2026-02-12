@@ -202,98 +202,98 @@
       >
         <div class="section-header">
           <h2>Team Overview</h2>
-          <div class="filters">
-            <input
-              type="text"
-              id="rosterSearch"
-              class="input"
-              placeholder="Search athletes…"
-              aria-label="Search athletes"
-              oninput="debouncedOverview()"
-              style="min-width: 160px"
-            />
-            <select
-              id="overviewPosFilter"
-              aria-label="Filter by position"
-              onchange="renderOverview()"
-            >
-              <option value="all">All Positions</option>
-            </select>
-            <select
-              id="overviewGroupFilter"
-              aria-label="Filter by group"
-              onchange="renderOverview()"
-            >
-              <option value="all">All Groups</option>
-            </select>
-            <select
-              id="overviewGradeFilter"
-              aria-label="Filter by grade tier"
-              onchange="renderOverview()"
-            >
-              <option value="all">All Grades</option>
-              <option value="elite">Elite Only</option>
-              <option value="excellent">Excellent+</option>
-              <option value="good">Good+</option>
-              <option value="average">Average+</option>
-              <option value="below">Below Avg</option>
-            </select>
-            <button
-              class="btn btn-sm"
-              onclick="exportCSV()"
-              title="Download team data as CSV"
-            >
-              📥 CSV
-            </button>
-            <span class="filter-sep">|</span>
-            <label
-              class="toggle-label overview-toggle"
-              title="Show relative (body-weight-normalized) metrics and training age"
-            >
-              <input
-                type="checkbox"
-                id="overviewRelToggle"
-                onchange="toggleOverviewRelatives(this.checked)"
-              />
-              <span>Relatives</span>
-            </label>
-            <label
-              class="toggle-label overview-toggle"
-              title="Adjust performance standards based on each athlete's grade level (training age)"
-            >
-              <input
-                type="checkbox"
-                id="overviewAgeToggle"
-                onchange="toggleAgeAdjusted(this.checked)"
-              />
-              <span>Age-Adj</span>
-            </label>
-            <label
-              class="toggle-label overview-toggle"
-              title="Adjust performance thresholds based on weight class and height bracket"
-            >
-              <input
-                type="checkbox"
-                id="overviewBodyToggle"
-                onchange="toggleBodyAdjusted(this.checked)"
-              />
-              <span>Body-Adj</span>
-            </label>
-            <label
-              class="toggle-label overview-toggle"
-              title="Rank athletes against peers with the same position, weight, height, and grade band"
-            >
-              <input
-                type="checkbox"
-                id="overviewCohortToggle"
-                onchange="toggleCohortMode(this.checked)"
-              />
-              <span>Cohort</span>
-            </label>
-          </div>
         </div>
         <div class="card-row" id="summaryCards"></div>
         <div id="dataWarnings"></div>
+        <div class="filters roster-filters">
+          <input
+            type="text"
+            id="rosterSearch"
+            class="input"
+            placeholder="Search athletes…"
+            aria-label="Search athletes"
+            oninput="debouncedOverview()"
+            style="min-width: 160px"
+          />
+          <select
+            id="overviewPosFilter"
+            aria-label="Filter by position"
+            onchange="renderOverview()"
+          >
+            <option value="all">All Positions</option>
+          </select>
+          <select
+            id="overviewGroupFilter"
+            aria-label="Filter by group"
+            onchange="renderOverview()"
+          >
+            <option value="all">All Groups</option>
+          </select>
+          <select
+            id="overviewGradeFilter"
+            aria-label="Filter by grade tier"
+            onchange="renderOverview()"
+          >
+            <option value="all">All Grades</option>
+            <option value="elite">Elite Only</option>
+            <option value="excellent">Excellent+</option>
+            <option value="good">Good+</option>
+            <option value="average">Average+</option>
+            <option value="below">Below Avg</option>
+          </select>
+          <button
+            class="btn btn-sm"
+            onclick="exportCSV()"
+            title="Download team data as CSV"
+          >
+            📥 CSV
+          </button>
+          <span class="filter-sep">|</span>
+          <label
+            class="toggle-label overview-toggle"
+            title="Show relative (body-weight-normalized) metrics and training age"
+          >
+            <input
+              type="checkbox"
+              id="overviewRelToggle"
+              onchange="toggleOverviewRelatives(this.checked)"
+            />
+            <span>Relatives</span>
+          </label>
+          <label
+            class="toggle-label overview-toggle"
+            title="Adjust performance standards based on each athlete's grade level (training age)"
+          >
+            <input
+              type="checkbox"
+              id="overviewAgeToggle"
+              onchange="toggleAgeAdjusted(this.checked)"
+            />
+            <span>Age-Adj</span>
+          </label>
+          <label
+            class="toggle-label overview-toggle"
+            title="Adjust performance thresholds based on weight class and height bracket"
+          >
+            <input
+              type="checkbox"
+              id="overviewBodyToggle"
+              onchange="toggleBodyAdjusted(this.checked)"
+            />
+            <span>Body-Adj</span>
+          </label>
+          <label
+            class="toggle-label overview-toggle"
+            title="Rank athletes against peers with the same position, weight, height, and grade band"
+          >
+            <input
+              type="checkbox"
+              id="overviewCohortToggle"
+              onchange="toggleCohortMode(this.checked)"
+            />
+            <span>Cohort</span>
+          </label>
+        </div>
         <div class="table-wrap roster-table-wrap">
           <table id="rosterTable" class="data-table sortable">
             <caption class="sr-only">

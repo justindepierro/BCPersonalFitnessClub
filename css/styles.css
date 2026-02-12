@@ -200,6 +200,14 @@ body {
   flex-wrap: wrap;
 }
 
+.roster-filters {
+  margin-bottom: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
 .filter-sep {
   color: var(--border);
   font-size: 0.85rem;
