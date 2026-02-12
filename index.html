@@ -722,7 +722,7 @@
 
             <div class="ref-category">
               <h4>📐 Math Notes & Methodology</h4>
-              <div class="ref-grid" style="grid-template-columns: 1fr">
+              <div class="ref-grid ref-grid-single">
                 <div class="ref-item">
                   <p>
                     <strong>Distance conversions:</strong> 20 yards = 18.288 m,
@@ -754,223 +754,12 @@
         </details>
 
         <!-- Collapsible Grading Standards Reference -->
-        <details class="sprint-reference" id="sprintGradingRef">
+        <details class="sprint-reference">
           <summary>
             🏆 Grading Standards — What Makes Elite / Excellent / Good / Average
           </summary>
           <div class="sprint-ref-body" id="sprintGradingBody">
             <!-- Dynamically rendered by renderGradingSection() -->
-
-            <div class="grade-tables-wrap">
-              <div class="grade-table-block">
-                <h4>Skill (RB, WR, DB)</h4>
-                <table class="grade-std-table">
-                  <thead>
-                    <tr>
-                      <th>Metric</th>
-                      <th>Elite</th>
-                      <th>Excellent</th>
-                      <th>Good</th>
-                      <th>Average</th>
-                      <th>Below</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>40-Yard (s)</td>
-                      <td>≤ 4.75</td>
-                      <td>≤ 4.95</td>
-                      <td>≤ 5.15</td>
-                      <td>≤ 5.35</td>
-                      <td>&gt; 5.35</td>
-                    </tr>
-                    <tr>
-                      <td>vMax (m/s)</td>
-                      <td>≥ 9.0</td>
-                      <td>≥ 8.5</td>
-                      <td>≥ 8.0</td>
-                      <td>≥ 7.5</td>
-                      <td>&lt; 7.5</td>
-                    </tr>
-                    <tr>
-                      <td>v10 Best (m/s)</td>
-                      <td>≥ 9.0</td>
-                      <td>≥ 8.5</td>
-                      <td>≥ 8.0</td>
-                      <td>≥ 7.5</td>
-                      <td>&lt; 7.5</td>
-                    </tr>
-                    <tr>
-                      <td>F1 – Sprint Force (N)</td>
-                      <td>≥ 120</td>
-                      <td>≥ 100</td>
-                      <td>≥ 85</td>
-                      <td>≥ 70</td>
-                      <td>&lt; 70</td>
-                    </tr>
-                    <tr>
-                      <td>pₑ – Peak Momentum</td>
-                      <td>≥ 680</td>
-                      <td>≥ 600</td>
-                      <td>≥ 520</td>
-                      <td>≥ 440</td>
-                      <td>&lt; 440</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="grade-table-block">
-                <h4>Big Skill (QB, TE, LB)</h4>
-                <table class="grade-std-table">
-                  <thead>
-                    <tr>
-                      <th>Metric</th>
-                      <th>Elite</th>
-                      <th>Excellent</th>
-                      <th>Good</th>
-                      <th>Average</th>
-                      <th>Below</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>40-Yard (s)</td>
-                      <td>≤ 4.95</td>
-                      <td>≤ 5.15</td>
-                      <td>≤ 5.35</td>
-                      <td>≤ 5.60</td>
-                      <td>&gt; 5.60</td>
-                    </tr>
-                    <tr>
-                      <td>vMax (m/s)</td>
-                      <td>≥ 8.8</td>
-                      <td>≥ 8.3</td>
-                      <td>≥ 7.8</td>
-                      <td>≥ 7.3</td>
-                      <td>&lt; 7.3</td>
-                    </tr>
-                    <tr>
-                      <td>v10 Best (m/s)</td>
-                      <td>≥ 8.8</td>
-                      <td>≥ 8.3</td>
-                      <td>≥ 7.8</td>
-                      <td>≥ 7.3</td>
-                      <td>&lt; 7.3</td>
-                    </tr>
-                    <tr>
-                      <td>F1 – Sprint Force (N)</td>
-                      <td>≥ 130</td>
-                      <td>≥ 110</td>
-                      <td>≥ 92</td>
-                      <td>≥ 75</td>
-                      <td>&lt; 75</td>
-                    </tr>
-                    <tr>
-                      <td>pₑ – Peak Momentum</td>
-                      <td>≥ 770</td>
-                      <td>≥ 680</td>
-                      <td>≥ 590</td>
-                      <td>≥ 500</td>
-                      <td>&lt; 500</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="grade-table-block">
-                <h4>Linemen (OL, DL)</h4>
-                <table class="grade-std-table">
-                  <thead>
-                    <tr>
-                      <th>Metric</th>
-                      <th>Elite</th>
-                      <th>Excellent</th>
-                      <th>Good</th>
-                      <th>Average</th>
-                      <th>Below</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>40-Yard (s)</td>
-                      <td>≤ 5.25</td>
-                      <td>≤ 5.50</td>
-                      <td>≤ 5.75</td>
-                      <td>≤ 6.00</td>
-                      <td>&gt; 6.00</td>
-                    </tr>
-                    <tr>
-                      <td>vMax (m/s)</td>
-                      <td>≥ 8.4</td>
-                      <td>≥ 7.9</td>
-                      <td>≥ 7.4</td>
-                      <td>≥ 6.9</td>
-                      <td>&lt; 6.9</td>
-                    </tr>
-                    <tr>
-                      <td>v10 Best (m/s)</td>
-                      <td>≥ 8.4</td>
-                      <td>≥ 7.9</td>
-                      <td>≥ 7.4</td>
-                      <td>≥ 6.9</td>
-                      <td>&lt; 6.9</td>
-                    </tr>
-                    <tr>
-                      <td>F1 – Sprint Force (N)</td>
-                      <td>≥ 140</td>
-                      <td>≥ 120</td>
-                      <td>≥ 100</td>
-                      <td>≥ 82</td>
-                      <td>&lt; 82</td>
-                    </tr>
-                    <tr>
-                      <td>pₑ – Peak Momentum</td>
-                      <td>≥ 880</td>
-                      <td>≥ 780</td>
-                      <td>≥ 680</td>
-                      <td>≥ 580</td>
-                      <td>&lt; 580</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div class="ref-category" style="margin-top: 1rem">
-              <h4>📊 Ungraded Diagnostic Columns</h4>
-              <p style="font-size: 0.8rem; color: var(--text-muted)">
-                These columns don't have formal HS standards but are valuable
-                for coaching diagnostics:
-              </p>
-              <ul class="ref-diag-list">
-                <li>
-                  <strong>Individual splits (0–20, 20–30, 30–40):</strong>
-                  Identify WHERE in the sprint an athlete is strong or weak.
-                </li>
-                <li>
-                  <strong>v1, v2, v3:</strong> Compare velocity across phases —
-                  are they still building speed or dropping off?
-                </li>
-                <li>
-                  <strong>a2, a3:</strong> Positive = still accelerating,
-                  negative = decelerating. Diagnose speed endurance issues.
-                </li>
-                <li>
-                  <strong>F2, F3:</strong> Force in later phases — typically
-                  small. Large negative F3 means significant deceleration.
-                </li>
-                <li>
-                  <strong>p1:</strong> Momentum after acceleration phase —
-                  compare to pₑ to see how much momentum they gain in the last
-                  20 yards.
-                </li>
-                <li>
-                  <strong>P1, P2, P3:</strong> Sprint power by phase — P1 is the
-                  key performance metric; P2/P3 are diagnostic.
-                </li>
-              </ul>
-            </div>
           </div>
         </details>
 
@@ -1337,7 +1126,7 @@
 
             <div class="ref-category">
               <h4>📐 Formulas & Methodology</h4>
-              <div class="ref-grid" style="grid-template-columns: 1fr">
+              <div class="ref-grid ref-grid-single">
                 <div class="ref-item">
                   <p>
                     <strong>Sayers Formula:</strong> P<sub>peak</sub> = 60.7 ×
@@ -1368,307 +1157,12 @@
         </details>
 
         <!-- Collapsible Grading Standards Reference -->
-        <details class="sprint-reference" id="strengthGradingRef">
+        <details class="sprint-reference">
           <summary>
             🏆 Grading Standards — What Makes Elite / Excellent / Good / Average
           </summary>
           <div class="sprint-ref-body" id="strengthGradingBody">
             <!-- Dynamically rendered by renderGradingSection() -->
-
-            <div class="grade-tables-wrap">
-              <div class="grade-table-block">
-                <h4>Skill (RB, WR, DB)</h4>
-                <table class="grade-std-table">
-                  <thead>
-                    <tr>
-                      <th>Metric</th>
-                      <th>Elite</th>
-                      <th>Excellent</th>
-                      <th>Good</th>
-                      <th>Average</th>
-                      <th>Below</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Bench 1RM (lb)</td>
-                      <td>≥ 205</td>
-                      <td>≥ 175</td>
-                      <td>≥ 145</td>
-                      <td>≥ 115</td>
-                      <td>&lt; 115</td>
-                    </tr>
-                    <tr>
-                      <td>Squat 1RM (lb)</td>
-                      <td>≥ 335</td>
-                      <td>≥ 285</td>
-                      <td>≥ 235</td>
-                      <td>≥ 185</td>
-                      <td>&lt; 185</td>
-                    </tr>
-                    <tr>
-                      <td>Rel Bench (×BW)</td>
-                      <td>≥ 1.30</td>
-                      <td>≥ 1.10</td>
-                      <td>≥ 0.90</td>
-                      <td>≥ 0.70</td>
-                      <td>&lt; 0.70</td>
-                    </tr>
-                    <tr>
-                      <td>Rel Squat (×BW)</td>
-                      <td>≥ 1.90</td>
-                      <td>≥ 1.65</td>
-                      <td>≥ 1.40</td>
-                      <td>≥ 1.15</td>
-                      <td>&lt; 1.15</td>
-                    </tr>
-                    <tr>
-                      <td>Vertical Jump (in)</td>
-                      <td>≥ 33</td>
-                      <td>≥ 29</td>
-                      <td>≥ 25</td>
-                      <td>≥ 21</td>
-                      <td>&lt; 21</td>
-                    </tr>
-                    <tr>
-                      <td>Peak Power (W)</td>
-                      <td>≥ 5200</td>
-                      <td>≥ 4600</td>
-                      <td>≥ 4000</td>
-                      <td>≥ 3500</td>
-                      <td>&lt; 3500</td>
-                    </tr>
-                    <tr>
-                      <td>Rel Peak Power (W/kg)</td>
-                      <td>≥ 70</td>
-                      <td>≥ 62</td>
-                      <td>≥ 55</td>
-                      <td>≥ 48</td>
-                      <td>&lt; 48</td>
-                    </tr>
-                    <tr>
-                      <td>Med Ball (in)</td>
-                      <td>≥ 185</td>
-                      <td>≥ 165</td>
-                      <td>≥ 148</td>
-                      <td>≥ 130</td>
-                      <td>&lt; 130</td>
-                    </tr>
-                    <tr>
-                      <td>MB Relative (in/lb)</td>
-                      <td>≥ 1.10</td>
-                      <td>≥ 0.95</td>
-                      <td>≥ 0.80</td>
-                      <td>≥ 0.65</td>
-                      <td>&lt; 0.65</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="grade-table-block">
-                <h4>Big Skill (QB, TE, LB)</h4>
-                <table class="grade-std-table">
-                  <thead>
-                    <tr>
-                      <th>Metric</th>
-                      <th>Elite</th>
-                      <th>Excellent</th>
-                      <th>Good</th>
-                      <th>Average</th>
-                      <th>Below</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Bench 1RM (lb)</td>
-                      <td>≥ 255</td>
-                      <td>≥ 215</td>
-                      <td>≥ 175</td>
-                      <td>≥ 140</td>
-                      <td>&lt; 140</td>
-                    </tr>
-                    <tr>
-                      <td>Squat 1RM (lb)</td>
-                      <td>≥ 350</td>
-                      <td>≥ 300</td>
-                      <td>≥ 250</td>
-                      <td>≥ 200</td>
-                      <td>&lt; 200</td>
-                    </tr>
-                    <tr>
-                      <td>Rel Bench (×BW)</td>
-                      <td>≥ 1.40</td>
-                      <td>≥ 1.20</td>
-                      <td>≥ 1.00</td>
-                      <td>≥ 0.80</td>
-                      <td>&lt; 0.80</td>
-                    </tr>
-                    <tr>
-                      <td>Rel Squat (×BW)</td>
-                      <td>≥ 1.85</td>
-                      <td>≥ 1.60</td>
-                      <td>≥ 1.35</td>
-                      <td>≥ 1.10</td>
-                      <td>&lt; 1.10</td>
-                    </tr>
-                    <tr>
-                      <td>Vertical Jump (in)</td>
-                      <td>≥ 31</td>
-                      <td>≥ 27</td>
-                      <td>≥ 23</td>
-                      <td>≥ 19</td>
-                      <td>&lt; 19</td>
-                    </tr>
-                    <tr>
-                      <td>Peak Power (W)</td>
-                      <td>≥ 5800</td>
-                      <td>≥ 5100</td>
-                      <td>≥ 4400</td>
-                      <td>≥ 3800</td>
-                      <td>&lt; 3800</td>
-                    </tr>
-                    <tr>
-                      <td>Rel Peak Power (W/kg)</td>
-                      <td>≥ 68</td>
-                      <td>≥ 60</td>
-                      <td>≥ 53</td>
-                      <td>≥ 46</td>
-                      <td>&lt; 46</td>
-                    </tr>
-                    <tr>
-                      <td>Med Ball (in)</td>
-                      <td>≥ 200</td>
-                      <td>≥ 178</td>
-                      <td>≥ 158</td>
-                      <td>≥ 138</td>
-                      <td>&lt; 138</td>
-                    </tr>
-                    <tr>
-                      <td>MB Relative (in/lb)</td>
-                      <td>≥ 1.05</td>
-                      <td>≥ 0.90</td>
-                      <td>≥ 0.78</td>
-                      <td>≥ 0.65</td>
-                      <td>&lt; 0.65</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="grade-table-block">
-                <h4>Linemen (OL, DL)</h4>
-                <table class="grade-std-table">
-                  <thead>
-                    <tr>
-                      <th>Metric</th>
-                      <th>Elite</th>
-                      <th>Excellent</th>
-                      <th>Good</th>
-                      <th>Average</th>
-                      <th>Below</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Bench 1RM (lb)</td>
-                      <td>≥ 290</td>
-                      <td>≥ 250</td>
-                      <td>≥ 210</td>
-                      <td>≥ 170</td>
-                      <td>&lt; 170</td>
-                    </tr>
-                    <tr>
-                      <td>Squat 1RM (lb)</td>
-                      <td>≥ 375</td>
-                      <td>≥ 325</td>
-                      <td>≥ 275</td>
-                      <td>≥ 225</td>
-                      <td>&lt; 225</td>
-                    </tr>
-                    <tr>
-                      <td>Rel Bench (×BW)</td>
-                      <td>≥ 1.35</td>
-                      <td>≥ 1.15</td>
-                      <td>≥ 0.95</td>
-                      <td>≥ 0.75</td>
-                      <td>&lt; 0.75</td>
-                    </tr>
-                    <tr>
-                      <td>Rel Squat (×BW)</td>
-                      <td>≥ 1.70</td>
-                      <td>≥ 1.45</td>
-                      <td>≥ 1.25</td>
-                      <td>≥ 1.05</td>
-                      <td>&lt; 1.05</td>
-                    </tr>
-                    <tr>
-                      <td>Vertical Jump (in)</td>
-                      <td>≥ 29</td>
-                      <td>≥ 25</td>
-                      <td>≥ 21</td>
-                      <td>≥ 17</td>
-                      <td>&lt; 17</td>
-                    </tr>
-                    <tr>
-                      <td>Peak Power (W)</td>
-                      <td>≥ 6300</td>
-                      <td>≥ 5500</td>
-                      <td>≥ 4800</td>
-                      <td>≥ 4100</td>
-                      <td>&lt; 4100</td>
-                    </tr>
-                    <tr>
-                      <td>Rel Peak Power (W/kg)</td>
-                      <td>≥ 58</td>
-                      <td>≥ 52</td>
-                      <td>≥ 46</td>
-                      <td>≥ 40</td>
-                      <td>&lt; 40</td>
-                    </tr>
-                    <tr>
-                      <td>Med Ball (in)</td>
-                      <td>≥ 210</td>
-                      <td>≥ 188</td>
-                      <td>≥ 168</td>
-                      <td>≥ 148</td>
-                      <td>&lt; 148</td>
-                    </tr>
-                    <tr>
-                      <td>MB Relative (in/lb)</td>
-                      <td>≥ 0.95</td>
-                      <td>≥ 0.82</td>
-                      <td>≥ 0.72</td>
-                      <td>≥ 0.60</td>
-                      <td>&lt; 0.60</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div class="ref-category" style="margin-top: 1rem">
-              <h4>📊 Ungraded Diagnostic Columns</h4>
-              <p style="font-size: 0.8rem; color: var(--text-muted)">
-                These columns don't have formal grading thresholds but provide
-                important context:
-              </p>
-              <ul class="ref-diag-list">
-                <li>
-                  <strong>Wt (lb) / Mass (kg):</strong> Body composition
-                  context. Not graded because optimal weight varies drastically
-                  by position — a 160 lb WR and a 280 lb OL can both be
-                  perfectly built for their roles.
-                </li>
-                <li>
-                  <strong>Strength Utilisation:</strong> Diagnostic ratio
-                  comparing sprint force to squat strength. Low values flag
-                  athletes who are strong in the weight room but aren't
-                  expressing it on the field — a coaching target for sprint
-                  mechanics and rate-of-force development training.
-                </li>
-              </ul>
-            </div>
           </div>
         </details>
 
@@ -1797,7 +1291,7 @@
           <span class="tier-badge tier-competitive">Competitive 25–50th</span>
           <span class="tier-badge tier-developing">Developing &lt;25th</span>
         </div>
-        <div class="table-wrap" id="scorecardContent">
+        <div class="table-wrap">
           <table id="scorecardTable" class="data-table">
             <caption class="sr-only">
               Athlete scorecard with percentile-based tier assignments
@@ -1942,10 +1436,7 @@
             aria-label="Sport"
             onchange="updateBmGroupOptions(); renderBenchmarks()"
           >
-            <option value="Football">Football</option>
-            <option value="Soccer">Soccer</option>
-            <option value="Baseball">Baseball</option>
-            <option value="Basketball">Basketball</option>
+            <!-- Dynamically populated by renderBenchmarks() -->
           </select>
           <select
             id="bmGroup"

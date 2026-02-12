@@ -910,7 +910,6 @@
           for (const m of members) { m.cohort = { key: key, size: 1, percentiles: {} }; }
           continue;
         }
-        const metricPercentiles = {};
         for (const mk of cohortMetricKeys) {
           const inverted = _META_MAP.get(mk)?.invert;
           const vals = members.map(m => m[mk]).filter(v => v !== null && v !== undefined).sort((a, b) => a - b);

@@ -860,18 +860,18 @@ select:focus,
   .site-footer,
   .filters,
   .btn,
-  .no-print,
   .data-mgmt-bar,
-  .modal-overlay {
+  .modal-overlay,
+  .scroll-top-btn,
+  .toast-container,
+  .edit-panel,
+  .edit-panel-backdrop {
     display: none !important;
   }
 
   .tab-panel {
     display: none !important;
-  }
-
-  .tab-panel.print-active {
-    display: block !important;
+    overflow: visible !important;
   }
 
   .content {
@@ -914,6 +914,25 @@ select:focus,
   .constants-footer,
   .info-banner {
     display: none !important;
+  }
+
+  table {
+    font-size: 8pt !important;
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+
+  canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  .metric-grid,
+  .chart-card {
+    break-inside: avoid;
   }
 }
 
@@ -1008,6 +1027,7 @@ select:focus,
   padding: 1rem 1.25rem;
 }
 .ref-category {
+  margin-top: 1rem;
   margin-bottom: 1.25rem;
 }
 .ref-category h4 {
@@ -1017,10 +1037,20 @@ select:focus,
   border-bottom: 1px solid var(--border);
   padding-bottom: 0.3rem;
 }
+
+/* Reusable text utilities for JS-generated content */
+.ref-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
 .ref-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 0.75rem;
+}
+.ref-grid.ref-grid-single {
+  grid-template-columns: 1fr;
 }
 .ref-item {
   background: var(--surface2);
@@ -1078,6 +1108,9 @@ select:focus,
   border-collapse: collapse;
   font-size: 0.72rem;
 }
+.grade-std-table.std-narrow { max-width: 360px; }
+.grade-std-table.std-medium { max-width: 500px; }
+.grade-std-table.std-wide   { max-width: 660px; }
 .grade-std-table th,
 .grade-std-table td {
   padding: 0.35rem 0.5rem;
@@ -3308,35 +3341,6 @@ select:focus,
 }
 .text-muted {
   color: var(--text-muted);
-}
-
-@media print {
-  .scroll-top-btn,
-  .toast-container,
-  .edit-panel,
-  .edit-panel-backdrop,
-  .data-mgmt-bar,
-  .modal-overlay {
-    display: none !important;
-  }
-  table {
-    font-size: 8pt !important;
-    page-break-inside: auto;
-  }
-  tr {
-    page-break-inside: avoid;
-  }
-  canvas {
-    max-width: 100% !important;
-    height: auto !important;
-  }
-  .tab-panel {
-    overflow: visible !important;
-  }
-  .metric-grid,
-  .chart-card {
-    break-inside: avoid;
-  }
 }
 
 /* Utility: screen-reader-only (visually hidden, accessible to AT) */
