@@ -105,7 +105,8 @@
     const vals = arr.filter((v) => v !== null && v !== undefined);
     if (vals.length < 2) return null;
     const m = vals.reduce((s, v) => s + v, 0) / vals.length;
-    const variance = vals.reduce((s, v) => s + (v - m) ** 2, 0) / vals.length;
+    // Bessel's correction (N-1): correct for small-sample bias
+    const variance = vals.reduce((s, v) => s + (v - m) ** 2, 0) / (vals.length - 1);
     return Math.sqrt(variance);
   }
 
@@ -757,7 +758,7 @@
         parts.push(a.zVMax * 0.25);
         weights.push(0.25);
       }
-      if (parts.length > 0) {
+      if (parts.length >= 2) {
         a.totalExplosive = rd(
           parts.reduce((s, v) => s + v, 0) / weights.reduce((s, w) => s + w, 0),
           2,
@@ -996,6 +997,46 @@
             " lb) is very low relative to body weight (" +
             a.weight +
             " lb) — possible data entry error.",
+        });
+      }
+      // Unrealistic body metrics
+      if (a.weight !== null && (a.weight < 80 || a.weight > 400)) {
+        flags.push({
+          athlete: a.name, id: a.id,
+          msg: "Weight (" + a.weight + " lb) is outside plausible HS range (80–400) — verify data.",
+        });
+      }
+      if (a.height !== null && (a.height < 54 || a.height > 84)) {
+        flags.push({
+          athlete: a.name, id: a.id,
+          msg: "Height (" + a.height + " in) is outside plausible HS range (54–84\u2033) — verify data.",
+        });
+      }
+      // Unrealistic sprint
+      if (a.forty !== null && (a.forty < 4.0 || a.forty > 8.0)) {
+        flags.push({
+          athlete: a.name, id: a.id,
+          msg: "40-yd time (" + a.forty + " s) is outside plausible HS range (4.0–8.0) — verify data.",
+        });
+      }
+      // Unrealistic lifts relative to bodyweight
+      if (a.bench !== null && a.weight !== null && a.bench / a.weight > 2.5) {
+        flags.push({
+          athlete: a.name, id: a.id,
+          msg: "Bench (" + a.bench + " lb) is >2.5× body weight — exceptional or data error.",
+        });
+      }
+      if (a.squat !== null && a.weight !== null && a.squat / a.weight > 3.5) {
+        flags.push({
+          athlete: a.name, id: a.id,
+          msg: "Squat (" + a.squat + " lb) is >3.5× body weight — exceptional or data error.",
+        });
+      }
+      // Unrealistic vertical
+      if (a.vert !== null && a.vert > 48) {
+        flags.push({
+          athlete: a.name, id: a.id,
+          msg: "Vertical (" + a.vert + " in) exceeds 48\u2033 — world-class level, verify data.",
         });
       }
     }
