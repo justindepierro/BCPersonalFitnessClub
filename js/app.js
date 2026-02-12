@@ -91,13 +91,43 @@
     return g + (s[(v - 20) % 10] || s[v] || s[0]);
   }
 
-  /* ---------- Tier label from average score ---------- */
+  /* ---------- Tier label from average score — delegates to data.js source of truth ---------- */
   function tierLabelFromAvg(avg) {
-    if (avg >= 4.5) return "Elite";
-    if (avg >= 3.5) return "Excellent";
-    if (avg >= 2.5) return "Good";
-    if (avg >= 1.5) return "Average";
-    return "Below Avg";
+    return window._gradeHelpers.overallGradeLabel(avg);
+  }
+
+  /* ---------- Shared grade tier constants (single source of truth) ---------- */
+  /* These are referenced by donut charts, group dashboards, etc.
+     Tier names, labels, and scores come from HS_STANDARDS in data.js.
+     Colors are presentation-only, defined once here. */
+  const GRADE_TIER_LABELS = {
+    elite: "Elite",
+    excellent: "Excellent",
+    good: "Good",
+    average: "Average",
+    below: "Below Avg",
+  };
+  const GRADE_TIER_COLORS = {
+    elite: "#a78bfa",
+    excellent: "#4ade80",
+    good: "#60a5fa",
+    average: "#facc15",
+    below: "#f87171",
+  };
+  const GRADE_TIER_ORDER = ["elite", "excellent", "good", "average", "below"];
+
+  /** Map a percentile (0–100) to a grade-system tier for display consistency.
+      The canonical percentile tier vocabulary (strong/solid/competitive/developing)
+      is used for scorecard tiers; this mapping uses grade tiers (elite/excellent/
+      good/average/below) when displaying percentiles alongside grade data
+      (e.g. cohort column, profile badge) for uniform badge styling. */
+  function pctToGradeTier(pct) {
+    if (pct === null || pct === undefined) return "below";
+    if (pct >= 90) return "elite";
+    if (pct >= 75) return "excellent";
+    if (pct >= 50) return "good";
+    if (pct >= 25) return "average";
+    return "below";
   }
 
   /* ---------- Test History Metric Keys ---------- */
@@ -1382,7 +1412,7 @@
           ${a.cohort && a.cohort.avgPct !== null ? `
           <div class="profile-cohort-bar">
             <span class="cohort-label">Cohort Rank:</span>
-            <span class="grade-badge grade-bg-${a.cohort.avgPct >= 90 ? 'elite' : a.cohort.avgPct >= 75 ? 'excellent' : a.cohort.avgPct >= 50 ? 'good' : a.cohort.avgPct >= 25 ? 'average' : 'below'}" style="font-size:.65rem">${a.cohort.avgPct}th pctl</span>
+            <span class="grade-badge grade-bg-${pctToGradeTier(a.cohort.avgPct)}" style="font-size:.65rem">${a.cohort.avgPct}th pctl</span>
             <span class="cohort-detail">${esc(a.cohort.key)} (n=${a.cohort.size}, ${a.cohort.metricsUsed} metrics)</span>
           </div>` : ""}
         </div>
@@ -1860,27 +1890,8 @@
       return;
     }
 
-    const tierCounts = {
-      elite: 0,
-      excellent: 0,
-      good: 0,
-      average: 0,
-      below: 0,
-    };
-    const tierLabels = {
-      elite: "Elite",
-      excellent: "Excellent",
-      good: "Good",
-      average: "Average",
-      below: "Below Avg",
-    };
-    const tierColors = {
-      elite: "#a78bfa",
-      excellent: "#4ade80",
-      good: "#60a5fa",
-      average: "#facc15",
-      below: "#f87171",
-    };
+    const tierCounts = {};
+    for (const t of GRADE_TIER_ORDER) tierCounts[t] = 0;
 
     for (const g of Object.values(a.grades)) {
       if (g && g.tier && tierCounts.hasOwnProperty(g.tier))
@@ -1901,12 +1912,12 @@
     profileDonutInstance = new Chart(canvas, {
       type: "doughnut",
       data: {
-        labels: activeTiers.map((t) => tierLabels[t]),
+        labels: activeTiers.map((t) => GRADE_TIER_LABELS[t]),
         datasets: [
           {
             data: activeTiers.map((t) => tierCounts[t]),
-            backgroundColor: activeTiers.map((t) => tierColors[t] + "44"),
-            borderColor: activeTiers.map((t) => tierColors[t]),
+            backgroundColor: activeTiers.map((t) => GRADE_TIER_COLORS[t] + "44"),
+            borderColor: activeTiers.map((t) => GRADE_TIER_COLORS[t]),
             borderWidth: 2,
             hoverOffset: 8,
           },
@@ -4291,24 +4302,27 @@
       }
 
       /* --- Age-adjustment docs --- */
+      const ageFactorsSpeed = STD._ageFactorsSpeed;
       const ageRows = Object.entries(ageFactors)
         .sort((a, b) => b[0] - a[0])
         .map(
-          ([g, f]) =>
-            `<tr><td>${g}th</td><td>${f.toFixed(2)}</td><td>${f === 1 ? "Full standard (baseline)" : "Thresholds × " + f.toFixed(2)}</td></tr>`,
+          ([g, f]) => {
+            const sf = ageFactorsSpeed[g];
+            return `<tr><td>${g}th</td><td>${f.toFixed(2)}</td><td>${sf.toFixed(2)}</td><td>${f === 1 ? "Full standard (baseline)" : "Strength × " + f.toFixed(2) + ", Speed × " + sf.toFixed(2)}</td></tr>`;
+          },
         )
         .join("");
       const ageDoc = `<div class="ref-category" style="margin-top:1rem">
         <h4>📐 Age-Adjustment Factors</h4>
         <p style="font-size:.8rem;color:var(--text-muted)">
           When the <strong>Age-Adjusted</strong> toggle is on, thresholds are scaled by a
-          grade-based factor. For normal metrics (higher = better), thresholds are
-          <em>multiplied</em> by the factor. For inverted metrics like 40yd time
-          (lower = better), thresholds are <em>divided</em> by the factor. This means
-          younger athletes don't need to hit 12th-grade benchmarks to earn top grades.
+          grade-based factor. Strength metrics use steeper scaling (younger athletes
+          are much weaker); speed/inverted metrics use gentler scaling (speed develops
+          faster than strength). For normal metrics, thresholds are <em>multiplied</em>
+          by the factor. For inverted metrics, thresholds are <em>divided</em> by the factor.
         </p>
-        <table class="grade-std-table" style="max-width:400px">
-          <thead><tr><th>Grade</th><th>Factor</th><th>Effect</th></tr></thead>
+        <table class="grade-std-table" style="max-width:500px">
+          <thead><tr><th>Grade</th><th>Strength</th><th>Speed</th><th>Effect</th></tr></thead>
           <tbody>${ageRows}</tbody>
         </table>
       </div>`;
@@ -4854,11 +4868,14 @@
 
     /* --- Build age-adjustment factor reference --- */
     const ageFactors = D.hsStandards._ageFactors;
+    const ageFactorsSpeed = D.hsStandards._ageFactorsSpeed;
     const ageRows = Object.entries(ageFactors)
       .sort((a, b) => b[0] - a[0])
       .map(
-        ([g, f]) =>
-          `<tr><td>${g}th</td><td>${f.toFixed(2)}</td><td>${f === 1 ? "Full standard (12th-grade baseline)" : "Thresholds × " + f.toFixed(2)}</td></tr>`,
+        ([g, f]) => {
+          const sf = ageFactorsSpeed[g];
+          return `<tr><td>${g}th</td><td>${f.toFixed(2)}</td><td>${sf.toFixed(2)}</td><td>${f === 1 ? "Full standard (12th-grade baseline)" : "Strength × " + f.toFixed(2) + ", Speed × " + sf.toFixed(2)}</td></tr>`;
+        },
       )
       .join("");
 
@@ -4912,12 +4929,12 @@
       <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.5rem">
         Base thresholds reflect 12th-grade (senior) expectations. When the
         <strong>Age-Adjusted</strong> toggle is enabled, thresholds scale by grade
-        level. For normal metrics (higher = better), thresholds are <em>multiplied</em>
-        by the factor; for inverted metrics like 40yd time (lower = better),
-        thresholds are <em>divided</em> by the factor.
+        level. Strength metrics use steeper scaling (younger athletes are much
+        weaker); speed/inverted metrics use gentler scaling (speed develops
+        faster than strength).
       </p>
-      <table class="grade-std-table" style="max-width:400px">
-        <thead><tr><th>Grade</th><th>Factor</th><th>Effect</th></tr></thead>
+      <table class="grade-std-table" style="max-width:500px">
+        <thead><tr><th>Grade</th><th>Strength Factor</th><th>Speed Factor</th><th>Effect</th></tr></thead>
         <tbody>${ageRows}</tbody>
       </table>
       <p style="margin-top:.75rem"><em>${D.notes.join(" ")}</em></p>
@@ -6523,16 +6540,9 @@
       const totalGraded = Object.values(tierCounts).reduce((s, v) => s + v, 0);
       if (totalGraded > 0) {
         html += '<div class="grp-grade-dist">';
-        const tierLabels = {
-          elite: "Elite",
-          excellent: "Excellent",
-          good: "Good",
-          average: "Average",
-          below: "Below Avg",
-        };
         for (const [t, c] of Object.entries(tierCounts)) {
           if (c > 0) {
-            html += `<span class="grade-badge grade-bg-${t}">${tierLabels[t]}: ${c}</span>`;
+            html += `<span class="grade-badge grade-bg-${t}">${GRADE_TIER_LABELS[t]}: ${c}</span>`;
           }
         }
         html += "</div>";

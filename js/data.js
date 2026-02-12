@@ -171,6 +171,11 @@
       { key: "momMax", label: "Peak Momentum", unit: "kg\u00B7m/s" },
     ],
     /* --- Grade-based age-adjustment factors (grade 6–12) --- */
+    /* Strength factors: younger grades scale down proportionally.
+       Speed factors: speed develops faster than strength — 6th graders
+       run at ~85% of senior pace, not 58%. Using a separate table for
+       inverted/speed metrics prevents implausibly easy thresholds
+       (e.g. 8.19s "elite" forty for a 6th grader). */
     _ageFactors: {
       12: 1.0,
       11: 0.93,
@@ -179,6 +184,15 @@
       8: 0.72,
       7: 0.65,
       6: 0.58,
+    },
+    _ageFactorsSpeed: {
+      12: 1.0,
+      11: 0.97,
+      10: 0.94,
+      9: 0.91,
+      8: 0.88,
+      7: 0.86,
+      6: 0.84,
     },
     /* ===== Football ===== */
     Football: {
@@ -364,12 +378,15 @@
   ];
 
   /* Height tiers: taller athletes tend to jump higher and generate
-     more power at the same weight, shorter athletes accelerate faster. */
+     more power at the same weight. For acceleration (forty), shorter
+     athletes have an advantage (lower center of mass, quicker turnover).
+     For top speed (vMax), taller athletes have an advantage (stride length).
+     These are separate factors to avoid penalising short athletes on vMax. */
   const HEIGHT_TIERS = [
-    { label: '<64"',   max: 64, jumpF: 0.88, speedF: 1.04 },
-    { label: '64–67"', max: 67, jumpF: 0.94, speedF: 1.02 },
-    { label: '67–71"', max: 71, jumpF: 1.00, speedF: 1.00 },
-    { label: '71"+',   max: Infinity, jumpF: 1.06, speedF: 0.97 },
+    { label: '<64"',   max: 64, jumpF: 0.88, accelF: 1.04, topSpeedF: 0.94 },
+    { label: '64–67"', max: 67, jumpF: 0.94, accelF: 1.02, topSpeedF: 0.97 },
+    { label: '67–71"', max: 71, jumpF: 1.00, accelF: 1.00, topSpeedF: 1.00 },
+    { label: '71"+',   max: Infinity, jumpF: 1.06, accelF: 0.97, topSpeedF: 1.04 },
   ];
 
   /* Metric classification for body-adjustment factor selection */
@@ -378,7 +395,7 @@
     peakPower: "abs", F1: "abs", momMax: "abs",
     relBench: "rel", relSquat: "rel", mbRel: "rel", relPeakPower: "rel",
     vert: "jump", broad: "jump",
-    forty: "speed", vMax: "speed", v10Max: "speed",
+    forty: "accel", vMax: "topSpeed", v10Max: "topSpeed",
   };
 
   function getWeightTier(wt) {
@@ -406,8 +423,10 @@
       if (wt) factor *= wt.relF;
     } else if (cat === "jump") {
       if (ht) factor *= ht.jumpF;
-    } else if (cat === "speed") {
-      if (ht) factor *= ht.speedF;
+    } else if (cat === "accel") {
+      if (ht) factor *= ht.accelF;
+    } else if (cat === "topSpeed") {
+      if (ht) factor *= ht.topSpeedF;
     }
     if (factor === 1.0) return thresholds;
     return thresholds.map(function (t) {
@@ -430,9 +449,14 @@
     const inverted = _META_MAP.get(metricKey)?.invert;
 
     // Apply age-adjustment: scale thresholds down for younger grades
+    // Use speed-specific factors for inverted/speed metrics to avoid
+    // implausibly easy standards at younger grades
     if (ageAdj && grade !== null && grade !== undefined) {
       const clampedGrade = Math.max(6, Math.min(12, grade));
-      const factor = HS_STANDARDS._ageFactors[clampedGrade];
+      const factorTable = inverted
+        ? HS_STANDARDS._ageFactorsSpeed
+        : HS_STANDARDS._ageFactors;
+      const factor = factorTable[clampedGrade];
       if (factor !== undefined && factor !== 1.0) {
         thresholds = thresholds.map((t) =>
           inverted ? rd(t / factor, 2) : rd(t * factor, 2),
@@ -1001,9 +1025,16 @@
   }
 
   /* ---------- Fetch + expose ---------- */
-  // Make processData accessible for re-processing after edits
+  // Single source of truth: expose grading helpers so app.js never duplicates them
   window._processData = processData;
   window._rawDataCache = null;
+  window._gradeHelpers = {
+    overallGradeLabel: overallGradeLabel,
+    overallGradeTier: overallGradeTier,
+    tierFromPct: tierFromPct,
+    getWeightTier: getWeightTier,
+    getHeightTier: getHeightTier,
+  };
 
   fetch("data/athletes.json")
     .then((r) => {
