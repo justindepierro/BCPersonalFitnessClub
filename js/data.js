@@ -106,7 +106,8 @@
     if (vals.length < 2) return null;
     const m = vals.reduce((s, v) => s + v, 0) / vals.length;
     // Bessel's correction (N-1): correct for small-sample bias
-    const variance = vals.reduce((s, v) => s + (v - m) ** 2, 0) / (vals.length - 1);
+    const variance =
+      vals.reduce((s, v) => s + (v - m) ** 2, 0) / (vals.length - 1);
     return Math.sqrt(variance);
   }
 
@@ -371,11 +372,11 @@
      Factors multiply the baseline threshold for absolute metrics;
      relative/BW-normalised metrics use inverse factors. */
   const WEIGHT_TIERS = [
-    { label: "<120 lb",   max: 120, absF: 0.65, relF: 1.12 },
+    { label: "<120 lb", max: 120, absF: 0.65, relF: 1.12 },
     { label: "120–145 lb", max: 145, absF: 0.78, relF: 1.06 },
-    { label: "145–175 lb", max: 175, absF: 0.90, relF: 1.00 },
-    { label: "175–210 lb", max: 210, absF: 1.00, relF: 0.95 },
-    { label: "210+ lb",    max: Infinity, absF: 1.08, relF: 0.90 },
+    { label: "145–175 lb", max: 175, absF: 0.9, relF: 1.0 },
+    { label: "175–210 lb", max: 210, absF: 1.0, relF: 0.95 },
+    { label: "210+ lb", max: Infinity, absF: 1.08, relF: 0.9 },
   ];
 
   /* Height tiers: taller athletes tend to jump higher and generate
@@ -384,35 +385,61 @@
      For top speed (vMax), taller athletes have an advantage (stride length).
      These are separate factors to avoid penalising short athletes on vMax. */
   const HEIGHT_TIERS = [
-    { label: '<64"',   max: 64, jumpF: 0.88, accelF: 1.04, topSpeedF: 0.94 },
+    { label: '<64"', max: 64, jumpF: 0.88, accelF: 1.04, topSpeedF: 0.94 },
     { label: '64–67"', max: 67, jumpF: 0.94, accelF: 1.02, topSpeedF: 0.97 },
-    { label: '67–71"', max: 71, jumpF: 1.00, accelF: 1.00, topSpeedF: 1.00 },
-    { label: '71"+',   max: Infinity, jumpF: 1.06, accelF: 0.97, topSpeedF: 1.04 },
+    { label: '67–71"', max: 71, jumpF: 1.0, accelF: 1.0, topSpeedF: 1.0 },
+    {
+      label: '71"+',
+      max: Infinity,
+      jumpF: 1.06,
+      accelF: 0.97,
+      topSpeedF: 1.04,
+    },
   ];
 
   /* Metric classification for body-adjustment factor selection */
   const BODY_METRIC_CATEGORY = {
-    bench: "abs", squat: "abs", medball: "abs",
-    peakPower: "abs", F1: "abs", momMax: "abs",
-    relBench: "rel", relSquat: "rel", mbRel: "rel", relPeakPower: "rel",
-    vert: "jump", broad: "jump",
-    forty: "accel", vMax: "topSpeed", v10Max: "topSpeed",
+    bench: "abs",
+    squat: "abs",
+    medball: "abs",
+    peakPower: "abs",
+    F1: "abs",
+    momMax: "abs",
+    relBench: "rel",
+    relSquat: "rel",
+    mbRel: "rel",
+    relPeakPower: "rel",
+    vert: "jump",
+    broad: "jump",
+    forty: "accel",
+    vMax: "topSpeed",
+    v10Max: "topSpeed",
   };
 
   function getWeightTier(wt) {
     if (wt === null || wt === undefined) return null;
-    for (const t of WEIGHT_TIERS) { if (wt <= t.max) return t; }
+    for (const t of WEIGHT_TIERS) {
+      if (wt <= t.max) return t;
+    }
     return WEIGHT_TIERS[WEIGHT_TIERS.length - 1];
   }
 
   function getHeightTier(ht) {
     if (ht === null || ht === undefined) return null;
-    for (const t of HEIGHT_TIERS) { if (ht <= t.max) return t; }
+    for (const t of HEIGHT_TIERS) {
+      if (ht <= t.max) return t;
+    }
     return HEIGHT_TIERS[HEIGHT_TIERS.length - 1];
   }
 
   /** Apply combined weight + height body-adjustment to thresholds */
-  function bodyAdjustThresholds(thresholds, metricKey, weight, height, inverted) {
+  function bodyAdjustThresholds(
+    thresholds,
+    metricKey,
+    weight,
+    height,
+    inverted,
+  ) {
     const cat = BODY_METRIC_CATEGORY[metricKey];
     if (!cat) return thresholds; // unknown metric — no adjustment
     const wt = getWeightTier(weight);
@@ -441,7 +468,17 @@
      ageAdj = true to apply grade-based scaling
      bodyAdj = true to apply weight/height scaling
      weight/height = athlete body metrics (used when bodyAdj=true) */
-  function gradeValue(val, metricKey, sport, group, grade, ageAdj, bodyAdj, weight, height) {
+  function gradeValue(
+    val,
+    metricKey,
+    sport,
+    group,
+    grade,
+    ageAdj,
+    bodyAdj,
+    weight,
+    height,
+  ) {
     const sportStds = HS_STANDARDS[sport || "Football"];
     if (!sportStds) return null;
     const gs = sportStds[group];
@@ -467,7 +504,13 @@
 
     // Body-profile adjustment (weight + height)
     if (bodyAdj) {
-      thresholds = bodyAdjustThresholds(thresholds, metricKey, weight, height, inverted);
+      thresholds = bodyAdjustThresholds(
+        thresholds,
+        metricKey,
+        weight,
+        height,
+        inverted,
+      );
     }
 
     for (let i = 0; i < thresholds.length; i++) {
@@ -831,7 +874,17 @@
       const scores = [];
       for (const mk of gradeableKeys) {
         if (a[mk] !== null && a[mk] !== undefined) {
-          const g = gradeValue(a[mk], mk, a.sport, a.group, a.grade, ageAdj, bodyAdj, a.weight, a.height);
+          const g = gradeValue(
+            a[mk],
+            mk,
+            a.sport,
+            a.group,
+            a.grade,
+            ageAdj,
+            bodyAdj,
+            a.weight,
+            a.height,
+          );
           if (g) {
             a.grades[mk] = g;
             scores.push(g.score);
@@ -896,8 +949,14 @@
       for (const a of athletes) {
         const wt = getWeightTier(a.weight);
         const ht = getHeightTier(a.height);
-        const gradeBand = a.grade != null ? (a.grade <= 8 ? "MS" : "HS") : "UNK";
-        a._cohortKey = [a.group, wt ? wt.label : "?wt", ht ? ht.label : "?ht", gradeBand].join("|");
+        const gradeBand =
+          a.grade != null ? (a.grade <= 8 ? "MS" : "HS") : "UNK";
+        a._cohortKey = [
+          a.group,
+          wt ? wt.label : "?wt",
+          ht ? ht.label : "?ht",
+          gradeBand,
+        ].join("|");
       }
       // Group athletes by cohort
       const cohorts = {};
@@ -908,34 +967,46 @@
       for (const key of Object.keys(cohorts)) {
         const members = cohorts[key];
         if (members.length < 2) {
-          for (const m of members) { m.cohort = { key: key, size: 1, percentiles: {} }; }
+          for (const m of members) {
+            m.cohort = { key: key, size: 1, percentiles: {} };
+          }
           continue;
         }
         for (const mk of cohortMetricKeys) {
           const inverted = _META_MAP.get(mk)?.invert;
-          const vals = members.map(m => m[mk]).filter(v => v !== null && v !== undefined).sort((a, b) => a - b);
+          const vals = members
+            .map((m) => m[mk])
+            .filter((v) => v !== null && v !== undefined)
+            .sort((a, b) => a - b);
           if (vals.length < 2) continue;
           for (const m of members) {
             if (m[mk] === null || m[mk] === undefined) continue;
             let pct = percentileOf(m[mk], vals);
             if (inverted) pct = 100 - pct;
-            if (!m.cohort) m.cohort = { key: key, size: members.length, percentiles: {} };
+            if (!m.cohort)
+              m.cohort = { key: key, size: members.length, percentiles: {} };
             m.cohort.percentiles[mk] = rd(pct, 0);
           }
         }
         // Ensure all members have cohort object
         for (const m of members) {
-          if (!m.cohort) m.cohort = { key: key, size: members.length, percentiles: {} };
+          if (!m.cohort)
+            m.cohort = { key: key, size: members.length, percentiles: {} };
         }
         // Compute average cohort percentile
         for (const m of members) {
           const pcts = Object.values(m.cohort.percentiles);
-          m.cohort.avgPct = pcts.length >= 2 ? rd(pcts.reduce((s, v) => s + v, 0) / pcts.length, 0) : null;
+          m.cohort.avgPct =
+            pcts.length >= 2
+              ? rd(pcts.reduce((s, v) => s + v, 0) / pcts.length, 0)
+              : null;
           m.cohort.metricsUsed = pcts.length;
         }
       }
     } else {
-      for (const a of athletes) { a.cohort = null; }
+      for (const a of athletes) {
+        a.cohort = null;
+      }
     }
 
     // Testing Log
@@ -1002,41 +1073,65 @@
       // Unrealistic body metrics
       if (a.weight !== null && (a.weight < 80 || a.weight > 400)) {
         flags.push({
-          athlete: a.name, id: a.id,
-          msg: "Weight (" + a.weight + " lb) is outside plausible HS range (80–400) — verify data.",
+          athlete: a.name,
+          id: a.id,
+          msg:
+            "Weight (" +
+            a.weight +
+            " lb) is outside plausible HS range (80–400) — verify data.",
         });
       }
       if (a.height !== null && (a.height < 54 || a.height > 84)) {
         flags.push({
-          athlete: a.name, id: a.id,
-          msg: "Height (" + a.height + " in) is outside plausible HS range (54–84\u2033) — verify data.",
+          athlete: a.name,
+          id: a.id,
+          msg:
+            "Height (" +
+            a.height +
+            " in) is outside plausible HS range (54–84\u2033) — verify data.",
         });
       }
       // Unrealistic sprint
       if (a.forty !== null && (a.forty < 4.0 || a.forty > 8.0)) {
         flags.push({
-          athlete: a.name, id: a.id,
-          msg: "40-yd time (" + a.forty + " s) is outside plausible HS range (4.0–8.0) — verify data.",
+          athlete: a.name,
+          id: a.id,
+          msg:
+            "40-yd time (" +
+            a.forty +
+            " s) is outside plausible HS range (4.0–8.0) — verify data.",
         });
       }
       // Unrealistic lifts relative to bodyweight
       if (a.bench !== null && a.weight !== null && a.bench / a.weight > 2.5) {
         flags.push({
-          athlete: a.name, id: a.id,
-          msg: "Bench (" + a.bench + " lb) is >2.5× body weight — exceptional or data error.",
+          athlete: a.name,
+          id: a.id,
+          msg:
+            "Bench (" +
+            a.bench +
+            " lb) is >2.5× body weight — exceptional or data error.",
         });
       }
       if (a.squat !== null && a.weight !== null && a.squat / a.weight > 3.5) {
         flags.push({
-          athlete: a.name, id: a.id,
-          msg: "Squat (" + a.squat + " lb) is >3.5× body weight — exceptional or data error.",
+          athlete: a.name,
+          id: a.id,
+          msg:
+            "Squat (" +
+            a.squat +
+            " lb) is >3.5× body weight — exceptional or data error.",
         });
       }
       // Unrealistic vertical
       if (a.vert !== null && a.vert > 48) {
         flags.push({
-          athlete: a.name, id: a.id,
-          msg: "Vertical (" + a.vert + " in) exceeds 48\u2033 — world-class level, verify data.",
+          athlete: a.name,
+          id: a.id,
+          msg:
+            "Vertical (" +
+            a.vert +
+            " in) exceeds 48\u2033 — world-class level, verify data.",
         });
       }
     }

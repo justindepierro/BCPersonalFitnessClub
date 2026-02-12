@@ -709,7 +709,9 @@
     if (cohortToggle) {
       cohortToggle.checked = localStorage.getItem("lc_cohort_mode") === "true";
     }
-    const overviewCohortToggle = document.getElementById("overviewCohortToggle");
+    const overviewCohortToggle = document.getElementById(
+      "overviewCohortToggle",
+    );
     if (overviewCohortToggle) {
       overviewCohortToggle.checked =
         localStorage.getItem("lc_cohort_mode") === "true";
@@ -1292,7 +1294,8 @@
     thRow += '<th data-sort="overallGrade" title="Overall rating">Rating</th>';
     const showCohort = localStorage.getItem("lc_cohort_mode") === "true";
     if (showCohort) {
-      thRow += '<th data-sort="cohortPct" title="Avg percentile within body-profile & position cohort">Cohort&nbsp;%</th>';
+      thRow +=
+        '<th data-sort="cohortPct" title="Avg percentile within body-profile & position cohort">Cohort&nbsp;%</th>';
     }
     thRow += "</tr>";
     thead.innerHTML = thRow;
@@ -1364,7 +1367,7 @@
         ${ppCols}
         <td class="num">${fmtZ(a.zMB)}</td>
         ${overallGradeCell(a.overallGrade)}
-        ${showCohort ? '<td class="num">' + (a.cohort && a.cohort.avgPct !== null ? a.cohort.avgPct + '<small>% <span title="' + esc(a.cohort.key) + ' (n=' + a.cohort.size + ', ' + a.cohort.metricsUsed + ' metrics)">(' + a.cohort.size + ')</span></small>' : '—') + '</td>' : ''}
+        ${showCohort ? '<td class="num">' + (a.cohort && a.cohort.avgPct !== null ? a.cohort.avgPct + '<small>% <span title="' + esc(a.cohort.key) + " (n=" + a.cohort.size + ", " + a.cohort.metricsUsed + ' metrics)">(' + a.cohort.size + ")</span></small>" : "—") + "</td>" : ""}
       </tr>
     `;
       })
@@ -1420,12 +1423,16 @@
             ${D.ageAdjusted ? '<span class="meta-item"><span class="grade-badge grade-bg-good" style="font-size:.65rem">Age-Adjusted</span></span>' : ""}
             ${D.bodyAdjusted ? '<span class="meta-item"><span class="grade-badge grade-bg-good" style="font-size:.65rem">Body-Adjusted</span></span>' : ""}
           </div>
-          ${a.cohort && a.cohort.avgPct !== null ? `
+          ${
+            a.cohort && a.cohort.avgPct !== null
+              ? `
           <div class="profile-cohort-bar">
             <span class="cohort-label">Cohort Rank:</span>
             <span class="grade-badge grade-bg-${pctToGradeTier(a.cohort.avgPct)}" style="font-size:.65rem">${a.cohort.avgPct}th pctl</span>
             <span class="cohort-detail">${esc(a.cohort.key)} (n=${a.cohort.size}, ${a.cohort.metricsUsed} metrics)</span>
-          </div>` : ""}
+          </div>`
+              : ""
+          }
         </div>
       </div>
 
@@ -1927,7 +1934,9 @@
         datasets: [
           {
             data: activeTiers.map((t) => tierCounts[t]),
-            backgroundColor: activeTiers.map((t) => GRADE_TIER_COLORS[t] + "44"),
+            backgroundColor: activeTiers.map(
+              (t) => GRADE_TIER_COLORS[t] + "44",
+            ),
             borderColor: activeTiers.map((t) => GRADE_TIER_COLORS[t]),
             borderWidth: 2,
             hoverOffset: 8,

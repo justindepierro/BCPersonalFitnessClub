@@ -1116,9 +1116,15 @@ select:focus,
   border-collapse: collapse;
   font-size: 0.72rem;
 }
-.grade-std-table.std-narrow { max-width: 360px; }
-.grade-std-table.std-medium { max-width: 500px; }
-.grade-std-table.std-wide   { max-width: 660px; }
+.grade-std-table.std-narrow {
+  max-width: 360px;
+}
+.grade-std-table.std-medium {
+  max-width: 500px;
+}
+.grade-std-table.std-wide {
+  max-width: 660px;
+}
 .grade-std-table th,
 .grade-std-table td {
   padding: 0.35rem 0.5rem;
