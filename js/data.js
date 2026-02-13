@@ -1301,10 +1301,9 @@
         }
       }
 
-      // Apply latest test date values ONLY for fields that are null/missing
-      // in the JSON.  The JSON is the source of truth for current values;
-      // test history fills gaps but never overwrites existing data.
-      // Manual edits (lc_edits) are applied AFTER and can override anything.
+      // Apply latest test date values as current data.
+      // Test history represents newer measurements and overwrites JSON baseline.
+      // Manual edits (lc_edits) are applied AFTER and override everything.
       const savedTestH = localStorage.getItem("lc_test_history");
       if (savedTestH) {
         try {
@@ -1328,10 +1327,7 @@
                 const v = vals[vk];
                 if (v === null || v === undefined || v === "") continue;
                 if (typeof v === "number" && !isFinite(v)) continue;
-                // Only fill in if the JSON field is null/undefined/missing
-                if (tAthlete[vk] === null || tAthlete[vk] === undefined) {
-                  tAthlete[vk] = v;
-                }
+                tAthlete[vk] = v;
               }
             }
           }
