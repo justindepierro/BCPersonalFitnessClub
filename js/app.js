@@ -7211,7 +7211,9 @@
       });
     }
 
-    // Apply latest test data as current values for each athlete
+    // Apply latest test data ONLY for null/missing fields.
+    // The JSON is the source of truth; test history fills gaps but
+    // never overwrites.  Manual edits (lc_edits) override everything.
     var testH = getTestHistory();
     var testIds = Object.keys(testH);
     for (var ti = 0; ti < testIds.length; ti++) {
@@ -7233,7 +7235,13 @@
         var vals = tEntries[tk].values;
         for (var vk in vals) {
           if (vals[vk] !== null && vals[vk] !== undefined && vals[vk] !== "") {
-            tAthlete[vk] = vals[vk];
+            // Only fill in if the JSON field is null/undefined/missing
+            if (
+              tAthlete[vk] === null ||
+              tAthlete[vk] === undefined
+            ) {
+              tAthlete[vk] = vals[vk];
+            }
           }
         }
       }

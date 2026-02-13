@@ -1301,8 +1301,10 @@
         }
       }
 
-      // Apply latest test date values as current data
-      // (BEFORE edits, so manual edits take priority — matches rebuildFromStorage)
+      // Apply latest test date values ONLY for fields that are null/missing
+      // in the JSON.  The JSON is the source of truth for current values;
+      // test history fills gaps but never overwrites existing data.
+      // Manual edits (lc_edits) are applied AFTER and can override anything.
       const savedTestH = localStorage.getItem("lc_test_history");
       if (savedTestH) {
         try {
@@ -1325,9 +1327,11 @@
               for (const vk in vals) {
                 const v = vals[vk];
                 if (v === null || v === undefined || v === "") continue;
-                // Guard against NaN/Infinity from corrupted localStorage
                 if (typeof v === "number" && !isFinite(v)) continue;
-                tAthlete[vk] = v;
+                // Only fill in if the JSON field is null/undefined/missing
+                if (tAthlete[vk] === null || tAthlete[vk] === undefined) {
+                  tAthlete[vk] = v;
+                }
               }
             }
           }
