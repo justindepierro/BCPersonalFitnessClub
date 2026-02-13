@@ -269,6 +269,17 @@
           </label>
           <label
             class="toggle-label overview-toggle"
+            title="Use Burke Catholic program-specific standards (calibrated for our athlete pool)"
+          >
+            <input
+              type="checkbox"
+              id="overviewBCToggle"
+              onchange="toggleBCStandards(this.checked)"
+            />
+            <span>BC Stds</span>
+          </label>
+          <label
+            class="toggle-label overview-toggle"
             title="Adjust performance standards based on each athlete's grade level (training age)"
           >
             <input
@@ -1642,6 +1653,17 @@
             📥 Import JSON
           </button>
           <span class="data-mgmt-sep">|</span>
+          <label
+            class="toggle-label"
+            title="Use Burke Catholic program-specific standards (calibrated for our athlete pool)"
+          >
+            <input
+              type="checkbox"
+              id="bcStdToggle"
+              onchange="toggleBCStandards(this.checked)"
+            />
+            <span>BC Standards</span>
+          </label>
           <label
             class="toggle-label"
             title="Adjust performance standards based on each athlete's grade level (training age)"

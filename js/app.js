@@ -773,6 +773,16 @@
       overviewCohortToggle.checked =
         localStorage.getItem("lc_cohort_mode") === "true";
     }
+    // Restore BC Standards toggle state
+    const bcToggle = document.getElementById("bcStdToggle");
+    if (bcToggle) {
+      bcToggle.checked = localStorage.getItem("lc_bc_standards") === "true";
+    }
+    const overviewBCToggle = document.getElementById("overviewBCToggle");
+    if (overviewBCToggle) {
+      overviewBCToggle.checked =
+        localStorage.getItem("lc_bc_standards") === "true";
+    }
 
     // Populate position filter
     const posSel = document.getElementById("overviewPosFilter");
@@ -7609,6 +7619,27 @@
     safeLSSet("lc_snapshots", JSON.stringify(snapshots));
     refreshSnapshotList();
     updateDataStatus();
+  };
+
+  /* ---------- BC Standards Toggle ---------- */
+  window.toggleBCStandards = function (on) {
+    safeLSSet("lc_bc_standards", on ? "true" : "false");
+    // Sync both BC toggles
+    var bc1 = document.getElementById("bcStdToggle");
+    var bc2 = document.getElementById("overviewBCToggle");
+    if (bc1) bc1.checked = on;
+    if (bc2) bc2.checked = on;
+    rebuildFromStorage();
+    markTabsDirty();
+    const activeTab = document.querySelector(".tab.active");
+    if (activeTab) renderIfDirty(activeTab.dataset.tab);
+    renderProfile();
+    showToast(
+      on
+        ? "BC Standards enabled — using Burke Catholic program-specific thresholds"
+        : "BC Standards disabled — using national HS norms",
+      "info",
+    );
   };
 
   /* ---------- Age-Adjusted Standards Toggle ---------- */

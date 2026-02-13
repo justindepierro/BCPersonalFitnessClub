@@ -393,6 +393,204 @@
   // Pre-build lookup map for O(1) _meta access in gradeValue
   const _META_MAP = new Map(HS_STANDARDS._meta.map((m) => [m.key, m]));
 
+  /* ---------- BC Standards ("Elite of the Average") ---------- */
+  /* Burke Catholic program-specific thresholds — calibrated for a small-school
+     athlete pool.  Football values sourced from the coach's ChatGPT-derived
+     testing document; other sports extrapolated via HS_STANDARDS inter-sport
+     ratios so the relative difficulty feels consistent across programs.
+     Same 4-threshold / 5-tier structure as HS_STANDARDS.
+     Toggle: lc_bc_standards in localStorage. */
+  const BC_STANDARDS = {
+    /* ===== Football ===== */
+    Football: {
+      Skill: {
+        forty: [4.9, 5.1, 5.3, 5.55],
+        bench: [245, 225, 195, 165],
+        squat: [395, 355, 295, 245],
+        vert: [32, 29, 25, 20],
+        broad: [116, 110, 102, 94],
+        medball: [221, 197, 177, 155],
+        relBench: [1.15, 0.95, 0.8, 0.6],
+        relSquat: [1.65, 1.45, 1.2, 1.0],
+        mbRel: [0.95, 0.8, 0.7, 0.55],
+        vMax: [9.4, 8.85, 8.35, 7.8],
+        v10Max: [9.4, 8.85, 8.35, 7.8],
+        peakPower: [6210, 5490, 4770, 4180],
+        relPeakPower: [58, 54, 49, 42],
+        F1: [143, 119, 101, 84],
+        momMax: [870, 800, 700, 600],
+        proAgility: [4.35, 4.55, 4.75, 5.05],
+        lDrill: [7.05, 7.35, 7.65, 8.05],
+        backpedal: [3.3, 3.5, 3.7, 4.05],
+        wDrill: [4.55, 4.75, 5.05, 5.4],
+      },
+      "Big Skill": {
+        forty: [5.1, 5.3, 5.5, 5.8],
+        bench: [265, 245, 215, 185],
+        squat: [455, 405, 335, 275],
+        vert: [29, 26, 22, 18],
+        broad: [112, 106, 97, 88],
+        medball: [235, 209, 185, 162],
+        relBench: [1.15, 1.0, 0.8, 0.65],
+        relSquat: [1.5, 1.3, 1.1, 0.9],
+        mbRel: [0.85, 0.75, 0.65, 0.55],
+        vMax: [9.15, 8.65, 8.1, 7.6],
+        v10Max: [9.15, 8.65, 8.1, 7.6],
+        peakPower: [6810, 5980, 5160, 4460],
+        relPeakPower: [53, 49, 44, 38],
+        F1: [153, 129, 108, 88],
+        momMax: [1020, 950, 850, 700],
+        proAgility: [4.5, 4.7, 4.95, 5.2],
+        lDrill: [7.2, 7.55, 7.85, 8.25],
+        backpedal: [3.45, 3.65, 3.9, 4.2],
+        wDrill: [4.75, 5.0, 5.25, 5.55],
+      },
+      Linemen: {
+        forty: [5.4, 5.7, 5.95, 6.2],
+        bench: [315, 285, 245, 205],
+        squat: [505, 455, 385, 315],
+        vert: [26, 23, 19, 15],
+        broad: [103, 97, 89, 82],
+        medball: [248, 222, 198, 175],
+        relBench: [1.0, 0.85, 0.7, 0.55],
+        relSquat: [1.25, 1.1, 0.95, 0.8],
+        mbRel: [0.7, 0.6, 0.55, 0.45],
+        vMax: [8.75, 8.2, 7.7, 7.2],
+        v10Max: [8.75, 8.2, 7.7, 7.2],
+        peakPower: [7430, 6490, 5660, 4840],
+        relPeakPower: [42, 39, 35, 30],
+        F1: [165, 142, 118, 97],
+        momMax: [1120, 1050, 950, 800],
+        proAgility: [4.7, 4.95, 5.2, 5.45],
+        lDrill: [7.55, 7.85, 8.25, 8.65],
+        backpedal: [3.6, 3.8, 4.1, 4.35],
+      },
+    },
+    /* ===== Soccer ===== */
+    Soccer: {
+      Speed: {
+        forty: [5.0, 5.2, 5.4, 5.65],
+        bench: [185, 174, 155, 136],
+        squat: [324, 293, 251, 219],
+        vert: [29, 26, 22, 17],
+        broad: [112, 106, 97, 89],
+        medball: [203, 181, 163, 143],
+        relBench: [0.95, 0.8, 0.65, 0.5],
+        relSquat: [1.5, 1.25, 1.05, 0.85],
+        mbRel: [0.95, 0.8, 0.7, 0.55],
+        vMax: [9.3, 8.75, 8.25, 7.7],
+        v10Max: [9.3, 8.75, 8.25, 7.7],
+        peakPower: [5490, 4830, 4170, 3580],
+        relPeakPower: [56, 52, 47, 40],
+        F1: [131, 109, 93, 77],
+        momMax: [770, 710, 620, 530],
+        proAgility: [4.45, 4.65, 4.85, 5.15],
+        lDrill: [7.15, 7.45, 7.75, 8.15],
+      },
+      Physical: {
+        forty: [5.15, 5.35, 5.55, 5.85],
+        bench: [182, 171, 154, 132],
+        squat: [384, 344, 288, 241],
+        vert: [26, 23, 19, 15],
+        broad: [107, 100, 91, 82],
+        medball: [212, 190, 170, 150],
+        relBench: [0.9, 0.8, 0.65, 0.55],
+        relSquat: [1.35, 1.15, 1.0, 0.8],
+        mbRel: [0.8, 0.7, 0.6, 0.5],
+        vMax: [8.95, 8.45, 7.9, 7.4],
+        v10Max: [8.95, 8.45, 7.9, 7.4],
+        peakPower: [5870, 5160, 4460, 3870],
+        relPeakPower: [50, 47, 42, 36],
+        F1: [139, 117, 99, 80],
+        momMax: [870, 810, 720, 590],
+        proAgility: [4.6, 4.8, 5.05, 5.3],
+        lDrill: [7.3, 7.65, 7.95, 8.35],
+      },
+    },
+    /* ===== Baseball ===== */
+    Baseball: {
+      "Position Player": {
+        forty: [5.0, 5.2, 5.4, 5.65],
+        bench: [221, 206, 182, 158],
+        squat: [348, 318, 270, 232],
+        vert: [29, 26, 22, 17],
+        broad: [112, 106, 97, 89],
+        medball: [221, 198, 177, 155],
+        relBench: [1.0, 0.85, 0.75, 0.6],
+        relSquat: [1.5, 1.3, 1.05, 0.9],
+        mbRel: [0.95, 0.8, 0.7, 0.55],
+        vMax: [9.2, 8.65, 8.15, 7.6],
+        v10Max: [9.2, 8.65, 8.15, 7.6],
+        peakPower: [5730, 5070, 4410, 3820],
+        relPeakPower: [56, 51, 46, 39],
+        F1: [133, 113, 95, 78],
+        momMax: [790, 730, 630, 550],
+        proAgility: [4.45, 4.65, 4.85, 5.15],
+        lDrill: [7.15, 7.45, 7.75, 8.15],
+      },
+      Battery: {
+        forty: [5.25, 5.45, 5.65, 5.95],
+        bench: [208, 194, 178, 159],
+        squat: [403, 362, 302, 254],
+        vert: [26, 23, 19, 15],
+        broad: [107, 100, 91, 82],
+        medball: [229, 205, 181, 162],
+        relBench: [1.0, 0.9, 0.7, 0.6],
+        relSquat: [1.35, 1.15, 1.0, 0.8],
+        mbRel: [0.8, 0.7, 0.6, 0.5],
+        vMax: [8.75, 8.25, 7.7, 7.2],
+        v10Max: [8.75, 8.25, 7.7, 7.2],
+        peakPower: [6110, 5370, 4640, 3990],
+        relPeakPower: [48, 45, 40, 35],
+        F1: [144, 121, 102, 84],
+        momMax: [930, 860, 770, 640],
+        proAgility: [4.6, 4.8, 5.05, 5.3],
+        lDrill: [7.3, 7.65, 7.95, 8.35],
+      },
+    },
+    /* ===== Basketball ===== */
+    Basketball: {
+      Guard: {
+        forty: [4.85, 5.05, 5.25, 5.5],
+        bench: [197, 180, 159, 136],
+        squat: [324, 296, 251, 219],
+        vert: [33, 30, 26, 21],
+        broad: [116, 110, 102, 94],
+        medball: [201, 179, 160, 141],
+        relBench: [0.95, 0.8, 0.7, 0.55],
+        relSquat: [1.5, 1.25, 1.05, 0.85],
+        mbRel: [0.95, 0.8, 0.7, 0.55],
+        vMax: [9.4, 8.85, 8.35, 7.8],
+        v10Max: [9.4, 8.85, 8.35, 7.8],
+        peakPower: [5250, 4650, 4050, 3520],
+        relPeakPower: [58, 54, 49, 42],
+        F1: [129, 107, 90, 74],
+        momMax: [740, 680, 590, 510],
+        proAgility: [4.35, 4.55, 4.75, 5.05],
+        lDrill: [7.05, 7.35, 7.65, 8.05],
+      },
+      Big: {
+        forty: [5.2, 5.4, 5.65, 5.95],
+        bench: [223, 211, 190, 165],
+        squat: [422, 378, 315, 261],
+        vert: [28, 25, 21, 17],
+        broad: [109, 103, 94, 85],
+        medball: [229, 205, 181, 162],
+        relBench: [1.0, 0.9, 0.7, 0.6],
+        relSquat: [1.35, 1.15, 1.0, 0.8],
+        mbRel: [0.75, 0.7, 0.6, 0.5],
+        vMax: [8.85, 8.35, 7.8, 7.3],
+        v10Max: [8.85, 8.35, 7.8, 7.3],
+        peakPower: [6580, 5800, 5040, 4340],
+        relPeakPower: [47, 44, 40, 35],
+        F1: [155, 131, 112, 92],
+        momMax: [1030, 960, 860, 710],
+        proAgility: [4.55, 4.75, 5.0, 5.25],
+        lDrill: [7.2, 7.55, 7.85, 8.25],
+      },
+    },
+  };
+
   /* ---------- Body-Profile Adjustment Factors ---------- */
   /* Weight tiers: scale absolute-strength thresholds so lighter athletes
      aren't penalised and heavier athletes aren't over-rewarded.
@@ -498,7 +696,8 @@
      grade = 6–12 (null = no adjustment)
      ageAdj = true to apply grade-based scaling
      bodyAdj = true to apply weight/height scaling
-     weight/height = athlete body metrics (used when bodyAdj=true) */
+     weight/height = athlete body metrics (used when bodyAdj=true)
+     bcMode = true to use BC_STANDARDS instead of HS_STANDARDS */
   function gradeValue(
     val,
     metricKey,
@@ -509,8 +708,10 @@
     bodyAdj,
     weight,
     height,
+    bcMode,
   ) {
-    const sportStds = HS_STANDARDS[sport || "Football"];
+    const stdSource = bcMode ? BC_STANDARDS : HS_STANDARDS;
+    const sportStds = stdSource[sport || "Football"];
     if (!sportStds) return null;
     const gs = sportStds[group];
     if (!gs || !gs[metricKey] || val === null || val === undefined) return null;
@@ -582,6 +783,8 @@
     const bodyAdj = localStorage.getItem("lc_body_adjusted") === "true";
     // Check for cohort percentile ranking toggle
     const cohortMode = localStorage.getItem("lc_cohort_mode") === "true";
+    // Check for BC Standards toggle
+    const bcMode = localStorage.getItem("lc_bc_standards") === "true";
 
     const athletes = [];
     const positions = new Set();
@@ -933,6 +1136,7 @@
             bodyAdj,
             a.weight,
             a.height,
+            bcMode,
           );
           if (g) {
             a.grades[mk] = g;
