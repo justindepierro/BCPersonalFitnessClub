@@ -1276,8 +1276,9 @@
       const oldVersion = localStorage.getItem("lc_dataVersion");
       if (newVersion && newVersion !== oldVersion) {
         console.info(
-          "[data] New dataVersion detected (" + newVersion +
-          ") — purging stale localStorage edits."
+          "[data] New dataVersion detected (" +
+            newVersion +
+            ") — purging stale localStorage edits.",
         );
         localStorage.removeItem("lc_edits");
         localStorage.removeItem("lc_added");
@@ -1374,8 +1375,13 @@
             // If edit is older than coach data, skip it
             if (coachTS && editTS && editTS <= coachTS) {
               console.info(
-                "[data] Discarding stale edit for " + edit.id +
-                " (edit: " + editTS + " <= coach: " + coachTS + ")"
+                "[data] Discarding stale edit for " +
+                  edit.id +
+                  " (edit: " +
+                  editTS +
+                  " <= coach: " +
+                  coachTS +
+                  ")",
               );
               continue;
             }

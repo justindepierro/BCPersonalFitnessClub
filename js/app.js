@@ -3825,7 +3825,11 @@
               Object.assign(existing.changes, changes);
               existing.timestamp = new Date().toISOString();
             } else {
-              edits.push({ id: aid, changes: changes, timestamp: new Date().toISOString() });
+              edits.push({
+                id: aid,
+                changes: changes,
+                timestamp: new Date().toISOString(),
+              });
             }
             count++;
           }
@@ -8571,7 +8575,11 @@
       existing.changes = changes;
       existing.timestamp = new Date().toISOString();
     } else {
-      edits.push({ id: editingAthleteId, changes: changes, timestamp: new Date().toISOString() });
+      edits.push({
+        id: editingAthleteId,
+        changes: changes,
+        timestamp: new Date().toISOString(),
+      });
     }
     safeLSSet("lc_edits", JSON.stringify(edits));
 
@@ -9114,7 +9122,8 @@
             bench_1rm: a.bench_1rm !== undefined ? a.bench_1rm : null,
             squat_1rm: a.squat_1rm !== undefined ? a.squat_1rm : null,
             medball_in: a.medball_in !== undefined ? a.medball_in : null,
-            lastUpdated: a.lastUpdated || data.dataVersion || new Date().toISOString(),
+            lastUpdated:
+              a.lastUpdated || data.dataVersion || new Date().toISOString(),
           };
           return raw;
         });
