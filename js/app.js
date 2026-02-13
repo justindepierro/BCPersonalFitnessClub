@@ -6129,44 +6129,165 @@
     var history = getAthleteHistory(a.id);
     if (history.length === 0) return "";
     var current = currentTestValues(a);
-    var last = history[0]; // most recent
+    var shown = history.slice(0, 4); // up to 4 previous tests
+
     var html =
       '<div class="print-progress" style="margin-top:10px;page-break-inside:avoid">';
     html +=
-      '<h3 class="print-section">Progress vs ' +
-      esc(last.label || last.date) +
-      " (" +
-      last.date +
+      '<h3 class="print-section">Progress History (' +
+      history.length +
+      " previous test" +
+      (history.length > 1 ? "s" : "") +
       ")</h3>";
+
+    // Build header
     html +=
-      '<table class="print-metric-table" style="width:100%"><thead><tr><th>Metric</th><th>Current</th><th>Previous</th><th>Change</th></tr></thead><tbody>';
+      '<table class="print-metric-table print-progress-table" style="width:100%"><thead><tr><th>Metric</th><th>Current</th>';
+    for (var ti = 0; ti < shown.length; ti++) {
+      html +=
+        "<th>" +
+        esc(shown[ti].label || shown[ti].date) +
+        "<br><small>" +
+        shown[ti].date +
+        "</small></th>";
+    }
+    html += "<th>Change</th></tr></thead><tbody>";
+
+    // Helper: format a value with appropriate decimals
+    function fmtVal(v, mk) {
+      if (v === null || v === undefined) return "—";
+      if (Number.isInteger(v)) return String(v);
+      return v.toFixed(2);
+    }
+
+    // Metric rows — skip entirely if current AND all history values are null
     for (var i = 0; i < TEST_METRIC_KEYS.length; i++) {
       var mk = TEST_METRIC_KEYS[i];
       var cv = current[mk.jsonKey];
-      var pv = last.values[mk.jsonKey];
-      var changeStr = "—";
-      if (cv !== null && cv !== undefined && pv !== null && pv !== undefined) {
-        var d = cv - pv;
-        var improved = mk.lower ? d < 0 : d > 0;
-        var sign = d > 0 ? "+" : "";
-        changeStr =
-          (improved ? "▲ " : d === 0 ? "" : "▼ ") +
-          sign +
-          (Number.isInteger(d) ? d : d.toFixed(2)) +
-          " " +
-          mk.unit;
+      var hasAny = cv !== null && cv !== undefined;
+      var histVals = [];
+      for (var si = 0; si < shown.length; si++) {
+        var hv = shown[si].values[mk.jsonKey];
+        histVals.push(hv);
+        if (hv !== null && hv !== undefined) hasAny = true;
       }
+      if (!hasAny) continue; // skip empty rows
+
       html +=
-        "<tr><td>" +
+        "<tr><td><strong>" +
         mk.label +
-        '</td><td class="num">' +
-        (cv !== null && cv !== undefined ? cv : "—") +
-        '</td><td class="num">' +
-        (pv !== null && pv !== undefined ? pv : "—") +
-        '</td><td class="num">' +
-        changeStr +
-        "</td></tr>";
+        "</strong> <small>" +
+        mk.unit +
+        "</small></td>";
+      html +=
+        '<td class="num">' + fmtVal(cv, mk) + "</td>";
+      for (var hi = 0; hi < histVals.length; hi++) {
+        html +=
+          '<td class="num">' + fmtVal(histVals[hi], mk) + "</td>";
+      }
+
+      // Delta column: current vs oldest shown, or newest vs second-newest
+      var newV = null, oldV = null;
+      if (shown.length >= 2) {
+        newV = shown[0].values[mk.jsonKey];
+        oldV = shown[1].values[mk.jsonKey];
+      } else if (shown.length === 1) {
+        newV = cv;
+        oldV = shown[0].values[mk.jsonKey];
+      }
+      if (newV != null && oldV != null) {
+        var d = newV - oldV;
+        if (d === 0) {
+          html += '<td class="num" style="color:#999">—</td>';
+        } else {
+          var pctChange =
+            oldV !== 0 ? Math.round((d / Math.abs(oldV)) * 100) : 0;
+          var improved = mk.lower ? d < 0 : d > 0;
+          var declined = mk.lower ? d > 0 : d < 0;
+          var arrow = improved ? "▲" : "▼";
+          var sign = d > 0 ? "+" : "";
+          html +=
+            '<td class="num ' +
+            (improved ? "print-delta-up" : "print-delta-down") +
+            '">' +
+            arrow +
+            " " +
+            sign +
+            (Number.isInteger(d) ? d : d.toFixed(2)) +
+            " <small>(" +
+            sign +
+            pctChange +
+            "%)</small></td>";
+        }
+      } else {
+        html += '<td class="num">—</td>';
+      }
+      html += "</tr>";
     }
+
+    // 40 yd Total composite row (derived from sprint splits)
+    var curForty = a.forty;
+    var fortyHasAny = curForty != null;
+    var fortyHist = [];
+    for (var fi = 0; fi < shown.length; fi++) {
+      var fv = shown[fi].values;
+      var hForty =
+        fv.sprint_020 != null && fv.sprint_2030 != null && fv.sprint_3040 != null
+          ? +(fv.sprint_020 + fv.sprint_2030 + fv.sprint_3040).toFixed(2)
+          : null;
+      fortyHist.push(hForty);
+      if (hForty !== null) fortyHasAny = true;
+    }
+    if (fortyHasAny) {
+      html +=
+        '<tr style="border-top:1px solid #bbb"><td><strong>40 yd Total</strong> <small>s</small></td>';
+      html +=
+        '<td class="num">' + (curForty != null ? curForty : "—") + "</td>";
+      for (var fhi = 0; fhi < fortyHist.length; fhi++) {
+        html +=
+          '<td class="num">' +
+          (fortyHist[fhi] !== null ? fortyHist[fhi] : "—") +
+          "</td>";
+      }
+      // Delta for forty
+      var newForty = null, oldForty = null;
+      if (shown.length >= 2) {
+        newForty = fortyHist[0];
+        oldForty = fortyHist[1];
+      } else if (shown.length === 1) {
+        newForty = curForty;
+        oldForty = fortyHist[0];
+      }
+      if (newForty != null && oldForty != null) {
+        var fd = newForty - oldForty;
+        if (fd === 0) {
+          html += '<td class="num" style="color:#999">—</td>';
+        } else {
+          var fpct =
+            oldForty !== 0 ? Math.round((fd / Math.abs(oldForty)) * 100) : 0;
+          var fImproved = fd < 0;
+          var fDeclined = fd > 0;
+          var fArrow = fImproved ? "▲" : "▼";
+          var fSign = fd > 0 ? "+" : "";
+          html +=
+            '<td class="num ' +
+            (fImproved ? "print-delta-up" : "print-delta-down") +
+            '">' +
+            fArrow +
+            " " +
+            fSign +
+            fd.toFixed(2) +
+            " <small>(" +
+            fSign +
+            fpct +
+            "%)</small></td>";
+        }
+      } else {
+        html += '<td class="num">—</td>';
+      }
+      html += "</tr>";
+    }
+
     html += "</tbody></table></div>";
     return html;
   }
@@ -6255,6 +6376,13 @@
   .print-coaching-notes { margin-top: 10px; border: 1px solid #e0d6ff; background: #f8f6ff; border-radius: 4px; padding: 8px; font-size: 8pt; }
   .print-coaching-notes ul { margin-left: 14px; margin-top: 4px; }
   .print-coaching-notes li { margin-bottom: 3px; }
+
+  /* Progress table */
+  .print-progress-table th { font-size: 7pt; text-transform: uppercase; color: #666; border-bottom: 1px solid #bbb; text-align: center; }
+  .print-progress-table th:first-child { text-align: left; }
+  .print-progress-table td small { font-size: 6.5pt; color: #777; }
+  .print-delta-up { color: #155724; }
+  .print-delta-down { color: #721c24; }
 
   .na { color: #aaa; }
   @media print {
