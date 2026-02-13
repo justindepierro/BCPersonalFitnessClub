@@ -159,6 +159,34 @@
       unit: "s",
       lower: true,
     },
+    {
+      key: "proAgility",
+      jsonKey: "pro_agility",
+      label: "5-10-5",
+      unit: "s",
+      lower: true,
+    },
+    {
+      key: "lDrill",
+      jsonKey: "l_drill",
+      label: "L-Drill",
+      unit: "s",
+      lower: true,
+    },
+    {
+      key: "backpedal",
+      jsonKey: "backpedal",
+      label: "Backpedal",
+      unit: "s",
+      lower: true,
+    },
+    {
+      key: "wDrill",
+      jsonKey: "w_drill",
+      label: "W-Drill",
+      unit: "s",
+      lower: true,
+    },
   ];
 
   /* ---------- Test History helpers ---------- */
@@ -456,6 +484,34 @@
       measures: "Average velocity during top-speed phase",
       tellsYou:
         "Ability to maintain or increase speed — flags speed endurance issues if slower than 20-30 split.",
+    },
+    proAgility: {
+      name: "5-10-5 Pro Agility",
+      unit: "s",
+      measures: "Lateral quickness and change-of-direction speed",
+      tellsYou:
+        "How quickly an athlete can decelerate, redirect, and re-accelerate laterally. Key for skill-position players.",
+    },
+    lDrill: {
+      name: "L-Drill (3-Cone)",
+      unit: "s",
+      measures: "Multi-directional agility and body control",
+      tellsYou:
+        "Tests short-area quickness through 90° and 180° cuts. Correlates with ability to navigate traffic.",
+    },
+    backpedal: {
+      name: "Backpedal (10+10)",
+      unit: "s",
+      measures: "10-yd backpedal + 10-yd forward sprint",
+      tellsYou:
+        "Ability to retreat and transition to forward speed. Critical for DBs, LBs, and any zone-coverage athlete.",
+    },
+    wDrill: {
+      name: "W-Drill (5-Cone)",
+      unit: "s",
+      measures: "Open-hip agility and footwork through weaving pattern",
+      tellsYou:
+        "Tests fluid hip transitions and change of direction at multiple angles. Designed for DBs and coverage players.",
     },
     a1: {
       name: "Acceleration (0–20)",
@@ -941,10 +997,32 @@
   /* Get the most recent previous test value for a given metric key (jsonKey) */
   let _prevTestCache = null;
   let _staleKeysCache = null;
+
+  /** Return the YYYY-MM-DD export-date boundary from the raw JSON cache.
+   *  Test history entries before this date belong to a prior data session and
+   *  should not be applied as current values or used for stale-key detection. */
+  function getExportDateBoundary() {
+    const rc = window._rawDataCache;
+    if (!rc) return "";
+    const d = rc.exportDate || (rc.meta && rc.meta.export_date) || "";
+    return d ? d.slice(0, 10) : "";
+  }
+
+  /** Filter athlete history entries to only those from the current session
+   *  (date >= JSON export date).  Returns all entries if no export date. */
+  function getCurrentSessionEntries(athleteId) {
+    const entries = getAthleteHistory(athleteId); // sorted newest-first
+    const boundary = getExportDateBoundary();
+    if (!boundary) return entries;
+    return entries.filter(function (e) {
+      return e.date >= boundary;
+    });
+  }
+
   function getPrevTestValues(athleteId) {
     if (!_prevTestCache) _prevTestCache = {};
     if (_prevTestCache[athleteId]) return _prevTestCache[athleteId];
-    const entries = getAthleteHistory(athleteId); // sorted newest-first
+    const entries = getAthleteHistory(athleteId); // sorted newest-first (ALL entries for fallback)
     const vals = {};
     // Walk newest-to-oldest; first non-null value for each key wins
     for (const e of entries) {
@@ -976,11 +1054,15 @@
    * Return a Set of metric KEYS whose current value exists but was NOT part of
    * the athlete's most recent test entry.  These are "stale" — carried over from
    * an older session and should render in italics.
+   *
+   * Only entries from the CURRENT session (>= JSON export date) are considered.
+   * If the athlete has no current-session entries, nothing is stale — all values
+   * come from the JSON baseline and should display normally.
    */
   function getStaleKeys(athleteId) {
     if (!_staleKeysCache) _staleKeysCache = {};
     if (_staleKeysCache[athleteId]) return _staleKeysCache[athleteId];
-    const entries = getAthleteHistory(athleteId); // newest-first
+    const entries = getCurrentSessionEntries(athleteId); // newest-first, current session only
     const stale = new Set();
     if (!entries || entries.length === 0) {
       _staleKeysCache[athleteId] = stale;
@@ -5661,6 +5743,38 @@
       dec: 1,
       derived: true,
     },
+    {
+      key: "proAgility",
+      label: "5-10-5",
+      unit: "s",
+      dec: 2,
+      invert: true,
+      jsonKey: "pro_agility",
+    },
+    {
+      key: "lDrill",
+      label: "L-Drill",
+      unit: "s",
+      dec: 2,
+      invert: true,
+      jsonKey: "l_drill",
+    },
+    {
+      key: "backpedal",
+      label: "Backpedal",
+      unit: "s",
+      dec: 2,
+      invert: true,
+      jsonKey: "backpedal",
+    },
+    {
+      key: "wDrill",
+      label: "W-Drill",
+      unit: "s",
+      dec: 2,
+      invert: true,
+      jsonKey: "w_drill",
+    },
   ];
 
   /* Get unique test sessions across all athletes sorted by date */
@@ -6383,8 +6497,14 @@
 
   /* ===== SHARED: Delta table builder ===== */
   function _buildDeltaTable(athletes, deltas, metrics) {
+    const weightMeta = {
+      key: "weight",
+      label: "Weight",
+      unit: "lb",
+      dec: 0,
+    };
     let html =
-      '<div class="table-wrap"><table class="cmp-table"><thead><tr><th>Athlete</th><th>Group</th>';
+      '<div class="table-wrap"><table class="cmp-table"><thead><tr><th>Athlete</th><th>Group</th><th>Wt Δ</th>';
     for (const m of metrics) html += "<th>" + m.label + "</th>";
     html += "</tr></thead><tbody>";
     for (let i = 0; i < athletes.length; i++) {
@@ -6400,6 +6520,25 @@
         '">' +
         esc(a.group || "—") +
         "</span></td>";
+      // Weight delta column (neutral styling — gaining/losing neither good nor bad)
+      const wd = deltas[i][weightMeta.key];
+      if (!wd) {
+        html += '<td class="num na">—</td>';
+      } else {
+        const sign = wd.delta > 0 ? "+" : "";
+        html +=
+          '<td class="num" title="From ' +
+          wd.base.toFixed(0) +
+          " → " +
+          wd.cur.toFixed(0) +
+          ' lb">' +
+          sign +
+          wd.delta.toFixed(0) +
+          " <small>(" +
+          sign +
+          wd.pct.toFixed(1) +
+          "%)</small></td>";
+      }
       for (const m of metrics) {
         html += _deltaCell(deltas[i], m);
       }
@@ -6665,6 +6804,14 @@
       "z-RelBench",
       "z-RelSquat",
       "z-MBRel",
+      "5-10-5 (s)",
+      "L-Drill (s)",
+      "Backpedal (s)",
+      "W-Drill (s)",
+      "z-ProAgility",
+      "z-LDrill",
+      "z-Backpedal",
+      "z-WDrill",
       "Explosive Upper",
       "Total Explosive",
       "Overall Grade",
@@ -6712,6 +6859,14 @@
         a.zRelBench ?? "",
         a.zRelSquat ?? "",
         a.zMBRel ?? "",
+        a.proAgility ?? "",
+        a.lDrill ?? "",
+        a.backpedal ?? "",
+        a.wDrill ?? "",
+        a.zProAgility ?? "",
+        a.zLDrill ?? "",
+        a.zBackpedal ?? "",
+        a.zWDrill ?? "",
         a.explosiveUpper ?? "",
         a.totalExplosive ?? "",
         a.overallGrade ? a.overallGrade.label : "",
@@ -7081,25 +7236,38 @@
     }
 
     // Apply latest test data as current values for each athlete
+    // Only apply entries from on/after the JSON export date so stale
+    // localStorage data from a prior session doesn't overwrite current values.
+    const exportDateRaw =
+      rawCopy.exportDate || (rawCopy.meta && rawCopy.meta.export_date) || "";
+    const exportDateBoundary = exportDateRaw ? exportDateRaw.slice(0, 10) : "";
     var testH = getTestHistory();
     var testIds = Object.keys(testH);
     for (var ti = 0; ti < testIds.length; ti++) {
       var tAid = testIds[ti];
       var tEntries = testH[tAid];
       if (!tEntries || tEntries.length === 0) continue;
-      // Find the most recent date
-      var latestDate = tEntries[0].date;
-      for (var tj = 1; tj < tEntries.length; tj++) {
-        if (tEntries[tj].date > latestDate) latestDate = tEntries[tj].date;
+      // Filter to entries on or after the export date
+      var currentEntries = exportDateBoundary
+        ? tEntries.filter(function (e) {
+            return e.date >= exportDateBoundary;
+          })
+        : tEntries;
+      if (currentEntries.length === 0) continue;
+      // Find the most recent date among current entries
+      var latestDate = currentEntries[0].date;
+      for (var tj = 1; tj < currentEntries.length; tj++) {
+        if (currentEntries[tj].date > latestDate)
+          latestDate = currentEntries[tj].date;
       }
       // Merge all entries from that date (in case of multiple labels)
       var tAthlete = rawCopy.athletes.find(function (a) {
         return a.id === tAid;
       });
       if (!tAthlete) continue;
-      for (var tk = 0; tk < tEntries.length; tk++) {
-        if (tEntries[tk].date !== latestDate) continue;
-        var vals = tEntries[tk].values;
+      for (var tk = 0; tk < currentEntries.length; tk++) {
+        if (currentEntries[tk].date !== latestDate) continue;
+        var vals = currentEntries[tk].values;
         for (var vk in vals) {
           if (vals[vk] !== null && vals[vk] !== undefined && vals[vk] !== "") {
             tAthlete[vk] = vals[vk];
@@ -7423,6 +7591,46 @@
       min: "0.5",
       max: "3.0",
       section: "Sprint",
+    },
+    {
+      key: "proAgility",
+      jsonKey: "pro_agility",
+      label: "5-10-5 Shuttle (s)",
+      type: "number",
+      step: "0.01",
+      min: "3.5",
+      max: "7.0",
+      section: "Agility",
+    },
+    {
+      key: "lDrill",
+      jsonKey: "l_drill",
+      label: "L-Drill / 3-Cone (s)",
+      type: "number",
+      step: "0.01",
+      min: "5.5",
+      max: "11.0",
+      section: "Agility",
+    },
+    {
+      key: "backpedal",
+      jsonKey: "backpedal",
+      label: "Backpedal 10+10 (s)",
+      type: "number",
+      step: "0.01",
+      min: "2.5",
+      max: "6.0",
+      section: "Agility",
+    },
+    {
+      key: "wDrill",
+      jsonKey: "w_drill",
+      label: "W-Drill 5-Cone (s)",
+      type: "number",
+      step: "0.01",
+      min: "3.5",
+      max: "8.0",
+      section: "Agility",
     },
   ];
 

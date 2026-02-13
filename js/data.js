@@ -171,6 +171,10 @@
       { key: "relPeakPower", label: "Rel Peak Power", unit: "W/kg" },
       { key: "F1", label: "Sprint Force", unit: "N" },
       { key: "momMax", label: "Peak Momentum", unit: "kg\u00B7m/s" },
+      { key: "proAgility", label: "5-10-5 Shuttle", unit: "s", invert: true },
+      { key: "lDrill", label: "L-Drill", unit: "s", invert: true },
+      { key: "backpedal", label: "Backpedal", unit: "s", invert: true },
+      { key: "wDrill", label: "W-Drill", unit: "s", invert: true },
     ],
     /* --- Grade-based age-adjustment factors (grade 6–12) --- */
     /* Strength factors: younger grades scale down proportionally.
@@ -214,6 +218,10 @@
         relPeakPower: [70, 62, 55, 48],
         F1: [120, 100, 85, 70],
         momMax: [680, 600, 520, 440],
+        proAgility: [4.2, 4.4, 4.6, 4.9],
+        lDrill: [6.8, 7.1, 7.4, 7.8],
+        backpedal: [3.2, 3.4, 3.6, 3.9],
+        wDrill: [4.4, 4.6, 4.9, 5.2],
       },
       "Big Skill": {
         forty: [4.95, 5.15, 5.35, 5.6],
@@ -231,6 +239,10 @@
         relPeakPower: [68, 60, 53, 46],
         F1: [130, 110, 92, 75],
         momMax: [770, 680, 590, 500],
+        proAgility: [4.35, 4.55, 4.8, 5.05],
+        lDrill: [7.0, 7.3, 7.6, 8.0],
+        backpedal: [3.35, 3.55, 3.8, 4.05],
+        wDrill: [4.6, 4.85, 5.1, 5.4],
       },
       Linemen: {
         forty: [5.25, 5.5, 5.75, 6.0],
@@ -248,6 +260,9 @@
         relPeakPower: [58, 52, 46, 40],
         F1: [140, 120, 100, 82],
         momMax: [880, 780, 680, 580],
+        proAgility: [4.55, 4.8, 5.05, 5.3],
+        lDrill: [7.3, 7.6, 8.0, 8.4],
+        backpedal: [3.5, 3.7, 3.95, 4.2],
       },
     },
     /* ===== Soccer ===== */
@@ -268,6 +283,8 @@
         relPeakPower: [68, 60, 53, 46],
         F1: [110, 92, 78, 64],
         momMax: [600, 530, 460, 390],
+        proAgility: [4.3, 4.5, 4.7, 5.0],
+        lDrill: [6.9, 7.2, 7.5, 7.9],
       },
       Physical: {
         forty: [5.0, 5.2, 5.4, 5.65],
@@ -285,6 +302,8 @@
         relPeakPower: [64, 57, 50, 43],
         F1: [118, 100, 84, 68],
         momMax: [660, 580, 500, 420],
+        proAgility: [4.45, 4.65, 4.9, 5.15],
+        lDrill: [7.1, 7.4, 7.7, 8.1],
       },
     },
     /* ===== Baseball ===== */
@@ -305,6 +324,8 @@
         relPeakPower: [67, 59, 52, 45],
         F1: [112, 95, 80, 65],
         momMax: [620, 545, 470, 400],
+        proAgility: [4.3, 4.5, 4.7, 5.0],
+        lDrill: [6.9, 7.2, 7.5, 7.9],
       },
       Battery: {
         forty: [5.1, 5.3, 5.5, 5.75],
@@ -322,6 +343,8 @@
         relPeakPower: [62, 55, 48, 42],
         F1: [122, 103, 87, 72],
         momMax: [700, 618, 535, 455],
+        proAgility: [4.45, 4.65, 4.9, 5.15],
+        lDrill: [7.1, 7.4, 7.7, 8.1],
       },
     },
     /* ===== Basketball ===== */
@@ -342,6 +365,8 @@
         relPeakPower: [70, 62, 55, 48],
         F1: [108, 90, 76, 62],
         momMax: [580, 510, 440, 375],
+        proAgility: [4.2, 4.4, 4.6, 4.9],
+        lDrill: [6.8, 7.1, 7.4, 7.8],
       },
       Big: {
         forty: [5.05, 5.25, 5.5, 5.75],
@@ -359,6 +384,8 @@
         relPeakPower: [60, 54, 48, 42],
         F1: [132, 112, 95, 78],
         momMax: [780, 690, 600, 510],
+        proAgility: [4.4, 4.6, 4.85, 5.1],
+        lDrill: [7.0, 7.3, 7.6, 8.0],
       },
     },
   };
@@ -414,6 +441,10 @@
     forty: "accel",
     vMax: "topSpeed",
     v10Max: "topSpeed",
+    proAgility: "accel",
+    lDrill: "accel",
+    backpedal: "accel",
+    wDrill: "accel",
   };
 
   function getWeightTier(wt) {
@@ -584,6 +615,12 @@
       const squat = num(a.squat_1rm);
       const medball = num(a.medball_in);
 
+      // Agility
+      const proAgility = num(a.pro_agility);
+      const lDrill = num(a.l_drill);
+      const backpedal = num(a.backpedal);
+      const wDrill = num(a.w_drill);
+
       // Unit conversions
       const massKg = wt !== null ? rd(wt * C.LB_TO_KG, 2) : null;
       const htCm = ht !== null ? rd(ht * C.IN_TO_CM, 1) : null;
@@ -725,6 +762,10 @@
         peakPower,
         relPeakPower,
         strengthUtil,
+        proAgility,
+        lDrill,
+        backpedal,
+        wDrill,
         // placeholders
         zMB: null,
         zBench: null,
@@ -738,6 +779,10 @@
         zRelBench: null,
         zRelSquat: null,
         zMBRel: null,
+        zProAgility: null,
+        zLDrill: null,
+        zBackpedal: null,
+        zWDrill: null,
         mbPctTeam: null,
         mbPctGroup: null,
         mbTier: null,
@@ -761,6 +806,10 @@
       { key: "relBench", zKey: "zRelBench" },
       { key: "relSquat", zKey: "zRelSquat" },
       { key: "mbRel", zKey: "zMBRel" },
+      { key: "proAgility", zKey: "zProAgility", invert: true },
+      { key: "lDrill", zKey: "zLDrill", invert: true },
+      { key: "backpedal", zKey: "zBackpedal", invert: true },
+      { key: "wDrill", zKey: "zWDrill", invert: true },
     ];
     const MIN_Z_SAMPLE = 5; // z-scores need ≥5 data points to be meaningful
     const statsSummary = {};
@@ -1134,6 +1183,53 @@
             " in) exceeds 48\u2033 — world-class level, verify data.",
         });
       }
+      // Unrealistic agility times
+      if (
+        a.proAgility !== null &&
+        (a.proAgility < 3.5 || a.proAgility > 7.0)
+      ) {
+        flags.push({
+          athlete: a.name,
+          id: a.id,
+          msg:
+            "5-10-5 (" +
+            a.proAgility +
+            " s) is outside plausible HS range (3.5–7.0) — verify data.",
+        });
+      }
+      if (a.lDrill !== null && (a.lDrill < 5.5 || a.lDrill > 10.0)) {
+        flags.push({
+          athlete: a.name,
+          id: a.id,
+          msg:
+            "L-Drill (" +
+            a.lDrill +
+            " s) is outside plausible HS range (5.5–10.0) — verify data.",
+        });
+      }
+      if (
+        a.backpedal !== null &&
+        (a.backpedal < 2.5 || a.backpedal > 6.0)
+      ) {
+        flags.push({
+          athlete: a.name,
+          id: a.id,
+          msg:
+            "Backpedal (" +
+            a.backpedal +
+            " s) is outside plausible HS range (2.5–6.0) — verify data.",
+        });
+      }
+      if (a.wDrill !== null && (a.wDrill < 3.5 || a.wDrill > 8.0)) {
+        flags.push({
+          athlete: a.name,
+          id: a.id,
+          msg:
+            "W-Drill (" +
+            a.wDrill +
+            " s) is outside plausible HS range (3.5–8.0) — verify data.",
+        });
+      }
     }
 
     return {
@@ -1205,21 +1301,14 @@
         }
       }
 
-      // Apply any saved edits from localStorage
-      const savedEdits = localStorage.getItem("lc_edits");
-      if (savedEdits) {
-        try {
-          const edits = JSON.parse(savedEdits);
-          for (const edit of edits) {
-            const athlete = raw.athletes.find((a) => a.id === edit.id);
-            if (athlete) Object.assign(athlete, edit.changes);
-          }
-        } catch (e) {
-          console.warn("Failed to apply saved edits:", e);
-        }
-      }
+      // Determine the JSON export date boundary — only apply test history
+      // entries from AFTER the JSON was last exported so stale localStorage
+      // data from a prior session doesn't overwrite current JSON values.
+      const exportDateRaw = raw.exportDate || raw.meta?.export_date || "";
+      const exportDateBoundary = exportDateRaw ? exportDateRaw.slice(0, 10) : "";
 
       // Apply latest test date values as current data
+      // (BEFORE edits, so manual edits take priority — matches rebuildFromStorage)
       const savedTestH = localStorage.getItem("lc_test_history");
       if (savedTestH) {
         try {
@@ -1229,16 +1318,21 @@
             const tAid = testIds[ti];
             const tEntries = testH[tAid];
             if (!tEntries || tEntries.length === 0) continue;
-            let latestDate = tEntries[0].date;
-            for (let tj = 1; tj < tEntries.length; tj++) {
-              if (tEntries[tj].date > latestDate)
-                latestDate = tEntries[tj].date;
+            // Only consider entries on or after the export date
+            const currentEntries = exportDateBoundary
+              ? tEntries.filter((e) => e.date >= exportDateBoundary)
+              : tEntries;
+            if (currentEntries.length === 0) continue;
+            let latestDate = currentEntries[0].date;
+            for (let tj = 1; tj < currentEntries.length; tj++) {
+              if (currentEntries[tj].date > latestDate)
+                latestDate = currentEntries[tj].date;
             }
             const tAthlete = raw.athletes.find((a) => a.id === tAid);
             if (!tAthlete) continue;
-            for (let tk = 0; tk < tEntries.length; tk++) {
-              if (tEntries[tk].date !== latestDate) continue;
-              const vals = tEntries[tk].values;
+            for (let tk = 0; tk < currentEntries.length; tk++) {
+              if (currentEntries[tk].date !== latestDate) continue;
+              const vals = currentEntries[tk].values;
               for (const vk in vals) {
                 const v = vals[vk];
                 if (v === null || v === undefined || v === "") continue;
@@ -1250,6 +1344,20 @@
           }
         } catch (e) {
           console.warn("Failed to apply latest test data:", e);
+        }
+      }
+
+      // Apply saved edits AFTER test history so manual edits take priority
+      const savedEdits = localStorage.getItem("lc_edits");
+      if (savedEdits) {
+        try {
+          const edits = JSON.parse(savedEdits);
+          for (const edit of edits) {
+            const athlete = raw.athletes.find((a) => a.id === edit.id);
+            if (athlete) Object.assign(athlete, edit.changes);
+          }
+        } catch (e) {
+          console.warn("Failed to apply saved edits:", e);
         }
       }
 
