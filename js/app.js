@@ -917,7 +917,9 @@
         profileSprintChartInstance = destroyChart(profileSprintChartInstance);
         profileDonutInstance = destroyChart(profileDonutInstance);
         profileQuadrantInstance = destroyChart(profileQuadrantInstance);
-        profileProgressChartInstance = destroyChart(profileProgressChartInstance);
+        profileProgressChartInstance = destroyChart(
+          profileProgressChartInstance,
+        );
       }
       if (prevId === "leaderboards")
         lbChartInstance = destroyChart(lbChartInstance);
@@ -1146,7 +1148,9 @@
       average: "rgba(250,204,21,.10)",
       below: "rgba(248,113,113,.12)",
     };
-    return colors[grade.tier] ? ' style="background:' + colors[grade.tier] + '"' : "";
+    return colors[grade.tier]
+      ? ' style="background:' + colors[grade.tier] + '"'
+      : "";
   }
 
   function tdGraded(val, decimals, grade) {
@@ -2278,7 +2282,12 @@
       { key: "squat_1rm", label: "Squat", color: "#60a5fa", iKey: "squat" },
       { key: "vert_in", label: "Vert", color: "#4ade80", iKey: "vert" },
       { key: "broad_in", label: "Broad", color: "#facc15", iKey: "broad" },
-      { key: "medball_in", label: "Med Ball", color: "#f97316", iKey: "medball" },
+      {
+        key: "medball_in",
+        label: "Med Ball",
+        color: "#f97316",
+        iKey: "medball",
+      },
       { key: "weight_lb", label: "Weight", color: "#9ba0b2", iKey: "weight" },
     ];
 
@@ -2331,13 +2340,29 @@
     var useMultiAxis = false;
     if (datasets.length >= 2) {
       var ranges = datasets.map(function (ds) {
-        var vals = ds.data.filter(function (v) { return v !== null; });
-        return { min: Math.min.apply(null, vals), max: Math.max.apply(null, vals) };
+        var vals = ds.data.filter(function (v) {
+          return v !== null;
+        });
+        return {
+          min: Math.min.apply(null, vals),
+          max: Math.max.apply(null, vals),
+        };
       });
-      var maxRange = Math.max.apply(null, ranges.map(function (r) { return r.max; }));
-      var minRange = Math.min.apply(null, ranges.map(function (r) { return r.min; }));
+      var maxRange = Math.max.apply(
+        null,
+        ranges.map(function (r) {
+          return r.max;
+        }),
+      );
+      var minRange = Math.min.apply(
+        null,
+        ranges.map(function (r) {
+          return r.min;
+        }),
+      );
       // If ratio between largest and smallest max is >5x, use dual axes
-      if (maxRange > 0 && minRange > 0 && maxRange / minRange > 5) useMultiAxis = true;
+      if (maxRange > 0 && minRange > 0 && maxRange / minRange > 5)
+        useMultiAxis = true;
     }
 
     if (useMultiAxis && datasets.length >= 2) {
@@ -2357,7 +2382,14 @@
         position: "left",
         grid: { color: "rgba(255,255,255,.06)" },
         ticks: { color: "#8b90a0" },
-        title: useMultiAxis ? { display: true, text: datasets[0].label, color: datasets[0].borderColor, font: { size: 10 } } : { display: false },
+        title: useMultiAxis
+          ? {
+              display: true,
+              text: datasets[0].label,
+              color: datasets[0].borderColor,
+              font: { size: 10 },
+            }
+          : { display: false },
       },
     };
     if (useMultiAxis) {
@@ -2365,7 +2397,17 @@
         position: "right",
         grid: { drawOnChartArea: false },
         ticks: { color: "#8b90a0" },
-        title: { display: true, text: datasets.slice(1).map(function (d) { return d.label; }).join(", "), color: "#8b90a0", font: { size: 10 } },
+        title: {
+          display: true,
+          text: datasets
+            .slice(1)
+            .map(function (d) {
+              return d.label;
+            })
+            .join(", "),
+          color: "#8b90a0",
+          font: { size: 10 },
+        },
       };
     }
 
@@ -2380,12 +2422,20 @@
         scales: scales,
         plugins: {
           legend: {
-            labels: { color: "#e4e6ed", usePointStyle: true, pointStyle: "circle" },
+            labels: {
+              color: "#e4e6ed",
+              usePointStyle: true,
+              pointStyle: "circle",
+            },
           },
           tooltip: {
             callbacks: {
               label: function (ctx) {
-                return ctx.dataset.label + ": " + (ctx.raw !== null ? ctx.raw : "N/A");
+                return (
+                  ctx.dataset.label +
+                  ": " +
+                  (ctx.raw !== null ? ctx.raw : "N/A")
+                );
               },
             },
           },
@@ -3773,8 +3823,9 @@
             });
             if (existing) {
               Object.assign(existing.changes, changes);
+              existing.timestamp = new Date().toISOString();
             } else {
-              edits.push({ id: aid, changes: changes });
+              edits.push({ id: aid, changes: changes, timestamp: new Date().toISOString() });
             }
             count++;
           }
@@ -5971,7 +6022,7 @@
       html +=
         '<span style="background:' +
         tierColors[tk] +
-        ";padding:3px 8px;border-radius:4px;font-weight:600\">" +
+        ';padding:3px 8px;border-radius:4px;font-weight:600">' +
         tierLabels[tk] +
         ": " +
         gradeCounts[tk] +
@@ -5986,7 +6037,9 @@
     for (var ski = 0; ski < sumKeys.length; ski++) {
       var sm = sumKeys[ski];
       var avg =
-        counts[sm.key] > 0 ? (sums[sm.key] / counts[sm.key]).toFixed(sm.dec) : "—";
+        counts[sm.key] > 0
+          ? (sums[sm.key] / counts[sm.key]).toFixed(sm.dec)
+          : "—";
       var best =
         maxVals[sm.key] !== null
           ? typeof sm.dec === "number"
@@ -6041,10 +6094,14 @@
       html += '<div style="font-size:8pt">';
       if (warnCount > 0)
         html +=
-          "<p>⚠️ " + warnCount + " data coverage warning(s) — some metrics have fewer than 5 data points.</p>";
+          "<p>⚠️ " +
+          warnCount +
+          " data coverage warning(s) — some metrics have fewer than 5 data points.</p>";
       if (flagCount > 0)
         html +=
-          "<p>🚩 " + flagCount + " athlete data flag(s) — see dashboard for details.</p>";
+          "<p>🚩 " +
+          flagCount +
+          " athlete data flag(s) — see dashboard for details.</p>";
       html += "</div>";
     }
 
@@ -7744,6 +7801,13 @@
   function rebuildFromStorage() {
     const rawCopy = JSON.parse(JSON.stringify(window._rawDataCache));
 
+    // Build coach timestamp lookup from original JSON
+    var coachTimestamps = {};
+    for (var ci = 0; ci < rawCopy.athletes.length; ci++) {
+      var ca = rawCopy.athletes[ci];
+      if (ca.lastUpdated) coachTimestamps[ca.id] = ca.lastUpdated;
+    }
+
     // Apply additions
     const added = safeLSGet("lc_added", []);
     for (const a of added) {
@@ -7765,8 +7829,7 @@
     }
 
     // Apply test history values as current data.
-    // Walk ALL entries newest-date-first; for each metric, the first
-    // non-null value wins.  Manual edits (lc_edits) override everything.
+    // Only apply entries newer than the athlete's lastUpdated from coach JSON.
     var testH = getTestHistory();
     var testIds = Object.keys(testH);
     for (var ti = 0; ti < testIds.length; ti++) {
@@ -7777,12 +7840,15 @@
         return a.id === tAid;
       });
       if (!tAthlete) continue;
+      var coachTS = coachTimestamps[tAid] || "";
       // Sort entries newest-first
       var sorted = tEntries.slice().sort(function (a, b) {
         return a.date > b.date ? -1 : a.date < b.date ? 1 : 0;
       });
       var applied = {}; // track which jsonKeys we've already set
       for (var si = 0; si < sorted.length; si++) {
+        // Skip test entries older than coach's lastUpdated
+        if (coachTS && sorted[si].date <= coachTS.slice(0, 10)) continue;
         var vals = sorted[si].values;
         for (var vk in vals) {
           if (applied[vk]) continue; // already set from a newer entry
@@ -7795,13 +7861,18 @@
       }
     }
 
-    // Apply edits AFTER test history so manual edits take priority
+    // Apply edits AFTER test history so manual edits take priority.
+    // Only apply edits whose timestamp is newer than coach's lastUpdated.
     const edits = safeLSGet("lc_edits", []);
     for (const edit of edits) {
       const athlete = rawCopy.athletes.find(function (a) {
         return a.id === edit.id;
       });
-      if (athlete) Object.assign(athlete, edit.changes);
+      if (!athlete) continue;
+      var cTS = coachTimestamps[edit.id] || "";
+      var eTS = edit.timestamp || "";
+      if (cTS && eTS && eTS <= cTS) continue; // stale edit, skip
+      Object.assign(athlete, edit.changes);
     }
 
     window.CLUB = window._processData(rawCopy);
@@ -8498,8 +8569,9 @@
       }
     } else if (existing) {
       existing.changes = changes;
+      existing.timestamp = new Date().toISOString();
     } else {
-      edits.push({ id: editingAthleteId, changes: changes });
+      edits.push({ id: editingAthleteId, changes: changes, timestamp: new Date().toISOString() });
     }
     safeLSSet("lc_edits", JSON.stringify(edits));
 
@@ -8847,6 +8919,7 @@
       sprint_020: a.sprint020,
       sprint_2030: a.sprint2030,
       sprint_3040: a.sprint3040,
+      lastUpdated: new Date().toISOString(),
     };
 
     const json = JSON.stringify(exported, null, 2);
@@ -8884,9 +8957,11 @@
   /* ========== JSON EXPORT (full dataset) ========== */
   window.exportJSON = function () {
     const D = window.CLUB;
+    const now = new Date().toISOString();
     const exportData = {
-      exportDate: new Date().toISOString(),
+      exportDate: now,
       source: "BC Personal Fitness Club Dashboard",
+      dataVersion: now,
       athleteCount: D.athletes.length,
       athletes: D.athletes.map(function (a) {
         return {
@@ -8916,6 +8991,7 @@
           relPeakPower: a.relPeakPower,
           overallGrade: a.overallGrade ? a.overallGrade.label : null,
           gradeScore: a.overallGrade ? a.overallGrade.score : null,
+          lastUpdated: now,
         };
       }),
     };
@@ -9038,6 +9114,7 @@
             bench_1rm: a.bench_1rm !== undefined ? a.bench_1rm : null,
             squat_1rm: a.squat_1rm !== undefined ? a.squat_1rm : null,
             medball_in: a.medball_in !== undefined ? a.medball_in : null,
+            lastUpdated: a.lastUpdated || data.dataVersion || new Date().toISOString(),
           };
           return raw;
         });
@@ -9073,6 +9150,7 @@
             SAYERS_C: -2055,
           },
           athletes: rawAthletes,
+          dataVersion: data.dataVersion || new Date().toISOString(),
         };
         /* Carry over optional top-level collections if present */
         if (data.testing_log) rawData.testing_log = data.testing_log;
@@ -9086,6 +9164,12 @@
         localStorage.removeItem("lc_deleted");
         localStorage.removeItem("lc_snapshots");
         localStorage.removeItem("lc_test_notes");
+
+        // Store the dataVersion from the imported file so future loads
+        // recognise it and don't re-purge localStorage.
+        if (data.dataVersion) {
+          localStorage.setItem("lc_dataVersion", data.dataVersion);
+        }
 
         /* --- Restore test history if present in import --- */
         if (data.test_history && typeof data.test_history === "object") {

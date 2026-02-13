@@ -29,7 +29,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": "Excellent",
-      "gradeScore": 3.7
+      "gradeScore": 3.7,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH002",
@@ -57,7 +58,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": "Excellent",
-      "gradeScore": 3.5
+      "gradeScore": 3.5,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH003",
@@ -85,7 +87,8 @@
       "peakPower": 6520,
       "relPeakPower": 79.4,
       "overallGrade": "Elite",
-      "gradeScore": 4.5
+      "gradeScore": 4.5,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH004",
@@ -113,7 +116,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": "Elite",
-      "gradeScore": 4.8
+      "gradeScore": 4.8,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH005",
@@ -141,7 +145,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": null,
-      "gradeScore": null
+      "gradeScore": null,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH006",
@@ -169,7 +174,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": "Excellent",
-      "gradeScore": 4.3
+      "gradeScore": 4.3,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH007",
@@ -197,7 +203,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": "Excellent",
-      "gradeScore": 4.2
+      "gradeScore": 4.2,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH008",
@@ -225,7 +232,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": "Excellent",
-      "gradeScore": 3.8
+      "gradeScore": 3.8,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH009",
@@ -253,7 +261,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": "Excellent",
-      "gradeScore": 3.5
+      "gradeScore": 3.5,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH010",
@@ -281,7 +290,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": null,
-      "gradeScore": null
+      "gradeScore": null,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH011",
@@ -309,7 +319,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": null,
-      "gradeScore": null
+      "gradeScore": null,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH012",
@@ -337,7 +348,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": "Average",
-      "gradeScore": 2.2
+      "gradeScore": 2.2,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH013",
@@ -365,7 +377,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": "Average",
-      "gradeScore": 1.8
+      "gradeScore": 1.8,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH014",
@@ -393,7 +406,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": "Average",
-      "gradeScore": 1.8
+      "gradeScore": 1.8,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH015",
@@ -421,7 +435,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": null,
-      "gradeScore": null
+      "gradeScore": null,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH016",
@@ -449,7 +464,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": "Average",
-      "gradeScore": 1.8
+      "gradeScore": 1.8,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH017",
@@ -477,7 +493,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": "Average",
-      "gradeScore": 1.8
+      "gradeScore": 1.8,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH018",
@@ -505,7 +522,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": null,
-      "gradeScore": null
+      "gradeScore": null,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH019",
@@ -533,7 +551,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": "Average",
-      "gradeScore": 2.2
+      "gradeScore": 2.2,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH020",
@@ -561,7 +580,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": null,
-      "gradeScore": null
+      "gradeScore": null,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH021",
@@ -589,7 +609,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": "Good",
-      "gradeScore": 3
+      "gradeScore": 3,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH022",
@@ -617,7 +638,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": null,
-      "gradeScore": null
+      "gradeScore": null,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH023",
@@ -645,7 +667,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": null,
-      "gradeScore": null
+      "gradeScore": null,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH024",
@@ -673,7 +696,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": null,
-      "gradeScore": null
+      "gradeScore": null,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH025",
@@ -701,7 +725,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": null,
-      "gradeScore": null
+      "gradeScore": null,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH037",
@@ -729,7 +754,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": "Average",
-      "gradeScore": 1.8
+      "gradeScore": 1.8,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH038",
@@ -757,7 +783,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": null,
-      "gradeScore": null
+      "gradeScore": null,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH039",
@@ -785,7 +812,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": "Average",
-      "gradeScore": 2.2
+      "gradeScore": 2.2,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH040",
@@ -813,7 +841,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": null,
-      "gradeScore": null
+      "gradeScore": null,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH041",
@@ -841,7 +870,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": "Good",
-      "gradeScore": 3
+      "gradeScore": 3,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH042",
@@ -869,7 +899,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": "Excellent",
-      "gradeScore": 4.3
+      "gradeScore": 4.3,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH044",
@@ -897,7 +928,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": null,
-      "gradeScore": null
+      "gradeScore": null,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH045",
@@ -925,7 +957,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": "Elite",
-      "gradeScore": 4.5
+      "gradeScore": 4.5,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH047",
@@ -953,7 +986,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": null,
-      "gradeScore": null
+      "gradeScore": null,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH048",
@@ -981,7 +1015,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": null,
-      "gradeScore": null
+      "gradeScore": null,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH049",
@@ -1009,7 +1044,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": null,
-      "gradeScore": null
+      "gradeScore": null,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH050",
@@ -1037,7 +1073,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": null,
-      "gradeScore": null
+      "gradeScore": null,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH051",
@@ -1065,7 +1102,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": null,
-      "gradeScore": null
+      "gradeScore": null,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     },
     {
       "id": "ATH052",
@@ -1093,7 +1131,8 @@
       "peakPower": null,
       "relPeakPower": null,
       "overallGrade": null,
-      "gradeScore": null
+      "gradeScore": null,
+      "lastUpdated": "2026-02-13T20:00:00Z"
     }
   ],
   "test_history": {
@@ -1972,5 +2011,6 @@
         }
       }
     ]
-  }
+  },
+  "dataVersion": "2026-02-13T20:00:00Z"
 }

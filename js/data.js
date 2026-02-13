@@ -1269,6 +1269,31 @@
     .then((raw) => {
       window._rawDataCache = JSON.parse(JSON.stringify(raw)); // deep clone original
 
+      /* ---------- Coach-data-is-king: timestamp-based merge ---------- */
+      // If the coach pushed a new dataVersion, purge all stale localStorage
+      // edits/additions/deletions so the fresh JSON takes full precedence.
+      const newVersion = raw.dataVersion || null;
+      const oldVersion = localStorage.getItem("lc_dataVersion");
+      if (newVersion && newVersion !== oldVersion) {
+        console.info(
+          "[data] New dataVersion detected (" + newVersion +
+          ") — purging stale localStorage edits."
+        );
+        localStorage.removeItem("lc_edits");
+        localStorage.removeItem("lc_added");
+        localStorage.removeItem("lc_deleted");
+        localStorage.removeItem("lc_test_history");
+        localStorage.removeItem("lc_snapshots");
+        localStorage.removeItem("lc_test_notes");
+        localStorage.setItem("lc_dataVersion", newVersion);
+      }
+
+      // Build a lookup of per-athlete lastUpdated from the JSON (coach timestamps)
+      const coachTimestamps = {};
+      for (const a of raw.athletes) {
+        if (a.lastUpdated) coachTimestamps[a.id] = a.lastUpdated;
+      }
+
       // Apply saved additions from localStorage
       const savedAdded = localStorage.getItem("lc_added");
       if (savedAdded) {
@@ -1296,10 +1321,8 @@
       }
 
       // Apply test history values as current data.
-      // Walk ALL entries newest-date-first; for each metric, the first
-      // non-null value wins.  This means the most recent measurement for
-      // each metric is used, even if different metrics come from different
-      // test sessions.  Manual edits (lc_edits) override everything.
+      // Only apply entries whose date is NEWER than the athlete's lastUpdated
+      // from the coach JSON.  This ensures coach pushes override stale browser data.
       const savedTestH = localStorage.getItem("lc_test_history");
       if (savedTestH) {
         try {
@@ -1311,15 +1334,18 @@
             if (!tEntries || tEntries.length === 0) continue;
             const tAthlete = raw.athletes.find((a) => a.id === tAid);
             if (!tAthlete) continue;
+            const coachTS = coachTimestamps[tAid] || "";
             // Sort entries newest-first
             const sorted = tEntries
               .slice()
               .sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0));
-            const applied = {}; // track which jsonKeys we've already set
+            const applied = {};
             for (let si = 0; si < sorted.length; si++) {
+              // Skip test entries that are older than the coach's lastUpdated
+              if (coachTS && sorted[si].date <= coachTS.slice(0, 10)) continue;
               const vals = sorted[si].values;
               for (const vk in vals) {
-                if (applied[vk]) continue; // already set from a newer entry
+                if (applied[vk]) continue;
                 const v = vals[vk];
                 if (v === null || v === undefined || v === "") continue;
                 if (typeof v === "number" && !isFinite(v)) continue;
@@ -1333,14 +1359,27 @@
         }
       }
 
-      // Apply saved edits AFTER test history so manual edits take priority
+      // Apply saved edits AFTER test history so manual edits take priority.
+      // Only apply edits whose timestamp is NEWER than the athlete's
+      // lastUpdated from the coach JSON.
       const savedEdits = localStorage.getItem("lc_edits");
       if (savedEdits) {
         try {
           const edits = JSON.parse(savedEdits);
           for (const edit of edits) {
             const athlete = raw.athletes.find((a) => a.id === edit.id);
-            if (athlete) Object.assign(athlete, edit.changes);
+            if (!athlete) continue;
+            const coachTS = coachTimestamps[edit.id] || "";
+            const editTS = edit.timestamp || "";
+            // If edit is older than coach data, skip it
+            if (coachTS && editTS && editTS <= coachTS) {
+              console.info(
+                "[data] Discarding stale edit for " + edit.id +
+                " (edit: " + editTS + " <= coach: " + coachTS + ")"
+              );
+              continue;
+            }
+            Object.assign(athlete, edit.changes);
           }
         } catch (e) {
           console.warn("Failed to apply saved edits:", e);
