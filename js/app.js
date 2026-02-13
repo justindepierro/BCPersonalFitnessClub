@@ -998,31 +998,10 @@
   let _prevTestCache = null;
   let _staleKeysCache = null;
 
-  /** Return the YYYY-MM-DD export-date boundary from the raw JSON cache.
-   *  Test history entries before this date belong to a prior data session and
-   *  should not be applied as current values or used for stale-key detection. */
-  function getExportDateBoundary() {
-    const rc = window._rawDataCache;
-    if (!rc) return "";
-    const d = rc.exportDate || (rc.meta && rc.meta.export_date) || "";
-    return d ? d.slice(0, 10) : "";
-  }
-
-  /** Filter athlete history entries to only those from the current session
-   *  (date >= JSON export date).  Returns all entries if no export date. */
-  function getCurrentSessionEntries(athleteId) {
-    const entries = getAthleteHistory(athleteId); // sorted newest-first
-    const boundary = getExportDateBoundary();
-    if (!boundary) return entries;
-    return entries.filter(function (e) {
-      return e.date >= boundary;
-    });
-  }
-
   function getPrevTestValues(athleteId) {
     if (!_prevTestCache) _prevTestCache = {};
     if (_prevTestCache[athleteId]) return _prevTestCache[athleteId];
-    const entries = getAthleteHistory(athleteId); // sorted newest-first (ALL entries for fallback)
+    const entries = getAthleteHistory(athleteId); // sorted newest-first
     const vals = {};
     // Walk newest-to-oldest; first non-null value for each key wins
     for (const e of entries) {
@@ -1055,14 +1034,11 @@
    * the athlete's most recent test entry.  These are "stale" — carried over from
    * an older session and should render in italics.
    *
-   * Only entries from the CURRENT session (>= JSON export date) are considered.
-   * If the athlete has no current-session entries, nothing is stale — all values
-   * come from the JSON baseline and should display normally.
    */
   function getStaleKeys(athleteId) {
     if (!_staleKeysCache) _staleKeysCache = {};
     if (_staleKeysCache[athleteId]) return _staleKeysCache[athleteId];
-    const entries = getCurrentSessionEntries(athleteId); // newest-first, current session only
+    const entries = getAthleteHistory(athleteId); // newest-first
     const stale = new Set();
     if (!entries || entries.length === 0) {
       _staleKeysCache[athleteId] = stale;
@@ -7236,38 +7212,25 @@
     }
 
     // Apply latest test data as current values for each athlete
-    // Only apply entries from on/after the JSON export date so stale
-    // localStorage data from a prior session doesn't overwrite current values.
-    const exportDateRaw =
-      rawCopy.exportDate || (rawCopy.meta && rawCopy.meta.export_date) || "";
-    const exportDateBoundary = exportDateRaw ? exportDateRaw.slice(0, 10) : "";
     var testH = getTestHistory();
     var testIds = Object.keys(testH);
     for (var ti = 0; ti < testIds.length; ti++) {
       var tAid = testIds[ti];
       var tEntries = testH[tAid];
       if (!tEntries || tEntries.length === 0) continue;
-      // Filter to entries on or after the export date
-      var currentEntries = exportDateBoundary
-        ? tEntries.filter(function (e) {
-            return e.date >= exportDateBoundary;
-          })
-        : tEntries;
-      if (currentEntries.length === 0) continue;
-      // Find the most recent date among current entries
-      var latestDate = currentEntries[0].date;
-      for (var tj = 1; tj < currentEntries.length; tj++) {
-        if (currentEntries[tj].date > latestDate)
-          latestDate = currentEntries[tj].date;
+      // Find the most recent date
+      var latestDate = tEntries[0].date;
+      for (var tj = 1; tj < tEntries.length; tj++) {
+        if (tEntries[tj].date > latestDate) latestDate = tEntries[tj].date;
       }
       // Merge all entries from that date (in case of multiple labels)
       var tAthlete = rawCopy.athletes.find(function (a) {
         return a.id === tAid;
       });
       if (!tAthlete) continue;
-      for (var tk = 0; tk < currentEntries.length; tk++) {
-        if (currentEntries[tk].date !== latestDate) continue;
-        var vals = currentEntries[tk].values;
+      for (var tk = 0; tk < tEntries.length; tk++) {
+        if (tEntries[tk].date !== latestDate) continue;
+        var vals = tEntries[tk].values;
         for (var vk in vals) {
           if (vals[vk] !== null && vals[vk] !== undefined && vals[vk] !== "") {
             tAthlete[vk] = vals[vk];

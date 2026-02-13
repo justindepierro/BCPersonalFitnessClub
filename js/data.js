@@ -1301,12 +1301,6 @@
         }
       }
 
-      // Determine the JSON export date boundary — only apply test history
-      // entries from AFTER the JSON was last exported so stale localStorage
-      // data from a prior session doesn't overwrite current JSON values.
-      const exportDateRaw = raw.exportDate || raw.meta?.export_date || "";
-      const exportDateBoundary = exportDateRaw ? exportDateRaw.slice(0, 10) : "";
-
       // Apply latest test date values as current data
       // (BEFORE edits, so manual edits take priority — matches rebuildFromStorage)
       const savedTestH = localStorage.getItem("lc_test_history");
@@ -1318,21 +1312,16 @@
             const tAid = testIds[ti];
             const tEntries = testH[tAid];
             if (!tEntries || tEntries.length === 0) continue;
-            // Only consider entries on or after the export date
-            const currentEntries = exportDateBoundary
-              ? tEntries.filter((e) => e.date >= exportDateBoundary)
-              : tEntries;
-            if (currentEntries.length === 0) continue;
-            let latestDate = currentEntries[0].date;
-            for (let tj = 1; tj < currentEntries.length; tj++) {
-              if (currentEntries[tj].date > latestDate)
-                latestDate = currentEntries[tj].date;
+            let latestDate = tEntries[0].date;
+            for (let tj = 1; tj < tEntries.length; tj++) {
+              if (tEntries[tj].date > latestDate)
+                latestDate = tEntries[tj].date;
             }
             const tAthlete = raw.athletes.find((a) => a.id === tAid);
             if (!tAthlete) continue;
-            for (let tk = 0; tk < currentEntries.length; tk++) {
-              if (currentEntries[tk].date !== latestDate) continue;
-              const vals = currentEntries[tk].values;
+            for (let tk = 0; tk < tEntries.length; tk++) {
+              if (tEntries[tk].date !== latestDate) continue;
+              const vals = tEntries[tk].values;
               for (const vk in vals) {
                 const v = vals[vk];
                 if (v === null || v === undefined || v === "") continue;
