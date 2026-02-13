@@ -1,5 +1,5 @@
 {
-  "exportDate": "2026-02-12T15:42:01.518Z",
+  "exportDate": "2026-02-13T19:41:37.007Z",
   "source": "BC Personal Fitness Club Dashboard",
   "athleteCount": 39,
   "athletes": [
@@ -1117,7 +1117,9 @@
         "date": "2026-02-10",
         "label": "Phase 1 Testing",
         "values": {
-          "weight_lb": 217
+          "weight_lb": 217,
+          "sprint_020": null,
+          "sprint_2030": null
         }
       }
     ],
@@ -1141,7 +1143,8 @@
         "date": "2026-02-10",
         "label": "Phase 1 Testing",
         "values": {
-          "squat_1rm": 375
+          "squat_1rm": 375,
+          "bench_1rm": 275
         }
       }
     ],
@@ -1211,7 +1214,14 @@
         "date": "2026-02-10",
         "label": "Phase 1 Testing",
         "values": {
-          "weight_lb": 95
+          "weight_lb": 95,
+          "bench_1rm": 90,
+          "squat_1rm": 150,
+          "sprint_020": 3.65,
+          "sprint_2030": 1.25,
+          "sprint_3040": 1.25,
+          "vert_in": 18,
+          "broad_in": 71
         }
       }
     ],
@@ -1261,7 +1271,8 @@
         "values": {
           "squat_1rm": 225,
           "weight_lb": 200,
-          "medball_in": 123
+          "medball_in": 123,
+          "bench_1rm": 115
         }
       }
     ],
@@ -1309,7 +1320,8 @@
         "values": {
           "squat_1rm": 135,
           "weight_lb": 110,
-          "medball_in": 96
+          "medball_in": 96,
+          "bench_1rm": 70
         }
       }
     ],
@@ -1386,7 +1398,8 @@
         "values": {
           "squat_1rm": 405,
           "weight_lb": 151,
-          "medball_in": 153
+          "medball_in": 153,
+          "bench_1rm": 175
         }
       }
     ],
@@ -1437,7 +1450,8 @@
         "values": {
           "squat_1rm": 315,
           "weight_lb": 163,
-          "medball_in": 163
+          "medball_in": 163,
+          "bench_1rm": 210
         }
       }
     ],
@@ -1462,14 +1476,14 @@
         "label": "Phase 1 Testing",
         "values": {
           "weight_lb": 181,
-          "bench_1rm": null,
+          "bench_1rm": 245,
           "squat_1rm": 500,
           "medball_in": 203,
-          "vert_in": null,
-          "broad_in": null,
-          "sprint_020": null,
-          "sprint_2030": null,
-          "sprint_3040": null
+          "vert_in": 30.5,
+          "broad_in": 104,
+          "sprint_020": 2.97,
+          "sprint_2030": 1.02,
+          "sprint_3040": 1.01
         }
       }
     ],
@@ -1521,7 +1535,8 @@
         "values": {
           "squat_1rm": 425,
           "weight_lb": 188,
-          "medball_in": 191
+          "medball_in": 191,
+          "bench_1rm": 175
         }
       }
     ],
@@ -1547,7 +1562,13 @@
         "values": {
           "squat_1rm": 225,
           "weight_lb": 138,
-          "medball_in": 137
+          "medball_in": 137,
+          "bench_1rm": 105,
+          "sprint_020": 3.65,
+          "sprint_2030": 1.42,
+          "sprint_3040": 1.29,
+          "broad_in": 74,
+          "vert_in": 20
         }
       }
     ],
@@ -1573,7 +1594,13 @@
         "values": {
           "squat_1rm": 410,
           "weight_lb": 173,
-          "medball_in": 191
+          "medball_in": 191,
+          "bench_1rm": 195,
+          "sprint_020": 3.17,
+          "sprint_2030": 1.16,
+          "sprint_3040": 1.08,
+          "broad_in": 103,
+          "vert_in": 29
         }
       }
     ],
@@ -1597,7 +1624,13 @@
         "date": "2026-02-10",
         "label": "Phase 1 Testing",
         "values": {
-          "weight_lb": 192
+          "weight_lb": 192,
+          "bench_1rm": 245,
+          "sprint_020": 3.41,
+          "sprint_2030": 1.18,
+          "sprint_3040": 1.09,
+          "broad_in": 89,
+          "vert_in": 25
         }
       }
     ],
@@ -1648,7 +1681,8 @@
         "label": "Phase 1 Testing",
         "values": {
           "weight_lb": 127,
-          "medball_in": 133
+          "medball_in": 133,
+          "bench_1rm": 105
         }
       }
     ],
@@ -1674,7 +1708,8 @@
         "values": {
           "squat_1rm": 275,
           "weight_lb": 122,
-          "medball_in": 151
+          "medball_in": 151,
+          "bench_1rm": 145
         }
       }
     ],
@@ -1749,7 +1784,13 @@
         "values": {
           "squat_1rm": 205,
           "weight_lb": 146,
-          "medball_in": 151
+          "medball_in": 151,
+          "bench_1rm": 120,
+          "sprint_020": 3.55,
+          "sprint_2030": 1.18,
+          "sprint_3040": 1.13,
+          "broad_in": 83,
+          "vert_in": 19
         }
       }
     ],
@@ -1775,7 +1816,8 @@
         "values": {
           "squat_1rm": 225,
           "weight_lb": 133,
-          "medball_in": 141
+          "medball_in": 141,
+          "bench_1rm": 135
         }
       }
     ],
@@ -1827,7 +1869,8 @@
         "values": {
           "squat_1rm": 335,
           "weight_lb": 132,
-          "medball_in": 156
+          "medball_in": 156,
+          "bench_1rm": 160
         }
       }
     ],
@@ -1861,7 +1904,8 @@
         "label": "Phase 1 Testing",
         "values": {
           "squat_1rm": 185,
-          "weight_lb": 163
+          "weight_lb": 163,
+          "bench_1rm": 135
         }
       }
     ],
@@ -1879,7 +1923,8 @@
         "values": {
           "weight_lb": 117,
           "medball_in": null,
-          "squat_1rm": 140
+          "squat_1rm": 140,
+          "bench_1rm": 100
         }
       }
     ],
@@ -1889,7 +1934,8 @@
         "label": "Phase 1 Testing",
         "values": {
           "medball_in": null,
-          "squat_1rm": 105
+          "squat_1rm": 105,
+          "bench_1rm": null
         }
       }
     ],
@@ -1921,7 +1967,8 @@
         "label": "Phase 1 Testing",
         "values": {
           "medball_in": null,
-          "squat_1rm": 225
+          "squat_1rm": 225,
+          "bench_1rm": 145
         }
       }
     ]

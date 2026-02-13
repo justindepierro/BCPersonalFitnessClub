@@ -14,6 +14,7 @@
   let profileSprintChartInstance = null;
   let profileDonutInstance = null;
   let profileQuadrantInstance = null;
+  let profileProgressChartInstance = null;
 
   /* ---------- Athlete Map (O(1) lookups by id) ---------- */
   let _athleteMap = null;
@@ -916,6 +917,7 @@
         profileSprintChartInstance = destroyChart(profileSprintChartInstance);
         profileDonutInstance = destroyChart(profileDonutInstance);
         profileQuadrantInstance = destroyChart(profileQuadrantInstance);
+        profileProgressChartInstance = destroyChart(profileProgressChartInstance);
       }
       if (prevId === "leaderboards")
         lbChartInstance = destroyChart(lbChartInstance);
@@ -1134,11 +1136,24 @@
     return `<td class="num stale-val" title="Previous test data">${fmt(val, decimals)}</td>`;
   }
 
+  // Heat map background color from grade tier (subtle transparent tints)
+  function heatBg(grade) {
+    if (!grade) return "";
+    var colors = {
+      elite: "rgba(167,139,250,.15)",
+      excellent: "rgba(74,222,128,.13)",
+      good: "rgba(96,165,250,.12)",
+      average: "rgba(250,204,21,.10)",
+      below: "rgba(248,113,113,.12)",
+    };
+    return colors[grade.tier] ? ' style="background:' + colors[grade.tier] + '"' : "";
+  }
+
   function tdGraded(val, decimals, grade) {
     if (val === null || val === undefined) return '<td class="num na">—</td>';
     const v = typeof decimals === "number" ? val.toFixed(decimals) : val;
     if (!grade) return `<td class="num">${v}</td>`;
-    return `<td class="num grade-text-${grade.tier}" title="${grade.label}">${v}</td>`;
+    return `<td class="num grade-text-${grade.tier}" title="${grade.label}"${heatBg(grade)}>${v}</td>`;
   }
 
   function tdGradedStale(val, decimals, grade) {
@@ -1146,7 +1161,7 @@
     const v = typeof decimals === "number" ? val.toFixed(decimals) : val;
     if (!grade)
       return `<td class="num stale-val" title="Previous test data">${v}</td>`;
-    return `<td class="num stale-val grade-text-${grade.tier}" title="${grade.label} (previous test data)">${v}</td>`;
+    return `<td class="num stale-val grade-text-${grade.tier}" title="${grade.label} (previous test data)"${heatBg(grade)}>${v}</td>`;
   }
 
   function tdNumColoredStale(val, decimals) {
@@ -1588,6 +1603,9 @@
 
       ${buildProgressSection(a)}
 
+      <div class="profile-section-title">Progress Timeline</div>
+      <div class="profile-chart-wrap profile-chart-wide"><canvas id="profileProgressChart"></canvas></div>
+
       <div class="profile-section-title">Radar</div>
       <div class="profile-chart-wrap"><canvas id="profileRadar"></canvas></div>
 
@@ -1612,6 +1630,7 @@
     buildSprintVelocityChart(a);
     buildGradeDonut(a);
     buildStrengthSpeedChart(a);
+    buildProgressTimeline(a);
   };
 
   function metricCard(label, val, unit, sub, grade) {
@@ -2225,6 +2244,154 @@
 
     if (!rows) return "";
     return `<div class="profile-section-title">Team Rankings</div><div class="team-ranking-grid">${rows}</div>`;
+  }
+
+  /* ========== PROGRESS TIMELINE CHART ========== */
+  function buildProgressTimeline(a) {
+    const canvas = document.getElementById("profileProgressChart");
+    if (!canvas || typeof Chart === "undefined") return;
+    if (profileProgressChartInstance) {
+      profileProgressChartInstance.destroy();
+      profileProgressChartInstance = null;
+    }
+
+    const history = getAthleteHistory(a.id); // newest-first
+    if (history.length === 0) {
+      canvas.parentElement.style.display = "none";
+      // Also hide the section title
+      var prevTitle = canvas.parentElement.previousElementSibling;
+      if (prevTitle && prevTitle.classList.contains("profile-section-title"))
+        prevTitle.style.display = "none";
+      return;
+    }
+
+    // Build timeline: each test date is a data point, plus "Current" at the end
+    const current = currentTestValues(a);
+    // Sort entries oldest-first for the timeline
+    const sorted = history.slice().sort(function (x, y) {
+      return x.date < y.date ? -1 : x.date > y.date ? 1 : 0;
+    });
+
+    // Pick the 4 most interesting metrics to chart (ones with data across multiple entries)
+    const candidates = [
+      { key: "bench_1rm", label: "Bench", color: "#a78bfa", iKey: "bench" },
+      { key: "squat_1rm", label: "Squat", color: "#60a5fa", iKey: "squat" },
+      { key: "vert_in", label: "Vert", color: "#4ade80", iKey: "vert" },
+      { key: "broad_in", label: "Broad", color: "#facc15", iKey: "broad" },
+      { key: "medball_in", label: "Med Ball", color: "#f97316", iKey: "medball" },
+      { key: "weight_lb", label: "Weight", color: "#9ba0b2", iKey: "weight" },
+    ];
+
+    // Build labels and datasets
+    var labels = sorted.map(function (e) {
+      return e.label || e.date;
+    });
+    labels.push("Current");
+
+    var datasets = [];
+    for (var ci = 0; ci < candidates.length; ci++) {
+      var c = candidates[ci];
+      var data = [];
+      var hasMultiple = 0;
+      for (var si = 0; si < sorted.length; si++) {
+        var v = sorted[si].values[c.key];
+        data.push(v != null ? v : null);
+        if (v != null) hasMultiple++;
+      }
+      // Add current value as last point
+      var curV = current[c.key];
+      data.push(curV != null ? curV : null);
+      if (curV != null) hasMultiple++;
+
+      if (hasMultiple >= 2) {
+        datasets.push({
+          label: c.label,
+          data: data,
+          borderColor: c.color,
+          backgroundColor: c.color + "22",
+          tension: 0.3,
+          pointRadius: 5,
+          pointBackgroundColor: c.color,
+          pointBorderColor: "#fff",
+          pointBorderWidth: 2,
+          spanGaps: true,
+        });
+      }
+    }
+
+    if (datasets.length === 0) {
+      canvas.parentElement.style.display = "none";
+      var prevTitle2 = canvas.parentElement.previousElementSibling;
+      if (prevTitle2 && prevTitle2.classList.contains("profile-section-title"))
+        prevTitle2.style.display = "none";
+      return;
+    }
+
+    // For metrics with very different scales, use multiple Y axes
+    var useMultiAxis = false;
+    if (datasets.length >= 2) {
+      var ranges = datasets.map(function (ds) {
+        var vals = ds.data.filter(function (v) { return v !== null; });
+        return { min: Math.min.apply(null, vals), max: Math.max.apply(null, vals) };
+      });
+      var maxRange = Math.max.apply(null, ranges.map(function (r) { return r.max; }));
+      var minRange = Math.min.apply(null, ranges.map(function (r) { return r.min; }));
+      // If ratio between largest and smallest max is >5x, use dual axes
+      if (maxRange > 0 && minRange > 0 && maxRange / minRange > 5) useMultiAxis = true;
+    }
+
+    if (useMultiAxis && datasets.length >= 2) {
+      // Split: first dataset on left y, rest on right y
+      datasets[0].yAxisID = "y";
+      for (var di = 1; di < datasets.length; di++) {
+        datasets[di].yAxisID = "y1";
+      }
+    }
+
+    var scales = {
+      x: {
+        grid: { color: "rgba(255,255,255,.06)" },
+        ticks: { color: "#8b90a0", font: { size: 10 } },
+      },
+      y: {
+        position: "left",
+        grid: { color: "rgba(255,255,255,.06)" },
+        ticks: { color: "#8b90a0" },
+        title: useMultiAxis ? { display: true, text: datasets[0].label, color: datasets[0].borderColor, font: { size: 10 } } : { display: false },
+      },
+    };
+    if (useMultiAxis) {
+      scales.y1 = {
+        position: "right",
+        grid: { drawOnChartArea: false },
+        ticks: { color: "#8b90a0" },
+        title: { display: true, text: datasets.slice(1).map(function (d) { return d.label; }).join(", "), color: "#8b90a0", font: { size: 10 } },
+      };
+    }
+
+    profileProgressChartInstance = new Chart(canvas, {
+      type: "line",
+      data: { labels: labels, datasets: datasets },
+      options: {
+        ...chartAnimOpts(),
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        scales: scales,
+        plugins: {
+          legend: {
+            labels: { color: "#e4e6ed", usePointStyle: true, pointStyle: "circle" },
+          },
+          tooltip: {
+            callbacks: {
+              label: function (ctx) {
+                return ctx.dataset.label + ": " + (ctx.raw !== null ? ctx.raw : "N/A");
+              },
+            },
+          },
+        },
+      },
+    });
   }
 
   /* ========== TEST HISTORY — PROFILE PROGRESS SECTION ========== */
@@ -5517,6 +5684,373 @@
     </div>`;
 
     openPrintWindow(printHTML, "Scorecard Report");
+  };
+
+  /* --- Print Sprint Analysis table --- */
+  window.printSprintTable = function () {
+    var D = window.CLUB;
+    var sprinters = D.athletes.filter(function (a) {
+      return a.sprint020 !== null;
+    });
+    if (sprinters.length === 0) {
+      showToast("No sprint data to print.", "warn");
+      return;
+    }
+    var html = '<div class="print-page">';
+    html +=
+      '<div class="print-header-bar"><span class="print-logo">BC Personal Fitness Club</span><span class="print-date">Sprint Analysis — ' +
+      new Date().toLocaleDateString() +
+      "</span></div>";
+    html +=
+      '<table class="print-data-table"><thead><tr><th>Athlete</th><th>Pos</th><th>Mass</th><th>0-20</th><th>20-30</th><th>30-40</th><th>40yd</th><th>vMax</th><th>v10</th><th>MPH</th><th>F1</th><th>momMax</th><th>Pow1</th></tr></thead><tbody>';
+    for (var i = 0; i < sprinters.length; i++) {
+      var a = sprinters[i];
+      var f = function (v, d) {
+        return v !== null && v !== undefined
+          ? typeof d === "number"
+            ? v.toFixed(d)
+            : v
+          : "—";
+      };
+      html +=
+        "<tr><td>" +
+        esc(a.name) +
+        "</td><td>" +
+        (a.position || "—") +
+        '</td><td class="num">' +
+        f(a.massKg, 1) +
+        '</td><td class="num">' +
+        f(a.sprint020, 2) +
+        '</td><td class="num">' +
+        f(a.sprint2030, 2) +
+        '</td><td class="num">' +
+        f(a.sprint3040, 2) +
+        '</td><td class="num">' +
+        f(a.forty, 2) +
+        '</td><td class="num">' +
+        f(a.vMax, 2) +
+        '</td><td class="num">' +
+        f(a.v10Max, 2) +
+        '</td><td class="num">' +
+        f(a.topMph, 1) +
+        '</td><td class="num">' +
+        f(a.F1, 1) +
+        '</td><td class="num">' +
+        f(a.momMax, 1) +
+        '</td><td class="num">' +
+        f(a.pow1, 0) +
+        "</td></tr>";
+    }
+    html += "</tbody></table>";
+    html +=
+      '<div class="print-footer">BC Personal Fitness Club — Sprint Analysis Report</div></div>';
+    openPrintWindow(html, "Sprint Analysis");
+  };
+
+  /* --- Print Strength & Power table --- */
+  window.printStrengthTable = function () {
+    var D = window.CLUB;
+    var list = D.athletes.filter(function (a) {
+      return (
+        a.bench !== null ||
+        a.squat !== null ||
+        a.peakPower !== null ||
+        a.medball !== null
+      );
+    });
+    if (list.length === 0) {
+      showToast("No strength data to print.", "warn");
+      return;
+    }
+    var html = '<div class="print-page">';
+    html +=
+      '<div class="print-header-bar"><span class="print-logo">BC Personal Fitness Club</span><span class="print-date">Strength &amp; Power — ' +
+      new Date().toLocaleDateString() +
+      "</span></div>";
+    html +=
+      '<table class="print-data-table"><thead><tr><th>Athlete</th><th>Pos</th><th>Wt</th><th>Bench</th><th>Rel B</th><th>Squat</th><th>Rel S</th><th>MB</th><th>Vert</th><th>Broad</th><th>PP</th><th>Rel PP</th><th>Str Util</th></tr></thead><tbody>';
+    for (var i = 0; i < list.length; i++) {
+      var a = list[i];
+      var f = function (v, d) {
+        return v !== null && v !== undefined
+          ? typeof d === "number"
+            ? v.toFixed(d)
+            : v
+          : "—";
+      };
+      html +=
+        "<tr><td>" +
+        esc(a.name) +
+        "</td><td>" +
+        (a.position || "—") +
+        '</td><td class="num">' +
+        f(a.weight, 0) +
+        '</td><td class="num">' +
+        f(a.bench, 0) +
+        '</td><td class="num">' +
+        f(a.relBench, 2) +
+        '</td><td class="num">' +
+        f(a.squat, 0) +
+        '</td><td class="num">' +
+        f(a.relSquat, 2) +
+        '</td><td class="num">' +
+        f(a.medball, 0) +
+        '</td><td class="num">' +
+        f(a.vert, 1) +
+        '</td><td class="num">' +
+        f(a.broad, 0) +
+        '</td><td class="num">' +
+        f(a.peakPower, 0) +
+        '</td><td class="num">' +
+        f(a.relPeakPower, 1) +
+        '</td><td class="num">' +
+        f(a.strengthUtil, 3) +
+        "</td></tr>";
+    }
+    html += "</tbody></table>";
+    html +=
+      '<div class="print-footer">BC Personal Fitness Club — Strength &amp; Power Report</div></div>';
+    openPrintWindow(html, "Strength & Power");
+  };
+
+  /* --- Print Team Summary One-Pager --- */
+  window.printTeamSummary = function () {
+    var D = window.CLUB;
+    var athletes = D.athletes;
+    var total = athletes.length;
+    if (total === 0) {
+      showToast("No athlete data to summarize.", "warn");
+      return;
+    }
+
+    // Compute averages
+    var sumKeys = [
+      { key: "bench", label: "Bench 1RM", unit: "lb", dec: 0 },
+      { key: "squat", label: "Squat 1RM", unit: "lb", dec: 0 },
+      { key: "medball", label: "Med Ball", unit: "in", dec: 0 },
+      { key: "vert", label: "Vertical", unit: "in", dec: 1 },
+      { key: "broad", label: "Broad Jump", unit: "in", dec: 0 },
+      { key: "forty", label: "40 yd", unit: "s", dec: 2 },
+      { key: "peakPower", label: "Peak Power", unit: "W", dec: 0 },
+      { key: "relBench", label: "Rel Bench", unit: "xBW", dec: 2 },
+      { key: "relSquat", label: "Rel Squat", unit: "xBW", dec: 2 },
+    ];
+    var sums = {},
+      counts = {},
+      maxVals = {},
+      maxNames = {};
+    for (var sk = 0; sk < sumKeys.length; sk++) {
+      sums[sumKeys[sk].key] = 0;
+      counts[sumKeys[sk].key] = 0;
+      maxVals[sumKeys[sk].key] = null;
+      maxNames[sumKeys[sk].key] = "";
+    }
+    var coreFields = ["bench", "squat", "medball", "vert", "broad", "forty"];
+    var fullyTested = 0;
+    for (var ai = 0; ai < athletes.length; ai++) {
+      var a = athletes[ai];
+      var allCore = true;
+      for (var cf = 0; cf < coreFields.length; cf++) {
+        if (a[coreFields[cf]] === null) allCore = false;
+      }
+      if (allCore) fullyTested++;
+      for (var sk2 = 0; sk2 < sumKeys.length; sk2++) {
+        var k = sumKeys[sk2].key;
+        if (a[k] !== null && a[k] !== undefined) {
+          sums[k] += a[k];
+          counts[k]++;
+          var isBetter =
+            maxVals[k] === null
+              ? true
+              : k === "forty"
+                ? a[k] < maxVals[k]
+                : a[k] > maxVals[k];
+          if (isBetter) {
+            maxVals[k] = a[k];
+            maxNames[k] = a.name;
+          }
+        }
+      }
+    }
+
+    // Grade distribution
+    var gradeCounts = { elite: 0, excellent: 0, good: 0, average: 0, below: 0 };
+    for (var gi = 0; gi < athletes.length; gi++) {
+      var og = athletes[gi].overallGrade;
+      if (og && gradeCounts[og.tier] !== undefined) gradeCounts[og.tier]++;
+    }
+
+    // Top improvements (if test history exists)
+    var improvements = [];
+    for (var ti = 0; ti < athletes.length; ti++) {
+      var ath = athletes[ti];
+      var hist = getAthleteHistory(ath.id);
+      if (hist.length < 2) continue;
+      var newest = hist[0];
+      var prior = hist[1];
+      // Check bench improvement
+      if (
+        newest.values.bench_1rm != null &&
+        prior.values.bench_1rm != null &&
+        newest.values.bench_1rm > prior.values.bench_1rm
+      ) {
+        improvements.push({
+          name: ath.name,
+          metric: "Bench",
+          from: prior.values.bench_1rm,
+          to: newest.values.bench_1rm,
+          delta: newest.values.bench_1rm - prior.values.bench_1rm,
+        });
+      }
+      if (
+        newest.values.squat_1rm != null &&
+        prior.values.squat_1rm != null &&
+        newest.values.squat_1rm > prior.values.squat_1rm
+      ) {
+        improvements.push({
+          name: ath.name,
+          metric: "Squat",
+          from: prior.values.squat_1rm,
+          to: newest.values.squat_1rm,
+          delta: newest.values.squat_1rm - prior.values.squat_1rm,
+        });
+      }
+    }
+    improvements.sort(function (a, b) {
+      return b.delta - a.delta;
+    });
+    var topImprov = improvements.slice(0, 6);
+
+    // Data quality flags
+    var flagCount = D.flags ? D.flags.length : 0;
+    var warnCount = D.warnings ? D.warnings.length : 0;
+
+    // Build HTML
+    var html = '<div class="print-page">';
+    html +=
+      '<div class="print-header-bar"><span class="print-logo">BC Personal Fitness Club</span><span class="print-date">Team Summary — ' +
+      new Date().toLocaleDateString() +
+      "</span></div>";
+
+    // Roster overview
+    html += '<h3 class="print-section">Roster Overview</h3>';
+    html +=
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;font-size:8pt">';
+    html +=
+      "<div><strong>Total Athletes:</strong> " +
+      total +
+      "</div><div><strong>Fully Tested:</strong> " +
+      fullyTested +
+      "/" +
+      total +
+      " (" +
+      (total > 0 ? Math.round((fullyTested / total) * 100) : 0) +
+      "%)</div><div><strong>Positions:</strong> " +
+      D.positions.length +
+      "</div></div>";
+
+    // Grade distribution bar
+    html += '<h3 class="print-section">Grade Distribution</h3>';
+    html +=
+      '<div style="display:flex;gap:8px;margin-bottom:10px;font-size:8pt">';
+    var tierColors = {
+      elite: "#d4edda",
+      excellent: "#cce5ff",
+      good: "#fff3cd",
+      average: "#ffe0cc",
+      below: "#f8d7da",
+    };
+    var tierLabels = {
+      elite: "Elite",
+      excellent: "Excellent",
+      good: "Good",
+      average: "Average",
+      below: "Below",
+    };
+    for (var tk in tierLabels) {
+      html +=
+        '<span style="background:' +
+        tierColors[tk] +
+        ";padding:3px 8px;border-radius:4px;font-weight:600\">" +
+        tierLabels[tk] +
+        ": " +
+        gradeCounts[tk] +
+        "</span>";
+    }
+    html += "</div>";
+
+    // Team averages table
+    html += '<h3 class="print-section">Team Averages &amp; Leaders</h3>';
+    html +=
+      '<table class="print-data-table"><thead><tr><th>Metric</th><th>Team Avg</th><th>Tested</th><th>Best</th><th>Leader</th></tr></thead><tbody>';
+    for (var ski = 0; ski < sumKeys.length; ski++) {
+      var sm = sumKeys[ski];
+      var avg =
+        counts[sm.key] > 0 ? (sums[sm.key] / counts[sm.key]).toFixed(sm.dec) : "—";
+      var best =
+        maxVals[sm.key] !== null
+          ? typeof sm.dec === "number"
+            ? maxVals[sm.key].toFixed(sm.dec)
+            : maxVals[sm.key]
+          : "—";
+      html +=
+        "<tr><td>" +
+        sm.label +
+        " (" +
+        sm.unit +
+        ')</td><td class="num">' +
+        avg +
+        '</td><td class="num">' +
+        counts[sm.key] +
+        "/" +
+        total +
+        '</td><td class="num" style="font-weight:700">' +
+        best +
+        "</td><td>" +
+        esc(maxNames[sm.key]) +
+        "</td></tr>";
+    }
+    html += "</tbody></table>";
+
+    // Top improvements
+    if (topImprov.length > 0) {
+      html += '<h3 class="print-section">Biggest Improvements</h3>';
+      html +=
+        '<table class="print-data-table"><thead><tr><th>Athlete</th><th>Metric</th><th>Previous</th><th>Current</th><th>Change</th></tr></thead><tbody>';
+      for (var ii = 0; ii < topImprov.length; ii++) {
+        var imp = topImprov[ii];
+        html +=
+          "<tr><td>" +
+          esc(imp.name) +
+          "</td><td>" +
+          imp.metric +
+          '</td><td class="num">' +
+          imp.from +
+          '</td><td class="num" style="font-weight:700">' +
+          imp.to +
+          '</td><td class="num" style="color:#155724;font-weight:700">+' +
+          imp.delta +
+          "</td></tr>";
+      }
+      html += "</tbody></table>";
+    }
+
+    // Flags
+    if (flagCount > 0 || warnCount > 0) {
+      html += '<h3 class="print-section">Data Quality Notes</h3>';
+      html += '<div style="font-size:8pt">';
+      if (warnCount > 0)
+        html +=
+          "<p>⚠️ " + warnCount + " data coverage warning(s) — some metrics have fewer than 5 data points.</p>";
+      if (flagCount > 0)
+        html +=
+          "<p>🚩 " + flagCount + " athlete data flag(s) — see dashboard for details.</p>";
+      html += "</div>";
+    }
+
+    html +=
+      '<div class="print-footer">BC Personal Fitness Club — Team Summary Report</div></div>';
+    openPrintWindow(html, "Team Summary");
   };
 
   /* --- Print progress section (for profile printout) --- */

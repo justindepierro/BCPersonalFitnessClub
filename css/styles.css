@@ -1553,6 +1553,11 @@ select:focus,
   color: var(--red);
 }
 
+/* Heat map cell backgrounds (applied via inline style from JS) */
+.data-table td[style*="background"] {
+  transition: background 0.2s ease;
+}
+
 /* Grade badges (inline labels) */
 .grade-badge {
   display: inline-block;

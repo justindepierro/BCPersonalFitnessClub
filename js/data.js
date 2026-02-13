@@ -1184,10 +1184,7 @@
         });
       }
       // Unrealistic agility times
-      if (
-        a.proAgility !== null &&
-        (a.proAgility < 3.5 || a.proAgility > 7.0)
-      ) {
+      if (a.proAgility !== null && (a.proAgility < 3.5 || a.proAgility > 7.0)) {
         flags.push({
           athlete: a.name,
           id: a.id,
@@ -1207,10 +1204,7 @@
             " s) is outside plausible HS range (5.5–10.0) — verify data.",
         });
       }
-      if (
-        a.backpedal !== null &&
-        (a.backpedal < 2.5 || a.backpedal > 6.0)
-      ) {
+      if (a.backpedal !== null && (a.backpedal < 2.5 || a.backpedal > 6.0)) {
         flags.push({
           athlete: a.name,
           id: a.id,

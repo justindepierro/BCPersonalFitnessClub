@@ -248,6 +248,13 @@
           >
             📥 CSV
           </button>
+          <button
+            class="btn btn-sm"
+            onclick="printTeamSummary()"
+            title="Print one-page team summary"
+          >
+            🖨️ Report
+          </button>
           <span class="filter-sep">|</span>
           <label
             class="toggle-label overview-toggle"
@@ -437,6 +444,7 @@
       >
         <div class="section-header">
           <h2>Derived Sprint Analysis</h2>
+          <button class="btn btn-sm" onclick="printSprintTable()" title="Print sprint analysis table">🖨️ Print</button>
         </div>
         <p class="section-desc">
           Velocity, acceleration, force, impulse, momentum, and power computed
@@ -921,6 +929,7 @@
       >
         <div class="section-header">
           <h2>Derived Strength &amp; Power</h2>
+          <button class="btn btn-sm" onclick="printStrengthTable()" title="Print strength & power table">🖨️ Print</button>
         </div>
         <p class="section-desc">
           Peak power (Sayers formula), relative strength ratios, and
