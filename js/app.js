@@ -1044,21 +1044,38 @@
       _staleKeysCache[athleteId] = stale;
       return stale;
     }
-    const latest = entries[0]; // most recent test snapshot
-    // Skip completely empty entries (e.g. new test worksheet opened but not filled)
-    let latestWithData = latest;
+    // Find the newest date that actually has data (skip empty worksheet entries)
+    let newestDate = null;
     for (let ei = 0; ei < entries.length; ei++) {
-      if (Object.values(entries[ei].values).some((v) => v != null)) {
-        latestWithData = entries[ei];
+      const vals = entries[ei].values;
+      const hasData = Object.keys(vals).some(function (k) {
+        return vals[k] !== null && vals[k] !== undefined && vals[k] !== "";
+      });
+      if (hasData) {
+        newestDate = entries[ei].date;
         break;
       }
     }
+    if (!newestDate) {
+      // No test entries with actual data → nothing is stale
+      _staleKeysCache[athleteId] = stale;
+      return stale;
+    }
+    // For each metric, find which DATE provides its value (first non-null, newest-first)
     for (const mk of TEST_METRIC_KEYS) {
-      const inLatest =
-        latestWithData.values.hasOwnProperty(mk.jsonKey) &&
-        latestWithData.values[mk.jsonKey] !== null &&
-        latestWithData.values[mk.jsonKey] !== undefined;
-      if (!inLatest) stale.add(mk.key);
+      let foundDate = null;
+      for (let ei = 0; ei < entries.length; ei++) {
+        const v = entries[ei].values[mk.jsonKey];
+        if (v !== null && v !== undefined && v !== "") {
+          foundDate = entries[ei].date;
+          break;
+        }
+      }
+      // Stale only if the metric IS in test history but from an OLDER date.
+      // If foundDate is null, the metric isn't in any test → use JSON baseline → not stale.
+      if (foundDate && foundDate < newestDate) {
+        stale.add(mk.key);
+      }
     }
     // Derived keys: forty is stale if all sprint splits are stale
     if (
@@ -3144,6 +3161,8 @@
       h[aid].push(newEntry);
     }
     setTestHistory(h);
+    _staleKeysCache = null;
+    rebuildFromStorage();
 
     // Update cell display
     td.textContent = newVal || "—";
@@ -7211,31 +7230,32 @@
       });
     }
 
-    // Apply latest test data as current values for each athlete.
-    // Test history represents newer measurements and overwrites JSON baseline.
-    // Manual edits (lc_edits) are applied AFTER and override everything.
+    // Apply test history values as current data.
+    // Walk ALL entries newest-date-first; for each metric, the first
+    // non-null value wins.  Manual edits (lc_edits) override everything.
     var testH = getTestHistory();
     var testIds = Object.keys(testH);
     for (var ti = 0; ti < testIds.length; ti++) {
       var tAid = testIds[ti];
       var tEntries = testH[tAid];
       if (!tEntries || tEntries.length === 0) continue;
-      // Find the most recent date
-      var latestDate = tEntries[0].date;
-      for (var tj = 1; tj < tEntries.length; tj++) {
-        if (tEntries[tj].date > latestDate) latestDate = tEntries[tj].date;
-      }
-      // Merge all entries from that date (in case of multiple labels)
       var tAthlete = rawCopy.athletes.find(function (a) {
         return a.id === tAid;
       });
       if (!tAthlete) continue;
-      for (var tk = 0; tk < tEntries.length; tk++) {
-        if (tEntries[tk].date !== latestDate) continue;
-        var vals = tEntries[tk].values;
+      // Sort entries newest-first
+      var sorted = tEntries.slice().sort(function (a, b) {
+        return a.date > b.date ? -1 : a.date < b.date ? 1 : 0;
+      });
+      var applied = {}; // track which jsonKeys we've already set
+      for (var si = 0; si < sorted.length; si++) {
+        var vals = sorted[si].values;
         for (var vk in vals) {
+          if (applied[vk]) continue; // already set from a newer entry
           if (vals[vk] !== null && vals[vk] !== undefined && vals[vk] !== "") {
+            if (typeof vals[vk] === "number" && !isFinite(vals[vk])) continue;
             tAthlete[vk] = vals[vk];
+            applied[vk] = true;
           }
         }
       }

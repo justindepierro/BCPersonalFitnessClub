@@ -1301,9 +1301,11 @@
         }
       }
 
-      // Apply latest test date values as current data.
-      // Test history represents newer measurements and overwrites JSON baseline.
-      // Manual edits (lc_edits) are applied AFTER and override everything.
+      // Apply test history values as current data.
+      // Walk ALL entries newest-date-first; for each metric, the first
+      // non-null value wins.  This means the most recent measurement for
+      // each metric is used, even if different metrics come from different
+      // test sessions.  Manual edits (lc_edits) override everything.
       const savedTestH = localStorage.getItem("lc_test_history");
       if (savedTestH) {
         try {
@@ -1313,21 +1315,22 @@
             const tAid = testIds[ti];
             const tEntries = testH[tAid];
             if (!tEntries || tEntries.length === 0) continue;
-            let latestDate = tEntries[0].date;
-            for (let tj = 1; tj < tEntries.length; tj++) {
-              if (tEntries[tj].date > latestDate)
-                latestDate = tEntries[tj].date;
-            }
             const tAthlete = raw.athletes.find((a) => a.id === tAid);
             if (!tAthlete) continue;
-            for (let tk = 0; tk < tEntries.length; tk++) {
-              if (tEntries[tk].date !== latestDate) continue;
-              const vals = tEntries[tk].values;
+            // Sort entries newest-first
+            const sorted = tEntries
+              .slice()
+              .sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0));
+            const applied = {}; // track which jsonKeys we've already set
+            for (let si = 0; si < sorted.length; si++) {
+              const vals = sorted[si].values;
               for (const vk in vals) {
+                if (applied[vk]) continue; // already set from a newer entry
                 const v = vals[vk];
                 if (v === null || v === undefined || v === "") continue;
                 if (typeof v === "number" && !isFinite(v)) continue;
                 tAthlete[vk] = v;
+                applied[vk] = true;
               }
             }
           }
