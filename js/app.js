@@ -7833,7 +7833,8 @@
     }
 
     // Apply test history values as current data.
-    // Only apply entries newer than the athlete's lastUpdated from coach JSON.
+    // Test history (including coach-provided entries from the JSON) is applied
+    // unconditionally.  Newest-first sorting ensures the latest value wins.
     var testH = getTestHistory();
     var testIds = Object.keys(testH);
     for (var ti = 0; ti < testIds.length; ti++) {
@@ -7844,15 +7845,12 @@
         return a.id === tAid;
       });
       if (!tAthlete) continue;
-      var coachTS = coachTimestamps[tAid] || "";
       // Sort entries newest-first
       var sorted = tEntries.slice().sort(function (a, b) {
         return a.date > b.date ? -1 : a.date < b.date ? 1 : 0;
       });
       var applied = {}; // track which jsonKeys we've already set
       for (var si = 0; si < sorted.length; si++) {
-        // Skip test entries older than coach's lastUpdated
-        if (coachTS && sorted[si].date <= coachTS.slice(0, 10)) continue;
         var vals = sorted[si].values;
         for (var vk in vals) {
           if (applied[vk]) continue; // already set from a newer entry

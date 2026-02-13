@@ -1295,6 +1295,43 @@
         if (a.lastUpdated) coachTimestamps[a.id] = a.lastUpdated;
       }
 
+      // Seed localStorage test_history from the JSON if the JSON contains it.
+      // This ensures the app always has the coach's test history available,
+      // especially after a dataVersion purge wipes lc_test_history.
+      const jsonTestHistory = raw.test_history || null;
+      if (jsonTestHistory) {
+        const existingTH = localStorage.getItem("lc_test_history");
+        if (!existingTH) {
+          // No localStorage test history — seed from JSON
+          try {
+            localStorage.setItem("lc_test_history", JSON.stringify(jsonTestHistory));
+          } catch (e) {
+            console.warn("Failed to seed test history from JSON:", e);
+          }
+        } else {
+          // Merge: keep any localStorage entries not in the JSON
+          try {
+            const lsTH = JSON.parse(existingTH);
+            for (const aid in jsonTestHistory) {
+              if (!lsTH[aid]) {
+                lsTH[aid] = jsonTestHistory[aid];
+              } else {
+                // Add JSON entries that don't already exist in localStorage
+                for (const je of jsonTestHistory[aid]) {
+                  const exists = lsTH[aid].some(
+                    (le) => le.date === je.date && le.label === je.label
+                  );
+                  if (!exists) lsTH[aid].push(je);
+                }
+              }
+            }
+            localStorage.setItem("lc_test_history", JSON.stringify(lsTH));
+          } catch (e) {
+            console.warn("Failed to merge test history:", e);
+          }
+        }
+      }
+
       // Apply saved additions from localStorage
       const savedAdded = localStorage.getItem("lc_added");
       if (savedAdded) {
@@ -1322,8 +1359,10 @@
       }
 
       // Apply test history values as current data.
-      // Only apply entries whose date is NEWER than the athlete's lastUpdated
-      // from the coach JSON.  This ensures coach pushes override stale browser data.
+      // Test history from the JSON is coach data — apply it unconditionally.
+      // Additional localStorage-only entries (added after load) are also applied
+      // since the user is actively exploring.  The athlete baseline in the JSON
+      // is the pre-test starting point; test history brings it up to date.
       const savedTestH = localStorage.getItem("lc_test_history");
       if (savedTestH) {
         try {
@@ -1335,15 +1374,12 @@
             if (!tEntries || tEntries.length === 0) continue;
             const tAthlete = raw.athletes.find((a) => a.id === tAid);
             if (!tAthlete) continue;
-            const coachTS = coachTimestamps[tAid] || "";
             // Sort entries newest-first
             const sorted = tEntries
               .slice()
               .sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0));
             const applied = {};
             for (let si = 0; si < sorted.length; si++) {
-              // Skip test entries that are older than the coach's lastUpdated
-              if (coachTS && sorted[si].date <= coachTS.slice(0, 10)) continue;
               const vals = sorted[si].values;
               for (const vk in vals) {
                 if (applied[vk]) continue;
