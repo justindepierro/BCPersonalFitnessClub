@@ -369,13 +369,13 @@ select:focus,
 
 /* ---------- Data Tables ---------- */
 .table-wrap {
-  overflow-x: auto;
+  overflow: auto;
   -webkit-overflow-scrolling: touch;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: var(--surface);
-  contain: layout style;
   position: relative;
+  max-height: 75vh;
 }
 
 /* Roster table overrides */
@@ -424,6 +424,7 @@ select:focus,
   position: sticky;
   top: 0;
   z-index: 2;
+  box-shadow: 0 1px 0 var(--border);
 }
 
 .data-table.sortable thead th {
@@ -895,6 +896,8 @@ select:focus,
     border: 1px solid #ccc;
     break-inside: avoid;
     background: #fff;
+    max-height: none;
+    overflow: visible;
   }
 
   .data-table thead th {
@@ -2470,6 +2473,7 @@ select:focus,
 /* ---------- Progress History Table ---------- */
 .progress-table-wrap {
   overflow-x: auto;
+  max-height: none;
   margin-bottom: 0.5rem;
 }
 .progress-table th,
