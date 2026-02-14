@@ -2,7 +2,8 @@
    app.js — BC Personal Fitness Club Dashboard
    Renders all tabs: Overview, Profiles, Leaderboards,
    Sprint Analysis, Strength & Power, Scorecard,
-   Benchmarks, Testing Log, Testing Week Plan.
+   Compare, Groups, Testing Log, Testing Week,
+   Constants.
    =================================================== */
 
 (function () {
@@ -353,7 +354,7 @@
       "sprint",
       "strength",
       "scorecard",
-      "benchmarks",
+      // "benchmarks", // deactivated — not ready yet
       "log",
       "plan",
       "constants",
@@ -375,7 +376,7 @@
       sprint: renderSprintAnalysis,
       strength: renderStrengthPower,
       scorecard: renderScorecard,
-      benchmarks: renderBenchmarks,
+      // benchmarks: renderBenchmarks, // deactivated — not ready yet
       log: renderTestingLog,
       plan: renderTestingWeekPlan,
       constants: renderConstants,
@@ -773,16 +774,12 @@
       overviewCohortToggle.checked =
         localStorage.getItem("lc_cohort_mode") === "true";
     }
-    // Restore BC Standards toggle state
+    // BC Standards deactivated — force off and clear any saved state
+    localStorage.removeItem("lc_bc_standards");
     const bcToggle = document.getElementById("bcStdToggle");
-    if (bcToggle) {
-      bcToggle.checked = localStorage.getItem("lc_bc_standards") === "true";
-    }
+    if (bcToggle) bcToggle.checked = false;
     const overviewBCToggle = document.getElementById("overviewBCToggle");
-    if (overviewBCToggle) {
-      overviewBCToggle.checked =
-        localStorage.getItem("lc_bc_standards") === "true";
-    }
+    if (overviewBCToggle) overviewBCToggle.checked = false;
 
     // Populate position filter
     const posSel = document.getElementById("overviewPosFilter");
