@@ -6962,26 +6962,8 @@
     const athletes = D.athletes;
     const deltas = _computeDeltas(athletes, sessionDate, sessionLabel);
 
-    // Compute weight summary separately
-    const weightMetric = CMP_METRICS.find((m) => m.key === "weight");
-    let weightSummary = null;
-    if (weightMetric) {
-      const wVals = [];
-      for (let i = 0; i < athletes.length; i++) {
-        if (deltas[i] && deltas[i].weight) wVals.push(deltas[i].weight);
-      }
-      if (wVals.length > 0) {
-        const avgDelta = wVals.reduce((s, v) => s + v.delta, 0) / wVals.length;
-        const avgPct = wVals.reduce((s, v) => s + v.pct, 0) / wVals.length;
-        const gained = wVals.filter((v) => v.delta > 0).length;
-        const lost = wVals.filter((v) => v.delta < 0).length;
-        const same = wVals.filter((v) => v.delta === 0).length;
-        weightSummary = { avgDelta, avgPct, gained, lost, same, total: wVals.length };
-      }
-    }
-
-    // Build summary cards
-    const filteredMetrics = CMP_METRICS.filter((m) => m.key !== "weight");
+    // Build summary cards (including weight)
+    const filteredMetrics = CMP_METRICS;
     const summaryData = {};
     for (const m of filteredMetrics) {
       const vals = [];
@@ -7053,20 +7035,6 @@
       totalDeclined +
       '</div><div class="cmp-stat-label">Athletes Declined</div></div>';
     html += "</div>";
-
-    // Weight change card
-    if (weightSummary) {
-      const ws = weightSummary;
-      const wSign = ws.avgDelta > 0 ? "+" : "";
-      const wCls = ws.avgDelta > 0 ? "delta-up" : ws.avgDelta < 0 ? "delta-down" : "";
-      html += '<div class="cmp-weight-card">';
-      html += '<div class="cmp-wt-icon">⚖️</div>';
-      html += '<div class="cmp-wt-body">';
-      html += '<div class="cmp-wt-label">Avg Weight Change</div>';
-      html += '<div class="cmp-wt-delta ' + wCls + '">' + wSign + ws.avgDelta.toFixed(1) + ' lb <small>(' + wSign + ws.avgPct.toFixed(1) + '%)</small></div>';
-      html += '<div class="cmp-wt-counts">▲ ' + ws.gained + ' gained · ▼ ' + ws.lost + ' lost · ' + ws.same + ' same · ' + ws.total + ' tracked</div>';
-      html += '</div></div>';
-    }
 
     // Metric-by-metric summary cards
     html += '<h3 class="cmp-section-title">Average Change by Metric</h3>';
@@ -7147,7 +7115,7 @@
         ? [...new Set(D.athletes.map((a) => a.group))].sort()
         : [groupFilter];
 
-    const filteredMetrics = CMP_METRICS.filter((m) => m.key !== "weight");
+    const filteredMetrics = CMP_METRICS;
     let html = "";
 
     // Cache per-group data for reuse in chart building
@@ -7190,21 +7158,6 @@
       if (Object.keys(groupSummary).length === 0) continue;
       _groupCache[group] = { athletes, deltas, groupSummary };
 
-      // Compute weight summary for this group
-      let grpWeightSummary = null;
-      const grpWVals = [];
-      for (let i = 0; i < athletes.length; i++) {
-        if (deltas[i] && deltas[i].weight) grpWVals.push(deltas[i].weight);
-      }
-      if (grpWVals.length > 0) {
-        const gAvgD = grpWVals.reduce((s, v) => s + v.delta, 0) / grpWVals.length;
-        const gAvgP = grpWVals.reduce((s, v) => s + v.pct, 0) / grpWVals.length;
-        const gGained = grpWVals.filter((v) => v.delta > 0).length;
-        const gLost = grpWVals.filter((v) => v.delta < 0).length;
-        const gSame = grpWVals.filter((v) => v.delta === 0).length;
-        grpWeightSummary = { avgDelta: gAvgD, avgPct: gAvgP, gained: gGained, lost: gLost, same: gSame, total: grpWVals.length };
-      }
-
       html += '<div class="cmp-group-section">';
       html +=
         '<h3 class="cmp-group-title"><span class="group-tag group-' +
@@ -7214,20 +7167,6 @@
         "</span> <small>(" +
         athletes.length +
         " athletes)</small></h3>";
-
-      // Weight change card for group
-      if (grpWeightSummary) {
-        const gws = grpWeightSummary;
-        const gwSign = gws.avgDelta > 0 ? "+" : "";
-        const gwCls = gws.avgDelta > 0 ? "delta-up" : gws.avgDelta < 0 ? "delta-down" : "";
-        html += '<div class="cmp-weight-card cmp-weight-card-sm">';
-        html += '<div class="cmp-wt-icon">⚖️</div>';
-        html += '<div class="cmp-wt-body">';
-        html += '<div class="cmp-wt-label">Avg Weight Change</div>';
-        html += '<div class="cmp-wt-delta ' + gwCls + '">' + gwSign + gws.avgDelta.toFixed(1) + ' lb <small>(' + gwSign + gws.avgPct.toFixed(1) + '%)</small></div>';
-        html += '<div class="cmp-wt-counts">▲ ' + gws.gained + ' gained · ▼ ' + gws.lost + ' lost · ' + gws.total + ' tracked</div>';
-        html += '</div></div>';
-      }
 
       // Metric cards
       html += '<div class="cmp-metric-cards">';
@@ -7361,7 +7300,7 @@
     html += "</div>";
 
     // Current values table
-    const h2hMetrics = CMP_METRICS.filter((m) => m.key !== "weight");
+    const h2hMetrics = CMP_METRICS;
     html +=
       '<div class="table-wrap"><table class="cmp-table"><thead><tr><th>Metric</th>';
     for (const a of athletes)
