@@ -3484,3 +3484,48 @@ select:focus,
 .wt-flat {
   color: var(--text-muted);
 }
+
+/* ---------- Compare Weight Card ---------- */
+.cmp-weight-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem 1.1rem;
+  margin-bottom: 1rem;
+}
+.cmp-weight-card-sm {
+  padding: 0.6rem 0.9rem;
+}
+.cmp-wt-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+.cmp-wt-body {
+  flex: 1;
+}
+.cmp-wt-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 0.15rem;
+}
+.cmp-wt-delta {
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.cmp-wt-delta small {
+  font-size: 0.75rem;
+  font-weight: 400;
+  opacity: 0.8;
+}
+.cmp-wt-counts {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
