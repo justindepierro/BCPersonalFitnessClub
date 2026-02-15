@@ -3455,7 +3455,7 @@ select:focus,
   align-items: center;
   gap: 0.5rem;
   padding: 0.15rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
 }
 .wt-history-row:last-child {
   border-bottom: none;
@@ -3475,6 +3475,12 @@ select:focus,
   min-width: 30px;
   text-align: right;
 }
-.wt-up { color: var(--green); }
-.wt-down { color: var(--red); }
-.wt-flat { color: var(--text-muted); }
+.wt-up {
+  color: var(--green);
+}
+.wt-down {
+  color: var(--red);
+}
+.wt-flat {
+  color: var(--text-muted);
+}

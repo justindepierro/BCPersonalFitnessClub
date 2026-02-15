@@ -108,7 +108,7 @@
     date.setDate(date.getDate() - day + 3); // nearest Thursday
     const yearStart = new Date(date.getFullYear(), 0, 1);
     const weekNum = Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
-    return date.getFullYear() + '-W' + String(weekNum).padStart(2, '0');
+    return date.getFullYear() + "-W" + String(weekNum).padStart(2, "0");
   }
   /** Format a weekKey for display: "W07 · Feb 2026" */
   function fmtWeekLabel(wk) {
@@ -122,14 +122,34 @@
     const dayOfWeek = (jan4.getDay() + 6) % 7; // Mon=0
     const monday = new Date(jan4);
     monday.setDate(jan4.getDate() - dayOfWeek + (wn - 1) * 7);
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return 'W' + m[2] + ' · ' + months[monday.getMonth()] + ' ' + monday.getFullYear();
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    return (
+      "W" +
+      m[2] +
+      " · " +
+      months[monday.getMonth()] +
+      " " +
+      monday.getFullYear()
+    );
   }
   function getWeightLog() {
-    return safeLSGet('lc_weight_log', {});
+    return safeLSGet("lc_weight_log", {});
   }
   function saveWeightLog(log) {
-    safeLSSet('lc_weight_log', JSON.stringify(log));
+    safeLSSet("lc_weight_log", JSON.stringify(log));
   }
   /** Save a weight entry for an athlete. Only keeps the latest per week. */
   function logWeight(athleteId, weight) {
@@ -138,16 +158,21 @@
     const now = new Date();
     const weekKey = getWeekKey(now);
     // Remove any existing entry for this week
-    log[athleteId] = log[athleteId].filter(function (e) { return e.weekKey !== weekKey; });
+    log[athleteId] = log[athleteId].filter(function (e) {
+      return e.weekKey !== weekKey;
+    });
     log[athleteId].push({
       weight: weight,
       timestamp: now.toISOString(),
-      weekKey: weekKey
+      weekKey: weekKey,
     });
     // Sort newest first
-    log[athleteId].sort(function (a, b) { return a.timestamp > b.timestamp ? -1 : 1; });
+    log[athleteId].sort(function (a, b) {
+      return a.timestamp > b.timestamp ? -1 : 1;
+    });
     // Keep last 52 weeks max
-    if (log[athleteId].length > 52) log[athleteId] = log[athleteId].slice(0, 52);
+    if (log[athleteId].length > 52)
+      log[athleteId] = log[athleteId].slice(0, 52);
     saveWeightLog(log);
   }
   /** Get weight history for an athlete, newest first */
@@ -1551,33 +1576,37 @@
   /* ========== INLINE WEIGHT EDITING ========== */
   window.inlineEditWeight = function (td, athleteId) {
     // Prevent double-activation
-    if (td.querySelector('.wt-inline-input')) return;
+    if (td.querySelector(".wt-inline-input")) return;
     const a = getAthleteById(athleteId);
     const currentWt = a ? a.weight : null;
-    const valSpan = td.querySelector('.wt-val');
-    const iconSpan = td.querySelector('.wt-edit-icon');
-    if (iconSpan) iconSpan.style.display = 'none';
+    const valSpan = td.querySelector(".wt-val");
+    const iconSpan = td.querySelector(".wt-edit-icon");
+    if (iconSpan) iconSpan.style.display = "none";
 
-    const input = document.createElement('input');
-    input.type = 'number';
-    input.className = 'wt-inline-input';
-    input.step = '1';
-    input.min = '50';
-    input.max = '500';
-    input.value = currentWt !== null && currentWt !== undefined ? currentWt : '';
-    input.setAttribute('aria-label', 'Update weight for ' + (a ? a.name : athleteId));
+    const input = document.createElement("input");
+    input.type = "number";
+    input.className = "wt-inline-input";
+    input.step = "1";
+    input.min = "50";
+    input.max = "500";
+    input.value =
+      currentWt !== null && currentWt !== undefined ? currentWt : "";
+    input.setAttribute(
+      "aria-label",
+      "Update weight for " + (a ? a.name : athleteId),
+    );
 
-    if (valSpan) valSpan.style.display = 'none';
+    if (valSpan) valSpan.style.display = "none";
     td.appendChild(input);
     input.focus();
     input.select();
 
     function commit() {
       const raw = input.value.trim();
-      const newWt = raw === '' ? null : parseInt(raw, 10);
+      const newWt = raw === "" ? null : parseInt(raw, 10);
       input.remove();
-      if (valSpan) valSpan.style.display = '';
-      if (iconSpan) iconSpan.style.display = '';
+      if (valSpan) valSpan.style.display = "";
+      if (iconSpan) iconSpan.style.display = "";
 
       // If unchanged or invalid, just restore
       if (newWt !== null && (isNaN(newWt) || newWt < 0)) return;
@@ -1589,8 +1618,10 @@
       }
 
       // Apply to lc_edits (same pattern as the edit panel)
-      let edits = safeLSGet('lc_edits', []);
-      const existing = edits.find(function (e) { return e.id === athleteId; });
+      let edits = safeLSGet("lc_edits", []);
+      const existing = edits.find(function (e) {
+        return e.id === athleteId;
+      });
       if (existing) {
         existing.changes.weight_lb = newWt;
         existing.timestamp = new Date().toISOString();
@@ -1598,10 +1629,10 @@
         edits.push({
           id: athleteId,
           changes: { weight_lb: newWt },
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
-      safeLSSet('lc_edits', JSON.stringify(edits));
+      safeLSSet("lc_edits", JSON.stringify(edits));
 
       // Rebuild and re-render
       rebuildFromStorage();
@@ -1612,54 +1643,92 @@
       _skipChartAnimation = false;
 
       const weekKey = getWeekKey(new Date());
-      showToast((a ? a.name : athleteId) + ' weight updated to ' + newWt + ' lb (' + fmtWeekLabel(weekKey) + ')', 'success');
+      showToast(
+        (a ? a.name : athleteId) +
+          " weight updated to " +
+          newWt +
+          " lb (" +
+          fmtWeekLabel(weekKey) +
+          ")",
+        "success",
+      );
     }
 
     let committed = false;
-    input.addEventListener('keydown', function (e) {
+    input.addEventListener("keydown", function (e) {
       e.stopPropagation();
-      if (e.key === 'Enter') { committed = true; commit(); }
-      if (e.key === 'Escape') {
+      if (e.key === "Enter") {
+        committed = true;
+        commit();
+      }
+      if (e.key === "Escape") {
         input.remove();
-        if (valSpan) valSpan.style.display = '';
-        if (iconSpan) iconSpan.style.display = '';
+        if (valSpan) valSpan.style.display = "";
+        if (iconSpan) iconSpan.style.display = "";
       }
     });
-    input.addEventListener('blur', function () {
+    input.addEventListener("blur", function () {
       if (!committed) commit();
     });
-    input.addEventListener('click', function (e) { e.stopPropagation(); });
+    input.addEventListener("click", function (e) {
+      e.stopPropagation();
+    });
   };
 
   /** Show weight history tooltip on hover */
   window.showWeightHistory = function (td, athleteId) {
-    if (td.querySelector('.wt-history-tip')) return;
+    if (td.querySelector(".wt-history-tip")) return;
     const history = getWeightHistory(athleteId);
     if (!history.length) return;
 
-    const tip = document.createElement('div');
-    tip.className = 'wt-history-tip';
+    const tip = document.createElement("div");
+    tip.className = "wt-history-tip";
     let html = '<div class="wt-history-title">Weight Log</div>';
     const rows = history.slice(0, 12); // show last 12 weeks max
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
       const dateStr = new Date(r.timestamp).toLocaleDateString();
       const delta = i < rows.length - 1 ? r.weight - rows[i + 1].weight : null;
-      const deltaStr = delta !== null ? (delta > 0 ? '+' + delta : delta === 0 ? '±0' : '' + delta) : '';
-      const deltaClass = delta !== null ? (delta > 0 ? 'wt-up' : delta < 0 ? 'wt-down' : 'wt-flat') : '';
-      html += '<div class="wt-history-row">' +
-        '<span class="wt-history-week">' + esc(fmtWeekLabel(r.weekKey)) + '</span>' +
-        '<span class="wt-history-wt">' + r.weight + ' lb</span>' +
-        (deltaStr ? '<span class="wt-history-delta ' + deltaClass + '">' + deltaStr + '</span>' : '') +
-        '</div>';
+      const deltaStr =
+        delta !== null
+          ? delta > 0
+            ? "+" + delta
+            : delta === 0
+              ? "±0"
+              : "" + delta
+          : "";
+      const deltaClass =
+        delta !== null
+          ? delta > 0
+            ? "wt-up"
+            : delta < 0
+              ? "wt-down"
+              : "wt-flat"
+          : "";
+      html +=
+        '<div class="wt-history-row">' +
+        '<span class="wt-history-week">' +
+        esc(fmtWeekLabel(r.weekKey)) +
+        "</span>" +
+        '<span class="wt-history-wt">' +
+        r.weight +
+        " lb</span>" +
+        (deltaStr
+          ? '<span class="wt-history-delta ' +
+            deltaClass +
+            '">' +
+            deltaStr +
+            "</span>"
+          : "") +
+        "</div>";
     }
     tip.innerHTML = html;
-    td.style.position = 'relative';
+    td.style.position = "relative";
     td.appendChild(tip);
   };
 
   window.hideWeightHistory = function (td) {
-    const tip = td.querySelector('.wt-history-tip');
+    const tip = td.querySelector(".wt-history-tip");
     if (tip) tip.remove();
   };
 
