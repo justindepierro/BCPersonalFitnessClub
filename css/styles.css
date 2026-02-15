@@ -3378,3 +3378,103 @@ select:focus,
   white-space: nowrap;
   border: 0;
 }
+
+/* ---------- Inline Weight Editing ---------- */
+.wt-cell {
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s;
+}
+.wt-cell:hover {
+  background: rgba(108, 99, 255, 0.18) !important;
+}
+.wt-edit-icon {
+  display: none;
+  margin-left: 3px;
+  font-size: 0.68rem;
+  color: var(--accent);
+  opacity: 0.7;
+  vertical-align: middle;
+}
+.wt-cell:hover .wt-edit-icon {
+  display: inline;
+}
+.na-wt {
+  color: var(--text-muted);
+  font-style: italic;
+}
+.wt-inline-input {
+  width: 54px;
+  padding: 1px 4px;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius-sm);
+  outline: none;
+  text-align: right;
+  -moz-appearance: textfield;
+}
+.wt-inline-input::-webkit-inner-spin-button,
+.wt-inline-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Weight history tooltip */
+.wt-history-tip {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 200;
+  min-width: 220px;
+  max-width: 280px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 0.5rem 0.65rem;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.wt-history-title {
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  margin-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.25rem;
+}
+.wt-history-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.15rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.wt-history-row:last-child {
+  border-bottom: none;
+}
+.wt-history-week {
+  color: var(--text-muted);
+  flex: 1;
+}
+.wt-history-wt {
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--text);
+}
+.wt-history-delta {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  min-width: 30px;
+  text-align: right;
+}
+.wt-up { color: var(--green); }
+.wt-down { color: var(--red); }
+.wt-flat { color: var(--text-muted); }

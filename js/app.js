@@ -98,6 +98,66 @@
     return window._gradeHelpers.overallGradeLabel(avg);
   }
 
+  /* ---------- Weekly Weight Log ---------- */
+  /** Get ISO week key like "2026-W07" from a Date */
+  function getWeekKey(d) {
+    const date = new Date(d);
+    date.setHours(0, 0, 0, 0);
+    // ISO week: Monday-based
+    const day = (date.getDay() + 6) % 7; // Mon=0 … Sun=6
+    date.setDate(date.getDate() - day + 3); // nearest Thursday
+    const yearStart = new Date(date.getFullYear(), 0, 1);
+    const weekNum = Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
+    return date.getFullYear() + '-W' + String(weekNum).padStart(2, '0');
+  }
+  /** Format a weekKey for display: "W07 · Feb 2026" */
+  function fmtWeekLabel(wk) {
+    // Parse "YYYY-Www" → approximate Monday of that week
+    const m = wk.match(/^(\d{4})-W(\d{2})$/);
+    if (!m) return wk;
+    const yr = parseInt(m[1], 10);
+    const wn = parseInt(m[2], 10);
+    // Jan 4 always falls in ISO week 1
+    const jan4 = new Date(yr, 0, 4);
+    const dayOfWeek = (jan4.getDay() + 6) % 7; // Mon=0
+    const monday = new Date(jan4);
+    monday.setDate(jan4.getDate() - dayOfWeek + (wn - 1) * 7);
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return 'W' + m[2] + ' · ' + months[monday.getMonth()] + ' ' + monday.getFullYear();
+  }
+  function getWeightLog() {
+    return safeLSGet('lc_weight_log', {});
+  }
+  function saveWeightLog(log) {
+    safeLSSet('lc_weight_log', JSON.stringify(log));
+  }
+  /** Save a weight entry for an athlete. Only keeps the latest per week. */
+  function logWeight(athleteId, weight) {
+    const log = getWeightLog();
+    if (!log[athleteId]) log[athleteId] = [];
+    const now = new Date();
+    const weekKey = getWeekKey(now);
+    // Remove any existing entry for this week
+    log[athleteId] = log[athleteId].filter(function (e) { return e.weekKey !== weekKey; });
+    log[athleteId].push({
+      weight: weight,
+      timestamp: now.toISOString(),
+      weekKey: weekKey
+    });
+    // Sort newest first
+    log[athleteId].sort(function (a, b) { return a.timestamp > b.timestamp ? -1 : 1; });
+    // Keep last 52 weeks max
+    if (log[athleteId].length > 52) log[athleteId] = log[athleteId].slice(0, 52);
+    saveWeightLog(log);
+  }
+  /** Get weight history for an athlete, newest first */
+  function getWeightHistory(athleteId) {
+    const log = getWeightLog();
+    return (log[athleteId] || []).slice().sort(function (a, b) {
+      return a.timestamp > b.timestamp ? -1 : 1;
+    });
+  }
+
   /* ---------- Shared grade tier constants (single source of truth) ---------- */
   /* These are referenced by donut charts, group dashboards, etc.
      Tier names, labels, and scores come from HS_STANDARDS in data.js.
@@ -1455,7 +1515,7 @@
         <td class="num">${a.grade ? ordGrade(a.grade) : "—"}</td>
         ${relCols}
         ${cellN("height", 0)}
-        ${cellN("weight", 0)}
+        <td class="num wt-cell" data-id="${esc(a.id)}" onclick="event.stopPropagation();inlineEditWeight(this,'${escJs(a.id)}')" onmouseenter="showWeightHistory(this,'${escJs(a.id)}')" onmouseleave="hideWeightHistory(this)" title="Click to update weight">${a.weight !== null && a.weight !== undefined ? '<span class="wt-val">' + a.weight + '</span><span class="wt-edit-icon">✎</span>' : '<span class="wt-val na-wt">—</span><span class="wt-edit-icon">✎</span>'}</td>
         ${cellG("bench", 0, a.grades.bench)}
         ${relBenchCol}
         ${cellG("squat", 0, a.grades.squat)}
@@ -1486,6 +1546,121 @@
     showTab("profiles");
     renderProfile();
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  /* ========== INLINE WEIGHT EDITING ========== */
+  window.inlineEditWeight = function (td, athleteId) {
+    // Prevent double-activation
+    if (td.querySelector('.wt-inline-input')) return;
+    const a = getAthleteById(athleteId);
+    const currentWt = a ? a.weight : null;
+    const valSpan = td.querySelector('.wt-val');
+    const iconSpan = td.querySelector('.wt-edit-icon');
+    if (iconSpan) iconSpan.style.display = 'none';
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'wt-inline-input';
+    input.step = '1';
+    input.min = '50';
+    input.max = '500';
+    input.value = currentWt !== null && currentWt !== undefined ? currentWt : '';
+    input.setAttribute('aria-label', 'Update weight for ' + (a ? a.name : athleteId));
+
+    if (valSpan) valSpan.style.display = 'none';
+    td.appendChild(input);
+    input.focus();
+    input.select();
+
+    function commit() {
+      const raw = input.value.trim();
+      const newWt = raw === '' ? null : parseInt(raw, 10);
+      input.remove();
+      if (valSpan) valSpan.style.display = '';
+      if (iconSpan) iconSpan.style.display = '';
+
+      // If unchanged or invalid, just restore
+      if (newWt !== null && (isNaN(newWt) || newWt < 0)) return;
+      if (newWt === currentWt) return;
+
+      // Log to weekly weight log
+      if (newWt !== null) {
+        logWeight(athleteId, newWt);
+      }
+
+      // Apply to lc_edits (same pattern as the edit panel)
+      let edits = safeLSGet('lc_edits', []);
+      const existing = edits.find(function (e) { return e.id === athleteId; });
+      if (existing) {
+        existing.changes.weight_lb = newWt;
+        existing.timestamp = new Date().toISOString();
+      } else {
+        edits.push({
+          id: athleteId,
+          changes: { weight_lb: newWt },
+          timestamp: new Date().toISOString()
+        });
+      }
+      safeLSSet('lc_edits', JSON.stringify(edits));
+
+      // Rebuild and re-render
+      rebuildFromStorage();
+      _skipChartAnimation = true;
+      markTabsDirty();
+      renderOverview();
+      updateDataStatus();
+      _skipChartAnimation = false;
+
+      const weekKey = getWeekKey(new Date());
+      showToast((a ? a.name : athleteId) + ' weight updated to ' + newWt + ' lb (' + fmtWeekLabel(weekKey) + ')', 'success');
+    }
+
+    let committed = false;
+    input.addEventListener('keydown', function (e) {
+      e.stopPropagation();
+      if (e.key === 'Enter') { committed = true; commit(); }
+      if (e.key === 'Escape') {
+        input.remove();
+        if (valSpan) valSpan.style.display = '';
+        if (iconSpan) iconSpan.style.display = '';
+      }
+    });
+    input.addEventListener('blur', function () {
+      if (!committed) commit();
+    });
+    input.addEventListener('click', function (e) { e.stopPropagation(); });
+  };
+
+  /** Show weight history tooltip on hover */
+  window.showWeightHistory = function (td, athleteId) {
+    if (td.querySelector('.wt-history-tip')) return;
+    const history = getWeightHistory(athleteId);
+    if (!history.length) return;
+
+    const tip = document.createElement('div');
+    tip.className = 'wt-history-tip';
+    let html = '<div class="wt-history-title">Weight Log</div>';
+    const rows = history.slice(0, 12); // show last 12 weeks max
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      const dateStr = new Date(r.timestamp).toLocaleDateString();
+      const delta = i < rows.length - 1 ? r.weight - rows[i + 1].weight : null;
+      const deltaStr = delta !== null ? (delta > 0 ? '+' + delta : delta === 0 ? '±0' : '' + delta) : '';
+      const deltaClass = delta !== null ? (delta > 0 ? 'wt-up' : delta < 0 ? 'wt-down' : 'wt-flat') : '';
+      html += '<div class="wt-history-row">' +
+        '<span class="wt-history-week">' + esc(fmtWeekLabel(r.weekKey)) + '</span>' +
+        '<span class="wt-history-wt">' + r.weight + ' lb</span>' +
+        (deltaStr ? '<span class="wt-history-delta ' + deltaClass + '">' + deltaStr + '</span>' : '') +
+        '</div>';
+    }
+    tip.innerHTML = html;
+    td.style.position = 'relative';
+    td.appendChild(tip);
+  };
+
+  window.hideWeightHistory = function (td) {
+    const tip = td.querySelector('.wt-history-tip');
+    if (tip) tip.remove();
   };
 
   /* ========== ATHLETE PROFILE ========== */
@@ -6176,15 +6351,14 @@
         "</strong> <small>" +
         mk.unit +
         "</small></td>";
-      html +=
-        '<td class="num">' + fmtVal(cv, mk) + "</td>";
+      html += '<td class="num">' + fmtVal(cv, mk) + "</td>";
       for (var hi = 0; hi < histVals.length; hi++) {
-        html +=
-          '<td class="num">' + fmtVal(histVals[hi], mk) + "</td>";
+        html += '<td class="num">' + fmtVal(histVals[hi], mk) + "</td>";
       }
 
       // Delta column: current vs oldest shown, or newest vs second-newest
-      var newV = null, oldV = null;
+      var newV = null,
+        oldV = null;
       if (shown.length >= 2) {
         newV = shown[0].values[mk.jsonKey];
         oldV = shown[1].values[mk.jsonKey];
@@ -6229,7 +6403,9 @@
     for (var fi = 0; fi < shown.length; fi++) {
       var fv = shown[fi].values;
       var hForty =
-        fv.sprint_020 != null && fv.sprint_2030 != null && fv.sprint_3040 != null
+        fv.sprint_020 != null &&
+        fv.sprint_2030 != null &&
+        fv.sprint_3040 != null
           ? +(fv.sprint_020 + fv.sprint_2030 + fv.sprint_3040).toFixed(2)
           : null;
       fortyHist.push(hForty);
@@ -6247,7 +6423,8 @@
           "</td>";
       }
       // Delta for forty
-      var newForty = null, oldForty = null;
+      var newForty = null,
+        oldForty = null;
       if (shown.length >= 2) {
         newForty = fortyHist[0];
         oldForty = fortyHist[1];
@@ -8736,6 +8913,11 @@
       });
     }
     safeLSSet("lc_edits", JSON.stringify(edits));
+
+    // Also log weight to weekly weight log if weight changed
+    if (changes.weight_lb !== undefined && changes.weight_lb !== null) {
+      logWeight(editingAthleteId, changes.weight_lb);
+    }
 
     // Reprocess data
     rebuildFromStorage();
