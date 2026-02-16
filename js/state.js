@@ -146,10 +146,44 @@
     renderIfDirty(tabId);
   };
 
+  /* ---------- Theme (light/dark) ---------- */
+  function getTheme() {
+    const saved = localStorage.getItem("lc_theme");
+    if (saved) return saved;
+    return window.matchMedia("(prefers-color-scheme: light)").matches
+      ? "light"
+      : "dark";
+  }
+  function applyTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("lc_theme", theme);
+  }
+  applyTheme(getTheme());
+
+  window.toggleTheme = function () {
+    const next = getTheme() === "dark" ? "light" : "dark";
+    applyTheme(next);
+    // Re-render active charts so Chart.js picks up new colors
+    if (APP._themeChangeCallback) APP._themeChangeCallback();
+  };
+
+  /* ---------- Lucide icon refresh ---------- */
+  let _iconDebounce = null;
+  function refreshIcons() {
+    if (window.lucide) lucide.createIcons();
+  }
+  // Auto-refresh Lucide icons when DOM changes
+  if (typeof MutationObserver !== "undefined") {
+    new MutationObserver(function () {
+      clearTimeout(_iconDebounce);
+      _iconDebounce = setTimeout(refreshIcons, 80);
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  }
+
   Object.assign(APP, {
     getAthleteMap, getAthleteById, invalidateAthleteMap,
     chartAnimOpts, destroyChart,
     safeLSGet, safeLSSet, showToast,
-    markTabsDirty, renderIfDirty,
+    markTabsDirty, renderIfDirty, refreshIcons,
   });
 })();

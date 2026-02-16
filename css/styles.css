@@ -13,6 +13,7 @@
 }
 
 :root {
+  /* ---------- Dark theme (default) ---------- */
   --bg: #0f1117;
   --surface: #1a1d27;
   --surface2: #242836;
@@ -34,12 +35,71 @@
   --blue-bg: rgba(96, 165, 250, 0.12);
   --orange: #f97316;
   --orange-bg: rgba(249, 115, 22, 0.12);
+  --row-stripe: rgba(255, 255, 255, 0.015);
+  --row-hover: rgba(108, 99, 255, 0.1);
+  --row-hover-strong: rgba(108, 99, 255, 0.15);
+  --chart-grid: rgba(255, 255, 255, 0.06);
+  --chart-tick: #8b90a0;
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
+
   --radius: 10px;
   --radius-sm: 6px;
-  --shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
   --font:
     "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --mono: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* Font-size scale */
+  --text-xs: 0.65rem;
+  --text-sm: 0.75rem;
+  --text-base: 0.85rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+}
+
+/* ---------- Light theme ---------- */
+[data-theme="light"] {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface2: #eef0f4;
+  --border: #d4d8e1;
+  --text: #1a1d27;
+  --text-muted: #5f6577;
+  --accent: #5b52e0;
+  --accent-hover: #4840c9;
+  --accent-glow: rgba(91, 82, 224, 0.18);
+  --purple: #7c3aed;
+  --purple-bg: rgba(124, 58, 237, 0.1);
+  --green: #16a34a;
+  --green-bg: rgba(22, 163, 74, 0.1);
+  --yellow: #ca8a04;
+  --yellow-bg: rgba(202, 138, 4, 0.1);
+  --red: #dc2626;
+  --red-bg: rgba(220, 38, 38, 0.1);
+  --blue: #2563eb;
+  --blue-bg: rgba(37, 99, 235, 0.1);
+  --orange: #ea580c;
+  --orange-bg: rgba(234, 88, 12, 0.1);
+  --row-stripe: rgba(0, 0, 0, 0.02);
+  --row-hover: rgba(91, 82, 224, 0.06);
+  --row-hover-strong: rgba(91, 82, 224, 0.1);
+  --chart-grid: rgba(0, 0, 0, 0.07);
+  --chart-tick: #5f6577;
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  color-scheme: light;
 }
 
 html {
@@ -63,6 +123,73 @@ body {
 
 :focus:not(:focus-visible) {
   outline: none;
+}
+
+/* ---------- Skip-to-content link ---------- */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--space-4);
+  background: var(--accent);
+  color: #fff;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: var(--text-base);
+  z-index: 10000;
+  text-decoration: none;
+  transition: top 0.2s ease;
+}
+.skip-link:focus {
+  top: var(--space-4);
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Custom scrollbars ---------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface2) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--surface2);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--border);
+  background-clip: content-box;
+}
+
+/* ---------- Lucide Icons ---------- */
+.icon {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  stroke-width: 2;
+  flex-shrink: 0;
+}
+.icon-logo {
+  width: 1.2em;
+  height: 1.2em;
 }
 
 /* ---------- Header ---------- */
@@ -96,6 +223,27 @@ body {
   font-weight: 500;
 }
 
+/* ---------- Theme Toggle ---------- */
+.theme-toggle {
+  margin-left: auto;
+  font-size: 1rem;
+  padding: 0.35rem 0.6rem;
+  line-height: 1;
+  border-radius: 999px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.theme-toggle:hover {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+.theme-icon-light { display: none; }
+.theme-icon-dark { display: inline; }
+[data-theme="light"] .theme-icon-light { display: inline; }
+[data-theme="light"] .theme-icon-dark { display: none; }
+
 /* ---------- Tabs ---------- */
 .tabs {
   display: flex;
@@ -113,6 +261,9 @@ body {
 
 .tabs::-webkit-scrollbar {
   display: none;
+}
+.tabs {
+  scrollbar-width: none;
 }
 
 .tab {
@@ -446,10 +597,10 @@ select:focus,
 }
 
 .data-table tbody tr:nth-child(even) {
-  background: rgba(255, 255, 255, 0.015);
+  background: var(--row-stripe);
 }
 .data-table tbody tr:hover {
-  background: rgba(108, 99, 255, 0.1);
+  background: var(--row-hover);
 }
 
 .data-table tbody tr.clickable {
@@ -457,7 +608,7 @@ select:focus,
 }
 
 .data-table tbody tr.clickable:hover {
-  background: rgba(108, 99, 255, 0.15);
+  background: var(--row-hover-strong);
 }
 
 .data-table td.num,

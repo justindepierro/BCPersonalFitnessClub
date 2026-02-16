@@ -340,7 +340,7 @@
       " saved)</small></div>";
     html += '<div class="edit-history-actions">';
     html +=
-      '<button class="btn btn-sm btn-primary" onclick="saveCurrentAsTest()" title="Snapshot current values as a dated test">📅 Save Current as Test Date</button> ';
+      '<button class="btn btn-sm btn-primary" onclick="saveCurrentAsTest()" title="Snapshot current values as a dated test"><i data-lucide="calendar-plus" class="icon"></i> Save Current as Test Date</button> ';
     html +=
       '<button class="btn btn-sm" onclick="openAddPreviousTest()" title="Manually enter historical test data">📝 Add Previous Test</button>';
     html += "</div>";
@@ -403,7 +403,7 @@
           _heDate +
           "','" +
           _heLabel +
-          '\')" title="Edit this test entry">✏️</button> ';
+          '\')" title="Edit this test entry"><i data-lucide="pencil" class="icon"></i></button> ';
         html +=
           '<button class="btn btn-xs btn-muted" onclick="deleteHistoryEntry(\'' +
           _heId +
@@ -1187,6 +1187,9 @@
     // Hide loading indicator
     const loadingEl = document.getElementById("loadingIndicator");
     if (loadingEl) loadingEl.style.display = "none";
+
+    // Initialize Lucide icons
+    if (window.lucide) lucide.createIcons();
 
     const D = window.CLUB;
     document.getElementById("exportDate").textContent = D.exportDate;

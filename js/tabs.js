@@ -283,7 +283,7 @@
       const ageFactorsSpeed = STD._ageFactorsSpeed;
       const ageRows = buildAgeFactorRows(ageFactors, ageFactorsSpeed);
       const ageDoc = `<div class="ref-category">
-        <h4>📐 Age-Adjustment Factors</h4>
+        <h4><i data-lucide="ruler" class="icon"></i> Age-Adjustment Factors</h4>
         <p class="ref-desc">
           When the <strong>Age-Adjusted</strong> toggle is on, thresholds are scaled by a
           grade-based factor. Strength metrics use steeper scaling (younger athletes

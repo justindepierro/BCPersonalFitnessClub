@@ -14,6 +14,12 @@
       rel="icon"
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏋️</text></svg>"
     />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    />
     <link rel="stylesheet" href="css/styles.css" />
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
@@ -23,8 +29,14 @@
       crossorigin="anonymous"
       defer
     ></script>
+    <script
+      src="https://unpkg.com/lucide@latest"
+      defer
+    ></script>
   </head>
   <body>
+    <!-- Skip to main content (keyboard accessibility) -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
     <noscript>
       <div
         style="
@@ -45,8 +57,18 @@
     <!-- ===== HEADER ===== -->
     <header class="site-header">
       <div class="header-inner">
-        <h1 class="logo">🏋️ BC Personal Fitness Club</h1>
+        <h1 class="logo"><i data-lucide="dumbbell" class="icon icon-logo"></i> BC Personal Fitness Club</h1>
         <span class="header-subtitle">Athletic Performance Dashboard</span>
+        <button
+          id="themeToggle"
+          class="btn btn-sm theme-toggle"
+          onclick="toggleTheme()"
+          title="Toggle light/dark mode"
+          aria-label="Toggle light/dark mode"
+        >
+          <span class="theme-icon-dark">☀️</span>
+          <span class="theme-icon-light">🌙</span>
+        </button>
       </div>
     </header>
 
@@ -174,7 +196,7 @@
     </nav>
 
     <!-- ===== MAIN CONTENT ===== -->
-    <main class="content">
+    <main id="main-content" class="content">
       <!-- Loading indicator -->
       <div id="loadingIndicator" class="loading-indicator">
         <div class="loading-spinner"></div>
@@ -233,14 +255,14 @@
             onclick="exportCSV()"
             title="Download team data as CSV"
           >
-            📥 CSV
+            <i data-lucide="download" class="icon"></i> CSV
           </button>
           <button
             class="btn btn-sm"
             onclick="printTeamSummary()"
             title="Print one-page team summary"
           >
-            🖨️ Report
+            <i data-lucide="printer" class="icon"></i> Report
           </button>
           <span class="filter-sep">|</span>
           <label
@@ -321,28 +343,28 @@
               onclick="printProfile()"
               title="Print current profile"
             >
-              🖨️ Print
+              <i data-lucide="printer" class="icon"></i> Print
             </button>
             <button
               class="btn btn-sm"
               onclick="openEditPanel()"
               title="Edit athlete data"
             >
-              ✏️ Edit
+              <i data-lucide="pencil" class="icon"></i> Edit
             </button>
             <button
               class="btn btn-sm btn-add"
               onclick="addAthlete()"
               title="Add a new athlete"
             >
-              ➕ Add Athlete
+              <i data-lucide="plus" class="icon"></i> Add Athlete
             </button>
             <button
               class="btn btn-sm btn-danger"
               onclick="deleteCurrentAthlete()"
               title="Delete selected athlete"
             >
-              🗑️ Delete
+              <i data-lucide="trash-2" class="icon"></i> Delete
             </button>
           </div>
         </div>
@@ -436,7 +458,7 @@
             onclick="printSprintTable()"
             title="Print sprint analysis table"
           >
-            🖨️ Print
+            <i data-lucide="printer" class="icon"></i> Print
           </button>
         </div>
         <p class="section-desc">
@@ -445,17 +467,17 @@
           average horizontal force using simplified kinematic equations.
         </p>
         <div class="info-banner">
-          <strong>📋 Workbook Note:</strong> If the late split slows (30–40
+          <strong><i data-lucide="clipboard-list" class="icon"></i> Workbook Note:</strong> If the late split slows (30–40
           slower than 20–30), a3/F3 may be low or negative — useful flag for
           speed endurance / mechanics.
         </div>
 
         <!-- Collapsible Column Reference Guide -->
         <details class="sprint-reference">
-          <summary>📖 Column Reference Guide — What Every Column Means</summary>
+          <summary><i data-lucide="book-open" class="icon"></i> Column Reference Guide — What Every Column Means</summary>
           <div class="sprint-ref-body">
             <div class="ref-category">
-              <h4>🏃 Raw Splits & Timing</h4>
+              <h4><i data-lucide="timer" class="icon"></i> Raw Splits & Timing</h4>
               <div class="ref-grid">
                 <div class="ref-item">
                   <span class="ref-col">Mass (kg)</span>
@@ -515,7 +537,7 @@
             </div>
 
             <div class="ref-category">
-              <h4>⚡ Velocity (Speed)</h4>
+              <h4><i data-lucide="zap" class="icon"></i> Velocity (Speed)</h4>
               <div class="ref-grid">
                 <div class="ref-item">
                   <span class="ref-col">v1 (m/s)</span>
@@ -581,7 +603,7 @@
             </div>
 
             <div class="ref-category">
-              <h4>🚀 Acceleration</h4>
+              <h4><i data-lucide="rocket" class="icon"></i> Acceleration</h4>
               <div class="ref-grid">
                 <div class="ref-item">
                   <span class="ref-col">a1 (m/s²)</span>
@@ -722,7 +744,7 @@
             </div>
 
             <div class="ref-category">
-              <h4>📐 Math Notes & Methodology</h4>
+              <h4><i data-lucide="ruler" class="icon"></i> Math Notes & Methodology</h4>
               <div class="ref-grid ref-grid-single">
                 <div class="ref-item">
                   <p>
@@ -927,7 +949,7 @@
             onclick="printStrengthTable()"
             title="Print strength & power table"
           >
-            🖨️ Print
+            <i data-lucide="printer" class="icon"></i> Print
           </button>
         </div>
         <p class="section-desc">
@@ -936,7 +958,7 @@
           metrics combine them with body mass and vertical jump.
         </p>
         <div class="info-banner">
-          <strong>📐 Sayers Peak Power:</strong> P<sub>peak</sub> = 60.7 ×
+          <strong><i data-lucide="ruler" class="icon"></i> Sayers Peak Power:</strong> P<sub>peak</sub> = 60.7 ×
           VJ<sub>cm</sub> + 45.3 × mass<sub>kg</sub> − 2055 &nbsp;|&nbsp;
           <strong>Strength Utilisation:</strong> F<sub>1</sub> / (Squat<sub
             >kg</sub
@@ -946,10 +968,10 @@
 
         <!-- Collapsible Column Reference Guide -->
         <details class="sprint-reference">
-          <summary>📖 Column Reference Guide — What Every Column Means</summary>
+          <summary><i data-lucide="book-open" class="icon"></i> Column Reference Guide — What Every Column Means</summary>
           <div class="sprint-ref-body">
             <div class="ref-category">
-              <h4>🏋️ Raw Strength Measures</h4>
+              <h4><i data-lucide="dumbbell" class="icon"></i> Raw Strength Measures</h4>
               <div class="ref-grid">
                 <div class="ref-item">
                   <span class="ref-col">Wt (lb)</span>
@@ -1133,7 +1155,7 @@
             </div>
 
             <div class="ref-category">
-              <h4>📐 Formulas & Methodology</h4>
+              <h4><i data-lucide="ruler" class="icon"></i> Formulas & Methodology</h4>
               <div class="ref-grid ref-grid-single">
                 <div class="ref-item">
                   <p>
@@ -1284,7 +1306,7 @@
               onclick="printScorecard()"
               title="Print scorecard report for coaches"
             >
-              🖨️ Print Report
+              <i data-lucide="printer" class="icon"></i> Print Report
             </button>
           </div>
         </div>
@@ -1524,14 +1546,14 @@
             onclick="saveAllAsTestDate()"
             title="Save all athletes' current data as a dated test (for progress tracking)"
           >
-            📅 Save All as Test Date
+            <i data-lucide="calendar-plus" class="icon"></i> Save All as Test Date
           </button>
           <button
             class="btn btn-sm"
             onclick="viewSavedTests()"
             title="View all saved test dates"
           >
-            📋 View Saved Tests
+            <i data-lucide="clipboard-list" class="icon"></i> View Saved Tests
           </button>
           <span class="data-mgmt-sep">|</span>
           <button
@@ -1562,7 +1584,7 @@
             onclick="document.getElementById('importJsonInput').click()"
             title="Import a previously exported JSON file to restore data"
           >
-            📥 Import JSON
+            <i data-lucide="upload" class="icon"></i> Import JSON
           </button>
           <span class="data-mgmt-sep">|</span>
           <label
@@ -1619,7 +1641,7 @@
           <span id="autoSaveStatus" class="autosave-status"></span>
           <kbd class="kbd-hint">Esc</kbd>
           <button class="modal-close" onclick="closeEditPanel()" title="Close">
-            ✕
+            <i data-lucide="x" class="icon"></i>
           </button>
         </div>
       </div>
@@ -1629,7 +1651,7 @@
           onclick="editPanelPrev()"
           title="Previous athlete"
         >
-          ◀ Prev
+          <i data-lucide="chevron-left" class="icon"></i> Prev
         </button>
         <select
           id="editAthleteSelect"
@@ -1642,7 +1664,7 @@
           onclick="editPanelNext()"
           title="Next athlete"
         >
-          Next ▶
+          Next <i data-lucide="chevron-right" class="icon"></i>
         </button>
       </div>
       <div class="edit-panel-body" id="editPanelBody"></div>
@@ -1652,21 +1674,17 @@
           onclick="undoAthleteEdits()"
           title="Undo all changes for this athlete"
         >
-          ↩ Undo
+          <i data-lucide="undo-2" class="icon"></i> Undo
         </button>
         <button
           class="btn btn-sm btn-danger"
           onclick="deleteCurrentAthlete()"
           title="Delete this athlete"
         >
-          🗑️ Delete
-        </button>
-        <button
-          class="btn btn-sm btn-primary"
-          onclick="exportAthleteJSON()"
+          <i data-lucide="trash-2" class="icon"></i> Delete
           title="Export this athlete as JSON"
         >
-          📋 JSON
+          <i data-lucide="clipboard" class="icon"></i> JSON
         </button>
       </div>
     </div>
@@ -1698,7 +1716,7 @@
     <!-- ===== CONSTANTS REFERENCE (collapsible) ===== -->
     <section class="constants-footer">
       <details>
-        <summary>📐 Workbook Constants &amp; Formulas Reference</summary>
+        <summary><i data-lucide="ruler" class="icon"></i> Workbook Constants &amp; Formulas Reference</summary>
         <div class="constants-grid" id="constantsGrid"></div>
         <div class="formula-notes" id="formulaNotes"></div>
       </details>

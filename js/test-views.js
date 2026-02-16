@@ -261,7 +261,7 @@
         _eDate +
         "','" +
         _eLabel +
-        '\')},300)" title="Edit this test">✏️</button>';
+        '\')},300)" title="Edit this test"><i data-lucide="pencil" class="icon"></i></button>';
       html +=
         '<button class="btn btn-xs btn-muted" onclick="deleteHistoryEntry(\'' +
         _eId +
@@ -505,49 +505,49 @@
         escapedDate +
         "','" +
         escapedLabel +
-        "')\">✏️ Rename</button>";
+        "')\"><i data-lucide=\"pencil\" class=\"icon\"></i> Rename</button>";
       cards +=
         "<button onclick=\"changeTestDate('" +
         escapedDate +
         "','" +
         escapedLabel +
-        "')\">📅 Change Date</button>";
+        "')\"><i data-lucide=\"calendar\" class=\"icon\"></i> Change Date</button>";
       cards +=
         "<button onclick=\"duplicateTest('" +
         escapedDate +
         "','" +
         escapedLabel +
-        "')\">📋 Duplicate</button>";
+        "')\"><i data-lucide=\"copy\" class=\"icon\"></i> Duplicate</button>";
       cards +=
         "<button onclick=\"editTestNote('" +
         escapedDate +
         "','" +
         escapedLabel +
-        "')\">📝 Notes</button>";
+        "')\"><i data-lucide=\"notebook-pen\" class=\"icon\"></i> Notes</button>";
       cards +=
         "<button onclick=\"addAthletesToTest('" +
         escapedDate +
         "','" +
         escapedLabel +
-        "')\">➕ Add Athletes</button>";
+        "')\"><i data-lucide=\"plus\" class=\"icon\"></i> Add Athletes</button>";
       cards +=
         "<button onclick=\"removeAthleteFromTest('" +
         escapedDate +
         "','" +
         escapedLabel +
-        "')\">➖ Remove Athlete</button>";
+        "')\"><i data-lucide=\"minus\" class=\"icon\"></i> Remove Athlete</button>";
       cards +=
         "<button onclick=\"exportSingleTest('" +
         escapedDate +
         "','" +
         escapedLabel +
-        "')\">📤 Export</button>";
+        "')\"><i data-lucide=\"share\" class=\"icon\"></i> Export</button>";
       cards +=
         '<button class="th-more-danger" onclick="deleteBulkTestEntry(\'' +
         escapedDate +
         "','" +
         escapedLabel +
-        "')\">🗑 Delete</button>";
+        "')\"><i data-lucide=\"trash-2\" class=\"icon\"></i> Delete</button>";
       cards += "</div></div>";
       cards += "</div>";
       // Expandable detail
@@ -592,13 +592,13 @@
 
     const emptyState =
       athleteIds.length === 0
-        ? '<div class="th-empty"><div class="th-empty-icon">📊</div><h3>No Test History Yet</h3><p>Save your first test baseline to start tracking athlete progress over time.</p><button class="btn btn-primary" onclick="document.querySelector(\'.test-history-modal\').remove(); saveAllAsTestDate()">📅 Save Current Team Data</button></div>'
+        ? '<div class="th-empty"><div class="th-empty-icon"><i data-lucide="bar-chart-3" class="icon" style="width:2.5rem;height:2.5rem"></i></div><h3>No Test History Yet</h3><p>Save your first test baseline to start tracking athlete progress over time.</p><button class="btn btn-primary" onclick="document.querySelector(\'.test-history-modal\').remove(); saveAllAsTestDate()"><i data-lucide="calendar-plus" class="icon"></i> Save Current Team Data</button></div>'
         : "";
 
     const bodyHTML =
       '<div class="th-modal-body">' +
       '<div class="th-modal-header">' +
-      "<h2>📋 Test History Manager</h2>" +
+      "<h2><i data-lucide=\"clipboard-list\" class=\"icon\"></i> Test History Manager</h2>" +
       '<p class="th-summary">' +
       (tests.length > 0
         ? tests.length +
@@ -616,11 +616,11 @@
       "</div>" +
       (tests.length > 0
         ? '<div class="th-toolbar">' +
-          '<button class="btn btn-sm btn-primary" onclick="document.querySelector(\'.test-history-modal\').remove(); saveAllAsTestDate()">📅 Save New Test Date</button>' +
-          '<button class="btn btn-sm" onclick="exportTestHistoryOnly()">📤 Export All</button>' +
-          '<label class="btn btn-sm" style="cursor:pointer">📥 Import<input type="file" accept=".json" onchange="importTestHistoryOnly(this)" style="display:none" /></label>' +
+          '<button class="btn btn-sm btn-primary" onclick="document.querySelector(\'.test-history-modal\').remove(); saveAllAsTestDate()"><i data-lucide="calendar-plus" class="icon"></i> Save New Test Date</button>' +
+          '<button class="btn btn-sm" onclick="exportTestHistoryOnly()"><i data-lucide="share" class="icon"></i> Export All</button>' +
+          '<label class="btn btn-sm" style="cursor:pointer"><i data-lucide="upload" class="icon"></i> Import<input type="file" accept=".json" onchange="importTestHistoryOnly(this)" style="display:none" /></label>' +
           (tests.length >= 2
-            ? '<button class="btn btn-sm" onclick="compareTests()">🔀 Compare Tests</button>'
+            ? '<button class="btn btn-sm" onclick="compareTests()"><i data-lucide="git-compare" class="icon"></i> Compare Tests</button>'
             : "") +
           '<div style="flex:1"></div>' +
           '<div class="th-search-wrap"><input type="text" class="th-search" id="thSearchInput" placeholder="Search tests…" oninput="filterTestCards(this.value)" /></div>' +
@@ -633,14 +633,14 @@
           "</select>" +
           '<div class="th-view-toggle">' +
           '<button class="btn btn-sm th-view-btn active" data-view="list" onclick="switchThView(\'list\')">☰ List</button>' +
-          '<button class="btn btn-sm th-view-btn" data-view="calendar" onclick="switchThView(\'calendar\')">📅 Calendar</button>' +
+          '<button class="btn btn-sm th-view-btn" data-view="calendar" onclick="switchThView(\'calendar\')">☰ Calendar</button>' +
           "</div>" +
           "</div>"
         : "") +
       (emptyState ||
         '<div id="thListView" class="th-card-list">' + cards + "</div>") +
       '<div id="thCalendarView" class="th-calendar-wrap" style="display:none"></div>' +
-      '<div class="th-new-test-bar"><button class="btn btn-primary" onclick="openNewTestEntry()">➕ Start New Test Session</button></div>' +
+      '<div class="th-new-test-bar"><button class="btn btn-primary" onclick="openNewTestEntry()"><i data-lucide="plus" class="icon"></i> Start New Test Session</button></div>' +
       '<p class="th-footer-note">Test history is included in full JSON exports and restored on import.</p>' +
       "</div>";
 
@@ -823,7 +823,7 @@
 
     // Timeline below the calendar
     html += '<div class="cal-timeline">';
-    html += '<div class="cal-timeline-title">📅 Chronological Timeline</div>';
+    html += '<div class="cal-timeline-title"><i data-lucide="calendar" class="icon"></i> Chronological Timeline</div>';
     // Sort tests oldest to newest for timeline
     const sorted = tests.slice().sort(function (a, b) {
       return a.date > b.date ? 1 : a.date < b.date ? -1 : 0;
