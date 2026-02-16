@@ -279,6 +279,7 @@
       normMetric(a.momMax, "momMax"),
     ];
 
+    var T = APP.getChartTheme();
     APP.charts.profileRadar = new Chart(canvas, {
       type: "radar",
       data: {
@@ -288,10 +289,10 @@
             label: a.name,
             data: values,
             fill: true,
-            backgroundColor: "rgba(167,139,250,.2)",
-            borderColor: "#a78bfa",
-            pointBackgroundColor: "#a78bfa",
-            pointBorderColor: "#fff",
+            backgroundColor: T.purple + "33",
+            borderColor: T.purple,
+            pointBackgroundColor: T.purple,
+            pointBorderColor: T.bg,
             pointHoverRadius: 6,
           },
         ],
@@ -305,10 +306,10 @@
             beginAtZero: true,
             max: 100,
             ticks: { display: false },
-            grid: { color: "rgba(255,255,255,.08)" },
-            angleLines: { color: "rgba(255,255,255,.08)" },
+            grid: { color: T.grid },
+            angleLines: { color: T.grid },
             pointLabels: {
-              color: "#8b90a0",
+              color: T.tick,
               font: { size: 11, weight: "600" },
             },
           },
@@ -361,16 +362,17 @@
       return m ? m.label : k;
     });
     const values = entries.map(([, sc]) => sc.percentile);
+    var T = APP.getChartTheme();
     const colors = values.map((v) =>
       v >= 80
-        ? "#a78bfa"
+        ? T.purple
         : v >= 60
-          ? "#4ade80"
+          ? T.green
           : v >= 40
-            ? "#60a5fa"
+            ? T.blue
             : v >= 20
-              ? "#facc15"
-              : "#f87171",
+              ? T.yellow
+              : T.red,
     );
 
     APP.charts.profilePct = new Chart(canvas, {
@@ -397,12 +399,12 @@
           x: {
             min: 0,
             max: 100,
-            grid: { color: "rgba(255,255,255,.06)" },
-            ticks: { color: "#8b90a0", callback: (v) => v + "%" },
+            grid: { color: T.grid },
+            ticks: { color: T.tick, callback: (v) => v + "%" },
           },
           y: {
             grid: { display: false },
-            ticks: { color: "#e4e6ed", font: { size: 11 } },
+            ticks: { color: T.text, font: { size: 11 } },
           },
         },
         plugins: {
@@ -468,6 +470,7 @@
       if (count[i] > 0) teamAvgs[i] = +(teamAvgs[i] / count[i]).toFixed(2);
     }
 
+    var T = APP.getChartTheme();
     APP.charts.profileSprint = new Chart(canvas, {
       type: "line",
       data: {
@@ -476,26 +479,26 @@
           {
             label: a.name,
             data: athleteVels,
-            borderColor: "#a78bfa",
-            backgroundColor: "rgba(167,139,250,.15)",
+            borderColor: T.purple,
+            backgroundColor: T.purple + "26",
             fill: true,
             tension: 0.3,
             pointRadius: 6,
-            pointBackgroundColor: "#a78bfa",
-            pointBorderColor: "#fff",
+            pointBackgroundColor: T.purple,
+            pointBorderColor: T.bg,
             pointBorderWidth: 2,
           },
           {
             label: "Team Avg",
             data: teamAvgs,
-            borderColor: "#60a5fa",
-            backgroundColor: "rgba(96,165,250,.08)",
+            borderColor: T.blue,
+            backgroundColor: T.blue + "14",
             fill: false,
             borderDash: [6, 3],
             tension: 0.3,
             pointRadius: 4,
-            pointBackgroundColor: "#60a5fa",
-            pointBorderColor: "#fff",
+            pointBackgroundColor: T.blue,
+            pointBorderColor: T.bg,
             pointBorderWidth: 2,
           },
         ],
@@ -506,19 +509,19 @@
         maintainAspectRatio: true,
         scales: {
           y: {
-            title: { display: true, text: "Velocity (m/s)", color: "#8b90a0" },
-            grid: { color: "rgba(255,255,255,.06)" },
-            ticks: { color: "#8b90a0" },
+            title: { display: true, text: "Velocity (m/s)", color: T.tick },
+            grid: { color: T.grid },
+            ticks: { color: T.tick },
           },
           x: {
-            grid: { color: "rgba(255,255,255,.06)" },
-            ticks: { color: "#8b90a0" },
+            grid: { color: T.grid },
+            ticks: { color: T.tick },
           },
         },
         plugins: {
           legend: {
             labels: {
-              color: "#e4e6ed",
+              color: T.text,
               usePointStyle: true,
               pointStyle: "circle",
             },
@@ -570,6 +573,7 @@
 
     const totalGraded = activeTiers.reduce((s, t) => s + tierCounts[t], 0);
 
+    var T = APP.getChartTheme();
     APP.charts.profileDonut = new Chart(canvas, {
       type: "doughnut",
       data: {
@@ -595,7 +599,7 @@
           legend: {
             position: "bottom",
             labels: {
-              color: "#e4e6ed",
+              color: T.text,
               padding: 16,
               usePointStyle: true,
               pointStyle: "rectRounded",
@@ -652,6 +656,7 @@
     const avgStr = sumStr / n;
     const avgSpd = sumSpd / n;
 
+    var T = APP.getChartTheme();
     const others = teamPoints.filter((p) => p.id !== a.id);
 
     APP.charts.profileQuadrant = new Chart(canvas, {
@@ -661,8 +666,8 @@
           {
             label: "Teammates",
             data: others.map((p) => ({ x: p.x, y: p.y })),
-            backgroundColor: "rgba(96,165,250,.35)",
-            borderColor: "#60a5fa",
+            backgroundColor: T.blue + "59",
+            borderColor: T.blue,
             pointRadius: 5,
             pointHoverRadius: 7,
             _names: others.map((p) => p.name),
@@ -670,8 +675,8 @@
           {
             label: a.name,
             data: [{ x: a.relSquat, y: a.forty }],
-            backgroundColor: "#a78bfa",
-            borderColor: "#fff",
+            backgroundColor: T.purple,
+            borderColor: T.bg,
             pointRadius: 9,
             pointBorderWidth: 2,
             pointHoverRadius: 11,
@@ -687,26 +692,26 @@
             title: {
               display: true,
               text: "Relative Squat (xBW) →  Stronger",
-              color: "#8b90a0",
+              color: T.tick,
             },
-            grid: { color: "rgba(255,255,255,.06)" },
-            ticks: { color: "#8b90a0" },
+            grid: { color: T.grid },
+            ticks: { color: T.tick },
           },
           y: {
             reverse: true,
             title: {
               display: true,
               text: "40-yd Dash (s) ↑  Faster",
-              color: "#8b90a0",
+              color: T.tick,
             },
-            grid: { color: "rgba(255,255,255,.06)" },
-            ticks: { color: "#8b90a0" },
+            grid: { color: T.grid },
+            ticks: { color: T.tick },
           },
         },
         plugins: {
           legend: {
             labels: {
-              color: "#e4e6ed",
+              color: T.text,
               usePointStyle: true,
               pointStyle: "circle",
             },
@@ -729,14 +734,14 @@
                     type: "line",
                     xMin: avgStr,
                     xMax: avgStr,
-                    borderColor: "rgba(255,255,255,.15)",
+                    borderColor: T.grid,
                     borderDash: [4, 4],
                   },
                   avgSpd: {
                     type: "line",
                     yMin: avgSpd,
                     yMax: avgSpd,
-                    borderColor: "rgba(255,255,255,.15)",
+                    borderColor: T.grid,
                     borderDash: [4, 4],
                   },
                 },
@@ -821,19 +826,20 @@
       return x.date < y.date ? -1 : x.date > y.date ? 1 : 0;
     });
 
+    var T = APP.getChartTheme();
     // Pick the 4 most interesting metrics to chart (ones with data across multiple entries)
     const candidates = [
-      { key: "bench_1rm", label: "Bench", color: "#a78bfa", iKey: "bench" },
-      { key: "squat_1rm", label: "Squat", color: "#60a5fa", iKey: "squat" },
-      { key: "vert_in", label: "Vert", color: "#4ade80", iKey: "vert" },
-      { key: "broad_in", label: "Broad", color: "#facc15", iKey: "broad" },
+      { key: "bench_1rm", label: "Bench", color: T.purple, iKey: "bench" },
+      { key: "squat_1rm", label: "Squat", color: T.blue, iKey: "squat" },
+      { key: "vert_in", label: "Vert", color: T.green, iKey: "vert" },
+      { key: "broad_in", label: "Broad", color: T.yellow, iKey: "broad" },
       {
         key: "medball_in",
         label: "Med Ball",
-        color: "#f97316",
+        color: T.orange,
         iKey: "medball",
       },
-      { key: "weight_lb", label: "Weight", color: "#9ba0b2", iKey: "weight" },
+      { key: "weight_lb", label: "Weight", color: T.muted, iKey: "weight" },
     ];
 
     // Build labels and datasets
@@ -866,7 +872,7 @@
           tension: 0.3,
           pointRadius: 5,
           pointBackgroundColor: c.color,
-          pointBorderColor: "#fff",
+          pointBorderColor: T.bg,
           pointBorderWidth: 2,
           spanGaps: true,
         });
@@ -920,13 +926,13 @@
 
     const scales = {
       x: {
-        grid: { color: "rgba(255,255,255,.06)" },
-        ticks: { color: "#8b90a0", font: { size: 10 } },
+        grid: { color: T.grid },
+        ticks: { color: T.tick, font: { size: 10 } },
       },
       y: {
         position: "left",
-        grid: { color: "rgba(255,255,255,.06)" },
-        ticks: { color: "#8b90a0" },
+        grid: { color: T.grid },
+        ticks: { color: T.tick },
         title: useMultiAxis
           ? {
               display: true,
@@ -941,7 +947,7 @@
       scales.y1 = {
         position: "right",
         grid: { drawOnChartArea: false },
-        ticks: { color: "#8b90a0" },
+        ticks: { color: T.tick },
         title: {
           display: true,
           text: datasets
@@ -950,7 +956,7 @@
               return d.label;
             })
             .join(", "),
-          color: "#8b90a0",
+          color: T.tick,
           font: { size: 10 },
         },
       };
@@ -968,7 +974,7 @@
         plugins: {
           legend: {
             labels: {
-              color: "#e4e6ed",
+              color: T.text,
               usePointStyle: true,
               pointStyle: "circle",
             },

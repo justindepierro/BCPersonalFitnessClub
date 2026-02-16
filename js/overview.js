@@ -130,6 +130,7 @@
       `;
     }
     document.getElementById("summaryCards").innerHTML = cardsHtml;
+    APP.animateCounters(document.getElementById("summaryCards"));
 
     // Data quality warnings & flags
     const warnContainer = document.getElementById("dataWarnings");

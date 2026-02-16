@@ -79,14 +79,15 @@
         '<p class="placeholder-text">Charts unavailable (Chart.js failed to load)</p>';
       return;
     }
+    var T = APP.getChartTheme();
     const colors = top.map((_, i) =>
       i === 0
-        ? "#a78bfa"
+        ? T.purple
         : i === 1
-          ? "#b8a4fb"
+          ? T.purple + "cc"
           : i === 2
-            ? "#c9bdfc"
-            : "rgba(167,139,250,.45)",
+            ? T.purple + "99"
+            : T.purple + "66",
     );
 
     const mi = METRIC_INFO[metric];
@@ -113,21 +114,21 @@
         maintainAspectRatio: false,
         scales: {
           x: {
-            grid: { color: "rgba(255,255,255,.06)" },
-            ticks: { color: "#8b90a0", font: { size: 10 } },
+            grid: { color: T.grid },
+            ticks: { color: T.tick, font: { size: 10 } },
           },
           y: {
             grid: { display: false },
-            ticks: { color: "#e4e6ed", font: { size: 11, weight: "600" } },
+            ticks: { color: T.text, font: { size: 11, weight: "600" } },
           },
         },
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: "#1a1d27",
-            titleColor: "#e4e6ed",
-            bodyColor: "#e4e6ed",
-            borderColor: "#2e3345",
+            backgroundColor: T.surface,
+            titleColor: T.text,
+            bodyColor: T.text,
+            borderColor: T.border,
             borderWidth: 1,
             callbacks: {
               title: (items) => items[0].label,

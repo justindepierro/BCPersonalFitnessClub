@@ -21,6 +21,8 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
     />
     <link rel="stylesheet" href="css/styles.css" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#6c63ff" />
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <script
@@ -197,10 +199,26 @@
 
     <!-- ===== MAIN CONTENT ===== -->
     <main id="main-content" class="content">
-      <!-- Loading indicator -->
-      <div id="loadingIndicator" class="loading-indicator">
-        <div class="loading-spinner"></div>
-        <p>Loading athlete data…</p>
+      <!-- Loading skeleton (replaced on data load) -->
+      <div id="loadingIndicator" class="skeleton-wrap">
+        <div class="skeleton-header">
+          <div class="skeleton-line skeleton-title"></div>
+        </div>
+        <div class="skeleton-cards">
+          <div class="skeleton-card"><div class="skeleton-line" style="width:60%"></div><div class="skeleton-line skeleton-big"></div><div class="skeleton-line" style="width:40%"></div></div>
+          <div class="skeleton-card"><div class="skeleton-line" style="width:50%"></div><div class="skeleton-line skeleton-big"></div><div class="skeleton-line" style="width:45%"></div></div>
+          <div class="skeleton-card"><div class="skeleton-line" style="width:70%"></div><div class="skeleton-line skeleton-big"></div><div class="skeleton-line" style="width:35%"></div></div>
+          <div class="skeleton-card"><div class="skeleton-line" style="width:55%"></div><div class="skeleton-line skeleton-big"></div><div class="skeleton-line" style="width:50%"></div></div>
+          <div class="skeleton-card"><div class="skeleton-line" style="width:65%"></div><div class="skeleton-line skeleton-big"></div><div class="skeleton-line" style="width:40%"></div></div>
+          <div class="skeleton-card"><div class="skeleton-line" style="width:45%"></div><div class="skeleton-line skeleton-big"></div><div class="skeleton-line" style="width:55%"></div></div>
+        </div>
+        <div class="skeleton-table">
+          <div class="skeleton-row"><div class="skeleton-line" style="width:100%"></div></div>
+          <div class="skeleton-row"><div class="skeleton-line" style="width:95%"></div></div>
+          <div class="skeleton-row"><div class="skeleton-line" style="width:90%"></div></div>
+          <div class="skeleton-row"><div class="skeleton-line" style="width:92%"></div></div>
+          <div class="skeleton-row"><div class="skeleton-line" style="width:88%"></div></div>
+        </div>
       </div>
 
       <!-- ——— TAB: Team Overview ——— -->
@@ -263,6 +281,13 @@
             title="Print one-page team summary"
           >
             <i data-lucide="printer" class="icon"></i> Report
+          </button>
+          <button
+            class="btn btn-sm"
+            onclick="exportTeamPDF()"
+            title="Export full team report as PDF"
+          >
+            <i data-lucide="file-text" class="icon"></i> PDF
           </button>
           <span class="filter-sep">|</span>
           <label
@@ -1744,5 +1769,11 @@
     <script src="js/compare.js"></script>
     <script src="js/data-mgmt.js"></script>
     <script src="js/edit-panel.js"></script>
+    <script>
+      // Register Service Worker for offline support
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("sw.js").catch(function () {});
+      }
+    </script>
   </body>
 </html>

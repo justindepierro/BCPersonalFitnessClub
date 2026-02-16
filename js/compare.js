@@ -647,11 +647,12 @@
     }
 
     const cols = athletes.length;
-    const palette = ["#a78bfa", "#4ade80", "#60a5fa"];
+    var T = APP.getChartTheme();
+    const palette = [T.purple, T.green, T.blue];
     const paletteBg = [
-      "rgba(167,139,250,.2)",
-      "rgba(74,222,128,.2)",
-      "rgba(96,165,250,.2)",
+      T.purple + "33",
+      T.green + "33",
+      T.blue + "33",
     ];
 
     // Profile cards
@@ -814,7 +815,7 @@
       backgroundColor: paletteBg[i],
       borderColor: palette[i],
       pointBackgroundColor: palette[i],
-      pointBorderColor: "#fff",
+      pointBorderColor: T.bg,
       pointHoverRadius: 6,
     }));
 
@@ -830,16 +831,16 @@
             beginAtZero: true,
             max: 100,
             ticks: { display: false },
-            grid: { color: "rgba(255,255,255,.08)" },
-            angleLines: { color: "rgba(255,255,255,.08)" },
+            grid: { color: T.grid },
+            angleLines: { color: T.grid },
             pointLabels: {
-              color: "#8b90a0",
+              color: T.tick,
               font: { size: 11, weight: "600" },
             },
           },
         },
         plugins: {
-          legend: { labels: { color: "#e4e6ed", font: { size: 11 } } },
+          legend: { labels: { color: T.text, font: { size: 11 } } },
           tooltip: {
             callbacks: {
               label: (ctx) =>
@@ -907,6 +908,7 @@
     const labels = [];
     const values = [];
     const colors = [];
+    var T = APP.getChartTheme();
     for (const key in summaryData) {
       const s = summaryData[key];
       labels.push(s.label);
@@ -915,10 +917,10 @@
       const improved = s.invert ? pct < 0 : pct > 0;
       colors.push(
         improved
-          ? "rgba(74,222,128,.7)"
+          ? T.green + "b3"
           : pct === 0
-            ? "rgba(139,144,160,.5)"
-            : "rgba(239,68,68,.7)",
+            ? T.muted + "80"
+            : T.red + "b3",
       );
     }
     const chart = new Chart(canvas, {
@@ -955,18 +957,18 @@
             title: {
               display: true,
               text: "% Change",
-              color: "#8b90a0",
+              color: T.tick,
               font: { size: 11 },
             },
-            grid: { color: "rgba(255,255,255,.06)" },
+            grid: { color: T.grid },
             ticks: {
-              color: "#8b90a0",
+              color: T.tick,
               callback: (v) => (v > 0 ? "+" : "") + v + "%",
             },
           },
           y: {
             grid: { display: false },
-            ticks: { color: "#e4e6ed", font: { size: 11, weight: "600" } },
+            ticks: { color: T.text, font: { size: 11, weight: "600" } },
           },
         },
       },

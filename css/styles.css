@@ -1,7 +1,16 @@
 /* ===================================================
    BC PERSONAL FITNESS CLUB — Athletic Testing Dashboard
    Modern, mobile-first stylesheet
+
+   CSS Architecture (logical layers):
+   ┌─ tokens    — Custom properties, reset, themes
+   ├─ layout    — Header, tabs, content, footer, responsive
+   ├─ components— Buttons, cards, tables, forms, badges
+   ├─ views     — Profile, leaderboard, compare, sprint, scorecard…
+   └─ utilities — Toasts, modals, loading, scrollbars, print, a11y
    =================================================== */
+
+/* ====== LAYER: TOKENS ====== */
 
 /* ---------- Reset & Variables ---------- */
 *,
@@ -24,17 +33,17 @@
   --accent-hover: #7f78ff;
   --accent-glow: rgba(108, 99, 255, 0.25);
   --purple: #a78bfa;
-  --purple-bg: rgba(167, 139, 250, 0.12);
+  --purple-bg: color-mix(in srgb, var(--purple) 12%, transparent);
   --green: #4ade80;
-  --green-bg: rgba(74, 222, 128, 0.12);
+  --green-bg: color-mix(in srgb, var(--green) 12%, transparent);
   --yellow: #facc15;
-  --yellow-bg: rgba(250, 204, 21, 0.12);
+  --yellow-bg: color-mix(in srgb, var(--yellow) 12%, transparent);
   --red: #f87171;
-  --red-bg: rgba(248, 113, 113, 0.12);
+  --red-bg: color-mix(in srgb, var(--red) 12%, transparent);
   --blue: #60a5fa;
-  --blue-bg: rgba(96, 165, 250, 0.12);
+  --blue-bg: color-mix(in srgb, var(--blue) 12%, transparent);
   --orange: #f97316;
-  --orange-bg: rgba(249, 115, 22, 0.12);
+  --orange-bg: color-mix(in srgb, var(--orange) 12%, transparent);
   --row-stripe: rgba(255, 255, 255, 0.015);
   --row-hover: rgba(108, 99, 255, 0.1);
   --row-hover-strong: rgba(108, 99, 255, 0.15);
@@ -82,17 +91,17 @@
   --accent-hover: #4840c9;
   --accent-glow: rgba(91, 82, 224, 0.18);
   --purple: #7c3aed;
-  --purple-bg: rgba(124, 58, 237, 0.1);
+  --purple-bg: color-mix(in srgb, var(--purple) 10%, transparent);
   --green: #16a34a;
-  --green-bg: rgba(22, 163, 74, 0.1);
+  --green-bg: color-mix(in srgb, var(--green) 10%, transparent);
   --yellow: #ca8a04;
-  --yellow-bg: rgba(202, 138, 4, 0.1);
+  --yellow-bg: color-mix(in srgb, var(--yellow) 10%, transparent);
   --red: #dc2626;
-  --red-bg: rgba(220, 38, 38, 0.1);
+  --red-bg: color-mix(in srgb, var(--red) 10%, transparent);
   --blue: #2563eb;
-  --blue-bg: rgba(37, 99, 235, 0.1);
+  --blue-bg: color-mix(in srgb, var(--blue) 10%, transparent);
   --orange: #ea580c;
-  --orange-bg: rgba(234, 88, 12, 0.1);
+  --orange-bg: color-mix(in srgb, var(--orange) 10%, transparent);
   --row-stripe: rgba(0, 0, 0, 0.02);
   --row-hover: rgba(91, 82, 224, 0.06);
   --row-hover-strong: rgba(91, 82, 224, 0.1);
@@ -192,6 +201,8 @@ body {
   height: 1.2em;
 }
 
+/* ====== LAYER: LAYOUT ====== */
+
 /* ---------- Header ---------- */
 .site-header {
   background: var(--surface);
@@ -277,10 +288,19 @@ body {
   border-radius: var(--radius-sm);
   cursor: pointer;
   white-space: nowrap;
+  position: relative;
   transition:
     color 0.15s,
     background-color 0.15s,
-    box-shadow 0.15s;
+    box-shadow 0.15s,
+    transform 0.1s ease;
+}
+.tab:active {
+  transform: scale(0.96);
+}
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .tab:hover {
@@ -293,12 +313,24 @@ body {
   background: var(--accent);
   box-shadow: 0 0 10px var(--accent-glow);
 }
+.tab.drag-over {
+  outline: 2px dashed var(--accent);
+  outline-offset: -2px;
+}
+.tab[draggable="true"] {
+  cursor: grab;
+}
+.tab[draggable="true"]:active {
+  cursor: grabbing;
+}
 
 /* ---------- Content ---------- */
 .content {
   max-width: 1280px;
   margin: 0 auto;
   padding: 1.5rem 1.25rem 3rem;
+  container-type: inline-size;
+  container-name: main;
 }
 
 .tab-panel {
@@ -399,6 +431,8 @@ select:focus,
   border-color: var(--accent);
 }
 
+/* ====== LAYER: COMPONENTS ====== */
+
 /* ---------- Buttons ---------- */
 .btn {
   display: inline-flex;
@@ -413,7 +447,13 @@ select:focus,
   cursor: pointer;
   transition:
     background-color 0.15s,
-    color 0.15s;
+    color 0.15s,
+    transform 0.1s ease,
+    box-shadow 0.15s ease;
+}
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .btn-primary {
@@ -489,12 +529,14 @@ select:focus,
   padding: 1rem 1.15rem;
   border-top: 3px solid var(--accent);
   transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 .summary-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  border-color: var(--accent);
 }
 
 .summary-card .label {
@@ -688,6 +730,8 @@ select:focus,
   color: var(--red);
 }
 
+/* ====== LAYER: VIEWS ====== */
+
 /* ---------- Leaderboard ---------- */
 .leaderboard-grid {
   display: grid;
@@ -716,6 +760,27 @@ select:focus,
   font-style: italic;
   text-align: center;
   padding: 4rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+.placeholder-text::before {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 80px;
+  opacity: 0.35;
+  background: var(--text-muted);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='12' y1='8' x2='12' y2='16'/%3E%3Cline x1='8' y1='12' x2='16' y2='12'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='12' y1='8' x2='12' y2='16'/%3E%3Cline x1='8' y1='12' x2='16' y2='12'/%3E%3C/svg%3E");
+  mask-size: contain;
+  -webkit-mask-size: contain;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+}
+td .placeholder-text::before {
+  display: none;
 }
 
 .profile-card {
@@ -1065,6 +1130,43 @@ select:focus,
   }
   .edit-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Responsive card table for mobile */
+  .table-wrap.card-view-mobile table thead {
+    display: none;
+  }
+  .table-wrap.card-view-mobile table,
+  .table-wrap.card-view-mobile table tbody,
+  .table-wrap.card-view-mobile table tr,
+  .table-wrap.card-view-mobile table td {
+    display: block;
+    width: 100%;
+  }
+  .table-wrap.card-view-mobile table tr {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-3);
+    margin-bottom: var(--space-2);
+  }
+  .table-wrap.card-view-mobile table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-1) 0;
+    border: none;
+    font-size: var(--text-sm);
+  }
+  .table-wrap.card-view-mobile table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+    margin-right: var(--space-2);
   }
 }
 
@@ -2538,6 +2640,8 @@ select:focus,
   cursor: pointer;
 }
 
+/* ====== LAYER: UTILITIES ====== */
+
 /* ---------- Loading indicator ---------- */
 .loading-indicator {
   display: flex;
@@ -2562,6 +2666,70 @@ select:focus,
   to {
     transform: rotate(360deg);
   }
+}
+
+/* ---------- Skeleton loading ---------- */
+.skeleton-wrap {
+  padding: var(--space-8) var(--space-4);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.skeleton-header {
+  margin-bottom: var(--space-6);
+}
+.skeleton-title {
+  height: 28px;
+  width: 220px;
+  border-radius: var(--radius-sm);
+}
+.skeleton-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+.skeleton-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.skeleton-line {
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--surface2) 25%,
+    color-mix(in srgb, var(--surface2) 60%, var(--bg)) 50%,
+    var(--surface2) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+.skeleton-big {
+  height: 32px;
+  width: 50%;
+}
+.skeleton-table {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.skeleton-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+}
+.skeleton-row .skeleton-line {
+  height: 16px;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* ---------- Untested athlete badge ---------- */
@@ -3655,4 +3823,83 @@ select:focus,
 }
 .wt-flat {
   color: var(--text-muted);
+}
+
+/* ---------- View Transitions API ---------- */
+::view-transition-old(root) {
+  animation: fade-out 0.15s ease-out;
+}
+::view-transition-new(root) {
+  animation: fade-in 0.2s ease-in;
+}
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---------- Micro-interaction polish (Item 9) ---------- */
+.profile-card,
+.section-card {
+  transition:
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.2s ease;
+}
+.profile-card:hover,
+.section-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+.data-table tbody tr {
+  transition: background-color 0.12s ease;
+}
+select,
+.input {
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+select:focus,
+.input:focus {
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+/* Ripple-like active effect on buttons */
+.btn-primary:active {
+  box-shadow: 0 0 0 4px var(--accent-glow);
+}
+.toast {
+  animation: toast-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ---------- @container queries (Item 19) ---------- */
+@container main (max-width: 600px) {
+  .card-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+}
+@container main (max-width: 400px) {
+  .card-row {
+    grid-template-columns: 1fr;
+  }
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
 }
