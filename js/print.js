@@ -1003,7 +1003,7 @@
   }
 
   /* --- Shared print window opener --- */
-  function openPrintWindow(bodyHTML, title) {
+  function openPrintWindow(bodyHTML, title, extraCSS) {
     const w = window.open("", "_blank", "width=1000,height=800");
     if (!w) {
       showToast(
@@ -1099,6 +1099,7 @@
     body { padding: 0; }
     @page { size: ${bodyHTML.includes("print-scorecard-page") ? "landscape" : "portrait"}; margin: 0.4in; }
   }
+  ${extraCSS || ""}
 </style></head><body>${bodyHTML}</body></html>`);
     w.document.close();
     setTimeout(() => {
@@ -1174,7 +1175,7 @@
       '</tr></thead><tbody>' + rosterRows + '</tbody></table>' +
       '</div>';
 
-    openPrintWindow("Team Report — " + today, bodyHTML,
+    openPrintWindow(bodyHTML, "Team Report — " + today,
       '.pdf-report { font-family: "Inter", system-ui, sans-serif; color: #1a1d27; }' +
       '.pdf-header { text-align: center; margin-bottom: 24px; border-bottom: 2px solid #6c63ff; padding-bottom: 16px; }' +
       '.pdf-header h1 { font-size: 20pt; color: #6c63ff; margin-bottom: 4px; }' +
