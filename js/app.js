@@ -22,8 +22,8 @@
   function getAthleteMap() {
     if (_athleteMap) return _athleteMap;
     _athleteMap = new Map();
-    var athletes = window.CLUB ? window.CLUB.athletes : [];
-    for (var i = 0; i < athletes.length; i++) {
+    const athletes = window.CLUB ? window.CLUB.athletes : [];
+    for (let i = 0; i < athletes.length; i++) {
       _athleteMap.set(athletes[i].id, athletes[i]);
     }
     return _athleteMap;
@@ -280,15 +280,12 @@
 
   /* Compute team averages, min, max for a set of athlete values */
   function computeTestAverages(athleteDetails) {
-    var stats = {};
-    for (var mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
-      var key = TEST_METRIC_KEYS[mk].jsonKey;
-      var sum = 0,
-        count = 0,
-        min = Infinity,
-        max = -Infinity;
-      for (var ai = 0; ai < athleteDetails.length; ai++) {
-        var v = athleteDetails[ai].values[key];
+    const stats = {};
+    for (let mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
+      const key = TEST_METRIC_KEYS[mk].jsonKey;
+      let sum = 0, count = 0, min = Infinity, max = -Infinity;
+      for (let ai = 0; ai < athleteDetails.length; ai++) {
+        const v = athleteDetails[ai].values[key];
         if (v !== null && v !== undefined && !isNaN(v)) {
           sum += v;
           count++;
@@ -308,11 +305,11 @@
 
   /* Build HTML for a team averages summary bar */
   function buildAvgSummaryHTML(stats) {
-    var html = '<div class="ta-summary">';
+    let html = '<div class="ta-summary">';
     html += '<span class="ta-title">Team Averages</span>';
-    for (var mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
-      var key = TEST_METRIC_KEYS[mk].jsonKey;
-      var s = stats[key];
+    for (let mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
+      const key = TEST_METRIC_KEYS[mk].jsonKey;
+      const s = stats[key];
       if (s.avg !== null) {
         html +=
           '<span class="ta-chip"><span class="ta-chip-label">' +
@@ -330,22 +327,22 @@
 
   /* Build avg/best/worst footer rows for a detail table */
   function buildAvgTableRows(stats, showBestWorst, extraCol) {
-    var extra = extraCol ? "<td></td>" : "";
-    var avgRow =
+    const extra = extraCol ? "<td></td>" : "";
+    let avgRow =
       '<tr class="ta-row ta-avg-row"><td><strong>Team Avg</strong></td>';
-    for (var mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
-      var s = stats[TEST_METRIC_KEYS[mk].jsonKey];
+    for (let mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
+      const s = stats[TEST_METRIC_KEYS[mk].jsonKey];
       avgRow += '<td class="num">' + (s.avg !== null ? s.avg : "—") + "</td>";
     }
     avgRow += extra + "</tr>";
     if (!showBestWorst) return avgRow;
-    var bestRow =
+    let bestRow =
       '<tr class="ta-row ta-best-row"><td><strong>Best</strong></td>';
-    var worstRow =
+    let worstRow =
       '<tr class="ta-row ta-worst-row"><td><strong>Worst</strong></td>';
-    for (var mk2 = 0; mk2 < TEST_METRIC_KEYS.length; mk2++) {
-      var s2 = stats[TEST_METRIC_KEYS[mk2].jsonKey];
-      var lower = TEST_METRIC_KEYS[mk2].lower;
+    for (let mk2 = 0; mk2 < TEST_METRIC_KEYS.length; mk2++) {
+      const s2 = stats[TEST_METRIC_KEYS[mk2].jsonKey];
+      const lower = TEST_METRIC_KEYS[mk2].lower;
       bestRow +=
         '<td class="num">' +
         (s2.avg !== null ? (lower ? s2.min : s2.max) : "—") +
@@ -399,8 +396,8 @@
     setTestHistory(h);
   }
   function currentTestValues(a) {
-    var vals = {};
-    for (var i = 0; i < TEST_METRIC_KEYS.length; i++) {
+    const vals = {};
+    for (let i = 0; i < TEST_METRIC_KEYS.length; i++) {
       vals[TEST_METRIC_KEYS[i].jsonKey] = a[TEST_METRIC_KEYS[i].key];
     }
     return vals;
@@ -439,7 +436,6 @@
       "sprint",
       "strength",
       "scorecard",
-      // "benchmarks", // deactivated — not ready yet
       "log",
       "plan",
       "constants",
@@ -461,7 +457,6 @@
       sprint: renderSprintAnalysis,
       strength: renderStrengthPower,
       scorecard: renderScorecard,
-      // benchmarks: renderBenchmarks, // deactivated — not ready yet
       log: renderTestingLog,
       plan: renderTestingWeekPlan,
       constants: renderConstants,
@@ -821,50 +816,20 @@
     const D = window.CLUB;
     document.getElementById("exportDate").textContent = D.exportDate;
 
-    // Restore age-adjusted toggle state
-    const ageToggle = document.getElementById("ageAdjToggle");
-    if (ageToggle) {
-      ageToggle.checked = localStorage.getItem("lc_age_adjusted") === "true";
+    // Restore all toggle states from localStorage
+    function restoreToggle(elementId, storageKey) {
+      const el = document.getElementById(elementId);
+      if (el) el.checked = localStorage.getItem(storageKey) === "true";
     }
-    // Sync overview duplicates
-    const overviewAgeToggle = document.getElementById("overviewAgeToggle");
-    if (overviewAgeToggle) {
-      overviewAgeToggle.checked =
-        localStorage.getItem("lc_age_adjusted") === "true";
+    const togglePairs = [
+      [["ageAdjToggle", "overviewAgeToggle"], "lc_age_adjusted"],
+      [["overviewRelToggle"], "lc_show_relatives"],
+      [["bodyAdjToggle", "overviewBodyToggle"], "lc_body_adjusted"],
+      [["cohortToggle", "overviewCohortToggle"], "lc_cohort_mode"],
+    ];
+    for (const [ids, key] of togglePairs) {
+      for (const id of ids) restoreToggle(id, key);
     }
-    const overviewRelToggle = document.getElementById("overviewRelToggle");
-    if (overviewRelToggle) {
-      overviewRelToggle.checked =
-        localStorage.getItem("lc_show_relatives") === "true";
-    }
-    // Restore body-adjusted toggle state
-    const bodyToggle = document.getElementById("bodyAdjToggle");
-    if (bodyToggle) {
-      bodyToggle.checked = localStorage.getItem("lc_body_adjusted") === "true";
-    }
-    const overviewBodyToggle = document.getElementById("overviewBodyToggle");
-    if (overviewBodyToggle) {
-      overviewBodyToggle.checked =
-        localStorage.getItem("lc_body_adjusted") === "true";
-    }
-    // Restore cohort toggle state
-    const cohortToggle = document.getElementById("cohortToggle");
-    if (cohortToggle) {
-      cohortToggle.checked = localStorage.getItem("lc_cohort_mode") === "true";
-    }
-    const overviewCohortToggle = document.getElementById(
-      "overviewCohortToggle",
-    );
-    if (overviewCohortToggle) {
-      overviewCohortToggle.checked =
-        localStorage.getItem("lc_cohort_mode") === "true";
-    }
-    // BC Standards deactivated — force off and clear any saved state
-    localStorage.removeItem("lc_bc_standards");
-    const bcToggle = document.getElementById("bcStdToggle");
-    if (bcToggle) bcToggle.checked = false;
-    const overviewBCToggle = document.getElementById("overviewBCToggle");
-    if (overviewBCToggle) overviewBCToggle.checked = false;
 
     // Populate position filter
     const posSel = document.getElementById("overviewPosFilter");
@@ -941,7 +906,7 @@
     // Sortable bindings (delegated to survive thead rebuilds)
     document.querySelectorAll(".data-table.sortable").forEach((table) => {
       table.addEventListener("click", function (ev) {
-        var th = ev.target.closest("th[data-sort]");
+        const th = ev.target.closest("th[data-sort]");
         if (!th) return;
         handleSort(table, th.dataset.sort, th);
       });
@@ -1220,20 +1185,20 @@
     return stale;
   }
 
-  function tdNum(val, decimals) {
+  /* ---------- Table cell helpers (unified) ---------- */
+  function tdNum(val, decimals, opts) {
     if (val === null || val === undefined) return '<td class="num na">—</td>';
-    return `<td class="num">${fmt(val, decimals)}</td>`;
-  }
-
-  function tdNumStale(val, decimals) {
-    if (val === null || val === undefined) return '<td class="num na">—</td>';
-    return `<td class="num stale-val" title="Previous test data">${fmt(val, decimals)}</td>`;
+    const stale = opts && opts.stale;
+    const v = fmt(val, decimals);
+    const cls = stale ? "num stale-val" : "num";
+    const title = stale ? ' title="Previous test data"' : "";
+    return `<td class="${cls}"${title}>${v}</td>`;
   }
 
   // Heat map background color from grade tier (subtle transparent tints)
   function heatBg(grade) {
     if (!grade) return "";
-    var colors = {
+    const colors = {
       elite: "rgba(167,139,250,.15)",
       excellent: "rgba(74,222,128,.13)",
       good: "rgba(96,165,250,.12)",
@@ -1245,33 +1210,28 @@
       : "";
   }
 
-  function tdGraded(val, decimals, grade) {
+  function tdGraded(val, decimals, grade, opts) {
     if (val === null || val === undefined) return '<td class="num na">—</td>';
+    const stale = opts && opts.stale;
     const v = typeof decimals === "number" ? val.toFixed(decimals) : val;
-    if (!grade) return `<td class="num">${v}</td>`;
-    return `<td class="num grade-text-${grade.tier}" title="${grade.label}"${heatBg(grade)}>${v}</td>`;
+    if (!grade) {
+      const cls = stale ? "num stale-val" : "num";
+      const title = stale ? ' title="Previous test data"' : "";
+      return `<td class="${cls}"${title}>${v}</td>`;
+    }
+    const staleCls = stale ? " stale-val" : "";
+    const titleText = stale ? `${grade.label} (previous test data)` : grade.label;
+    return `<td class="num${staleCls} grade-text-${grade.tier}" title="${titleText}"${heatBg(grade)}>${v}</td>`;
   }
 
-  function tdGradedStale(val, decimals, grade) {
+  function tdNumColored(val, decimals, opts) {
     if (val === null || val === undefined) return '<td class="num na">—</td>';
-    const v = typeof decimals === "number" ? val.toFixed(decimals) : val;
-    if (!grade)
-      return `<td class="num stale-val" title="Previous test data">${v}</td>`;
-    return `<td class="num stale-val grade-text-${grade.tier}" title="${grade.label} (previous test data)"${heatBg(grade)}>${v}</td>`;
-  }
-
-  function tdNumColoredStale(val, decimals) {
-    if (val === null || val === undefined) return '<td class="num na">—</td>';
+    const stale = opts && opts.stale;
     const v = typeof decimals === "number" ? val.toFixed(decimals) : val;
     const cls = val < 0 ? "z-neg" : val > 0 ? "z-pos" : "";
-    return `<td class="num stale-val ${cls}" title="Previous test data">${v}</td>`;
-  }
-
-  function tdNumColored(val, decimals) {
-    if (val === null || val === undefined) return '<td class="num na">—</td>';
-    const v = typeof decimals === "number" ? val.toFixed(decimals) : val;
-    const cls = val < 0 ? "z-neg" : val > 0 ? "z-pos" : "";
-    return `<td class="num ${cls}">${v}</td>`;
+    const staleCls = stale ? " stale-val" : "";
+    const title = stale ? ' title="Previous test data"' : "";
+    return `<td class="num${staleCls} ${cls}"${title}>${v}</td>`;
   }
 
   function gradeBadge(grade) {
@@ -1371,7 +1331,7 @@
 
     const showRel = localStorage.getItem("lc_show_relatives") === "true";
 
-    var cardsHtml = `
+    let cardsHtml = `
       <div class="summary-card"><div class="label">Athletes</div><div class="value">${total}</div><div class="sub">${D.positions.length} positions</div></div>
       <div class="summary-card"><div class="label">Avg Bench</div><div class="value">${avgBench ? avgBench.toFixed(0) : "—"}<small> lb</small></div><div class="sub">${counts.bench} tested${showRel && avgRelB ? " · " + avgRelB.toFixed(2) + " xBW" : ""}</div></div>
       <div class="summary-card"><div class="label">Avg Squat</div><div class="value">${avgSquat ? avgSquat.toFixed(0) : "—"}<small> lb</small></div><div class="sub">${counts.squat} tested${showRel && avgRelS ? " · " + avgRelS.toFixed(2) + " xBW" : ""}</div></div>
@@ -1418,8 +1378,8 @@
     if (rosterWrap) rosterWrap.classList.toggle("has-rel-cols", !!showRel);
 
     // Dynamically build thead to reflect toggle state
-    var thead = document.querySelector("#rosterTable thead");
-    var thRow = "<tr>";
+    const thead = document.querySelector("#rosterTable thead");
+    let thRow = "<tr>";
     thRow += '<th data-sort="name">Athlete</th>';
     thRow += '<th data-sort="position" title="Playing position">Pos</th>';
     thRow +=
@@ -1493,42 +1453,43 @@
         // Look up previous test values for missing cells
         const prev = getPrevTestValues(a.id);
         const staleKeys = getStaleKeys(a.id);
+        const _stale = { stale: true };
         // Helper: render current value (stale-styled if from older test) or fall back to previous
         function cellG(key, dec, grade) {
           if (a[key] !== null && a[key] !== undefined) {
             return staleKeys.has(key)
-              ? tdGradedStale(a[key], dec, grade)
+              ? tdGraded(a[key], dec, grade, _stale)
               : tdGraded(a[key], dec, grade);
           }
           if (prev[key] !== null && prev[key] !== undefined)
-            return tdNumStale(prev[key], dec);
+            return tdNum(prev[key], dec, _stale);
           return '<td class="num na">—</td>';
         }
         function cellN(key, dec) {
           if (a[key] !== null && a[key] !== undefined) {
             return staleKeys.has(key)
-              ? tdNumStale(a[key], dec)
+              ? tdNum(a[key], dec, _stale)
               : tdNum(a[key], dec);
           }
           if (prev[key] !== null && prev[key] !== undefined)
-            return tdNumStale(prev[key], dec);
+            return tdNum(prev[key], dec, _stale);
           return '<td class="num na">—</td>';
         }
-        var relCols = "";
+        let relCols = "";
         if (showRel) {
           relCols =
             '<td class="num">' +
             (a.trainingAge !== null ? a.trainingAge : "—") +
             "</td>";
         }
-        var relBenchCol = showRel
+        const relBenchCol = showRel
           ? cellG("relBench", 2, a.grades.relBench)
           : "";
-        var relSquatCol = showRel
+        const relSquatCol = showRel
           ? cellG("relSquat", 2, a.grades.relSquat)
           : "";
-        var mbRelCol = showRel ? cellG("mbRel", 2, a.grades.mbRel) : "";
-        var ppCols = showRel
+        const mbRelCol = showRel ? cellG("mbRel", 2, a.grades.mbRel) : "";
+        const ppCols = showRel
           ? cellG("peakPower", 0, a.grades.peakPower) +
             cellG("relPeakPower", 1, a.grades.relPeakPower)
           : "";
@@ -1609,7 +1570,7 @@
       if (iconSpan) iconSpan.style.display = "";
 
       // If unchanged or invalid, just restore
-      if (newWt !== null && (isNaN(newWt) || newWt < 0)) return;
+      if (newWt !== null && (isNaN(newWt) || newWt < 50 || newWt > 500)) return;
       if (newWt === currentWt) return;
 
       // Log to weekly weight log
@@ -2024,7 +1985,6 @@
             callbacks: {
               label: (ctx) => {
                 const key = radarKeys[ctx.dataIndex];
-                const mi = METRIC_INFO[key];
                 return `${ctx.label}: ${ctx.raw}% of team max`;
               },
               afterLabel: (ctx) => {
@@ -2514,7 +2474,7 @@
     if (history.length === 0) {
       canvas.parentElement.style.display = "none";
       // Also hide the section title
-      var prevTitle = canvas.parentElement.previousElementSibling;
+      const prevTitle = canvas.parentElement.previousElementSibling;
       if (prevTitle && prevTitle.classList.contains("profile-section-title"))
         prevTitle.style.display = "none";
       return;
@@ -2543,23 +2503,23 @@
     ];
 
     // Build labels and datasets
-    var labels = sorted.map(function (e) {
+    const labels = sorted.map(function (e) {
       return e.label || e.date;
     });
     labels.push("Current");
 
-    var datasets = [];
-    for (var ci = 0; ci < candidates.length; ci++) {
-      var c = candidates[ci];
-      var data = [];
-      var hasMultiple = 0;
-      for (var si = 0; si < sorted.length; si++) {
-        var v = sorted[si].values[c.key];
+    const datasets = [];
+    for (let ci = 0; ci < candidates.length; ci++) {
+      const c = candidates[ci];
+      const data = [];
+      let hasMultiple = 0;
+      for (let si = 0; si < sorted.length; si++) {
+        const v = sorted[si].values[c.key];
         data.push(v != null ? v : null);
         if (v != null) hasMultiple++;
       }
       // Add current value as last point
-      var curV = current[c.key];
+      const curV = current[c.key];
       data.push(curV != null ? curV : null);
       if (curV != null) hasMultiple++;
 
@@ -2581,17 +2541,17 @@
 
     if (datasets.length === 0) {
       canvas.parentElement.style.display = "none";
-      var prevTitle2 = canvas.parentElement.previousElementSibling;
+      const prevTitle2 = canvas.parentElement.previousElementSibling;
       if (prevTitle2 && prevTitle2.classList.contains("profile-section-title"))
         prevTitle2.style.display = "none";
       return;
     }
 
     // For metrics with very different scales, use multiple Y axes
-    var useMultiAxis = false;
+    let useMultiAxis = false;
     if (datasets.length >= 2) {
-      var ranges = datasets.map(function (ds) {
-        var vals = ds.data.filter(function (v) {
+      const ranges = datasets.map(function (ds) {
+        const vals = ds.data.filter(function (v) {
           return v !== null;
         });
         return {
@@ -2599,13 +2559,13 @@
           max: Math.max.apply(null, vals),
         };
       });
-      var maxRange = Math.max.apply(
+      const maxRange = Math.max.apply(
         null,
         ranges.map(function (r) {
           return r.max;
         }),
       );
-      var minRange = Math.min.apply(
+      const minRange = Math.min.apply(
         null,
         ranges.map(function (r) {
           return r.min;
@@ -2619,12 +2579,12 @@
     if (useMultiAxis && datasets.length >= 2) {
       // Split: first dataset on left y, rest on right y
       datasets[0].yAxisID = "y";
-      for (var di = 1; di < datasets.length; di++) {
+      for (let di = 1; di < datasets.length; di++) {
         datasets[di].yAxisID = "y1";
       }
     }
 
-    var scales = {
+    const scales = {
       x: {
         grid: { color: "rgba(255,255,255,.06)" },
         ticks: { color: "#8b90a0", font: { size: 10 } },
@@ -2695,6 +2655,17 @@
     });
   }
 
+  /* ========== TEST HISTORY — Shared Helpers ========== */
+  function closeTestHistoryModal() {
+    const existing = document.querySelector(".test-history-modal");
+    if (existing) existing.remove();
+  }
+
+  function refreshProfileIfVisible() {
+    const pid = document.getElementById("athleteSelect").value;
+    if (pid) renderProfile();
+  }
+
   /* ========== TEST HISTORY — PROFILE PROGRESS SECTION ========== */
   function buildProgressSection(a) {
     const history = getAthleteHistory(a.id);
@@ -2712,7 +2683,7 @@
     html += "<th>Metric</th><th>Current</th>";
     // Show up to last 4 tests
     const shown = history.slice(0, 4);
-    for (var ti = 0; ti < shown.length; ti++) {
+    for (let ti = 0; ti < shown.length; ti++) {
       html +=
         "<th>" +
         esc(shown[ti].label || shown[ti].date) +
@@ -2724,9 +2695,9 @@
     else if (shown.length === 1) html += "<th>vs Test</th>";
     html += "</tr></thead><tbody>";
 
-    for (var mi = 0; mi < TEST_METRIC_KEYS.length; mi++) {
-      var mk = TEST_METRIC_KEYS[mi];
-      var curVal = current[mk.jsonKey];
+    for (let mi = 0; mi < TEST_METRIC_KEYS.length; mi++) {
+      const mk = TEST_METRIC_KEYS[mi];
+      const curVal = current[mk.jsonKey];
       html +=
         "<tr><td><strong>" +
         mk.label +
@@ -2737,16 +2708,15 @@
         '<td class="num">' +
         (curVal !== null && curVal !== undefined ? curVal : "—") +
         "</td>";
-      for (var si = 0; si < shown.length; si++) {
-        var hVal = shown[si].values[mk.jsonKey];
+      for (let si = 0; si < shown.length; si++) {
+        const hVal = shown[si].values[mk.jsonKey];
         html +=
           '<td class="num">' +
           (hVal !== null && hVal !== undefined ? hVal : "—") +
           "</td>";
       }
       // Delta column
-      var newV = null,
-        oldV = null;
+      let newV = null, oldV = null;
       if (shown.length >= 2) {
         newV = shown[0].values[mk.jsonKey];
         oldV = shown[1].values[mk.jsonKey];
@@ -2756,18 +2726,18 @@
       }
       if (shown.length >= 1) {
         if (newV != null && oldV != null) {
-          var delta = newV - oldV;
-          var pctChange =
+          const delta = newV - oldV;
+          const pctChange =
             oldV !== 0 ? Math.round((delta / Math.abs(oldV)) * 100) : 0;
-          var improved = mk.lower ? delta < 0 : delta > 0;
-          var declined = mk.lower ? delta > 0 : delta < 0;
-          var cls = improved
+          const improved = mk.lower ? delta < 0 : delta > 0;
+          const declined = mk.lower ? delta > 0 : delta < 0;
+          const cls = improved
             ? "delta-up"
             : declined
               ? "delta-down"
               : "delta-flat";
-          var arrow = improved ? "▲" : declined ? "▼" : "—";
-          var sign = delta > 0 ? "+" : "";
+          const arrow = improved ? "▲" : declined ? "▼" : "—";
+          const sign = delta > 0 ? "+" : "";
           html +=
             '<td class="num ' +
             cls +
@@ -2788,13 +2758,13 @@
     }
 
     // Forty composite row
-    var curForty = a.forty;
+    const curForty = a.forty;
     html +=
       '<tr class="progress-composite"><td><strong>40 yd Total</strong> <small>s</small></td>';
     html += '<td class="num">' + (curForty != null ? curForty : "—") + "</td>";
-    for (var fi = 0; fi < shown.length; fi++) {
-      var fv = shown[fi].values;
-      var hForty =
+    for (let fi = 0; fi < shown.length; fi++) {
+      const fv = shown[fi].values;
+      const hForty =
         fv.sprint_020 != null &&
         fv.sprint_2030 != null &&
         fv.sprint_3040 != null
@@ -2803,9 +2773,9 @@
       html += '<td class="num">' + (hForty !== null ? hForty : "—") + "</td>";
     }
     if (shown.length >= 2) {
-      var fvNewer = shown[0].values;
-      var fvOlder = shown[1].values;
-      var newerForty =
+      const fvNewer = shown[0].values;
+      const fvOlder = shown[1].values;
+      const newerForty =
         fvNewer.sprint_020 != null &&
         fvNewer.sprint_2030 != null &&
         fvNewer.sprint_3040 != null
@@ -2815,7 +2785,7 @@
               fvNewer.sprint_3040
             ).toFixed(2)
           : null;
-      var olderForty =
+      const olderForty =
         fvOlder.sprint_020 != null &&
         fvOlder.sprint_2030 != null &&
         fvOlder.sprint_3040 != null
@@ -2826,18 +2796,18 @@
             ).toFixed(2)
           : null;
       if (newerForty !== null && olderForty !== null) {
-        var fd = newerForty - olderForty;
-        var fpct =
+        const fd = newerForty - olderForty;
+        const fpct =
           olderForty !== 0 ? Math.round((fd / Math.abs(olderForty)) * 100) : 0;
-        var fImproved = fd < 0;
-        var fDeclined = fd > 0;
-        var fCls = fImproved
+        const fImproved = fd < 0;
+        const fDeclined = fd > 0;
+        const fCls = fImproved
           ? "delta-up"
           : fDeclined
             ? "delta-down"
             : "delta-flat";
-        var fArrow = fImproved ? "▲" : fDeclined ? "▼" : "—";
-        var fSign = fd > 0 ? "+" : "";
+        const fArrow = fImproved ? "▲" : fDeclined ? "▼" : "—";
+        const fSign = fd > 0 ? "+" : "";
         html +=
           '<td class="num ' +
           fCls +
@@ -2854,8 +2824,8 @@
         html += '<td class="na">—</td>';
       }
     } else if (shown.length === 1) {
-      var fvLast = shown[0].values;
-      var lastForty =
+      const fvLast = shown[0].values;
+      const lastForty =
         fvLast.sprint_020 != null &&
         fvLast.sprint_2030 != null &&
         fvLast.sprint_3040 != null
@@ -2866,18 +2836,18 @@
             ).toFixed(2)
           : null;
       if (curForty !== null && lastForty !== null) {
-        var fd1 = curForty - lastForty;
-        var fpct1 =
+        const fd1 = curForty - lastForty;
+        const fpct1 =
           lastForty !== 0 ? Math.round((fd1 / Math.abs(lastForty)) * 100) : 0;
-        var fImproved1 = fd1 < 0;
-        var fDeclined1 = fd1 > 0;
-        var fCls1 = fImproved1
+        const fImproved1 = fd1 < 0;
+        const fDeclined1 = fd1 > 0;
+        const fCls1 = fImproved1
           ? "delta-up"
           : fDeclined1
             ? "delta-down"
             : "delta-flat";
-        var fArrow1 = fImproved1 ? "▲" : fDeclined1 ? "▼" : "—";
-        var fSign1 = fd1 > 0 ? "+" : "";
+        const fArrow1 = fImproved1 ? "▲" : fDeclined1 ? "▼" : "—";
+        const fSign1 = fd1 > 0 ? "+" : "";
         html +=
           '<td class="num ' +
           fCls1 +
@@ -2901,10 +2871,10 @@
     // Per-test action buttons
     html += '<div class="history-actions">';
     html += '<span class="history-actions-label">Manage tests:</span>';
-    for (var di = 0; di < shown.length; di++) {
-      var _eId = escJs(a.id);
-      var _eDate = escJs(shown[di].date);
-      var _eLabel = escJs(shown[di].label);
+    for (let di = 0; di < shown.length; di++) {
+      const _eId = escJs(a.id);
+      const _eDate = escJs(shown[di].date);
+      const _eLabel = escJs(shown[di].label);
       html += '<span class="history-action-group">';
       html +=
         '<button class="btn btn-xs btn-muted" onclick="openEditPanel(\'' +
@@ -2942,7 +2912,7 @@
     reRenderAll();
     // Refresh edit panel if open for this athlete
     if (editingAthleteId === athleteId) {
-      var a = getAthleteById(athleteId);
+      const a = getAthleteById(athleteId);
       if (a) buildEditFields(a);
     }
     showToast("Deleted test entry: " + label, "info");
@@ -2950,8 +2920,8 @@
 
   /* --- Save ALL athletes' current data as a test date --- */
   window.saveAllAsTestDate = function () {
-    var D = window.CLUB;
-    var tested = D.athletes.filter(function (a) {
+    const D = window.CLUB;
+    const tested = D.athletes.filter(function (a) {
       return Object.keys(a.scorecard).length > 0;
     });
     if (tested.length === 0) {
@@ -2959,12 +2929,12 @@
       return;
     }
 
-    var dateStr = prompt(
+    const dateStr = prompt(
       "Enter test date (YYYY-MM-DD):",
       new Date().toISOString().slice(0, 10),
     );
     if (!dateStr) return;
-    var label = prompt(
+    let label = prompt(
       'Enter a label for this test (e.g. "Pre-Season 2026", "Winter Testing"):',
       "",
     );
@@ -2972,13 +2942,13 @@
     if (!label.trim()) label = dateStr;
     label = label.trim();
 
-    var count = 0;
-    for (var i = 0; i < tested.length; i++) {
-      var a = tested[i];
-      var vals = currentTestValues(a);
+    let count = 0;
+    for (let i = 0; i < tested.length; i++) {
+      const a = tested[i];
+      const vals = currentTestValues(a);
       // Only save if at least one non-null metric
-      var hasData = false;
-      for (var k in vals) {
+      let hasData = false;
+      for (const k in vals) {
         if (vals[k] !== null && vals[k] !== undefined) {
           hasData = true;
           break;
@@ -2994,7 +2964,7 @@
       "success",
     );
     // Refresh profile if one is selected
-    var id = document.getElementById("athleteSelect").value;
+    const id = document.getElementById("athleteSelect").value;
     if (id) renderProfile();
   };
 
@@ -3011,18 +2981,18 @@
 
   /* --- Collect testMap from history --- */
   function buildTestMap() {
-    var h = getTestHistory();
-    var athleteIds = Object.keys(h);
-    var notes = getTestNotes();
-    var testMap = {};
-    for (var i = 0; i < athleteIds.length; i++) {
-      var aid = athleteIds[i];
-      var entries = h[aid];
-      for (var j = 0; j < entries.length; j++) {
-        var e = entries[j];
-        var key = e.label + "|" + e.date;
+    const h = getTestHistory();
+    const athleteIds = Object.keys(h);
+    const notes = getTestNotes();
+    const testMap = {};
+    for (let i = 0; i < athleteIds.length; i++) {
+      const aid = athleteIds[i];
+      const entries = h[aid];
+      for (let j = 0; j < entries.length; j++) {
+        const e = entries[j];
+        const key = e.label + "|" + e.date;
         if (!testMap[key]) {
-          var nk = noteKey(e.date, e.label);
+          const nk = noteKey(e.date, e.label);
           testMap[key] = {
             label: e.label,
             date: e.date,
@@ -3033,12 +3003,12 @@
           };
         }
         testMap[key].count++;
-        var found = getAthleteById(aid);
-        var aName = found ? found.name : aid;
+        const found = getAthleteById(aid);
+        const aName = found ? found.name : aid;
         testMap[key].athletes.push(aName);
-        var mCount = 0;
-        for (var mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
-          var v = e.values[TEST_METRIC_KEYS[mk].jsonKey];
+        let mCount = 0;
+        for (let mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
+          const v = e.values[TEST_METRIC_KEYS[mk].jsonKey];
           if (v !== null && v !== undefined) mCount++;
         }
         testMap[key].athleteDetails.push({
@@ -3054,41 +3024,41 @@
 
   /* --- View all saved test dates --- */
   window.viewSavedTests = function () {
-    var result = buildTestMap();
-    var testMap = result.testMap;
-    var athleteIds = result.athleteIds;
-    var D = window.CLUB;
+    const result = buildTestMap();
+    const testMap = result.testMap;
+    const athleteIds = result.athleteIds;
+    const D = window.CLUB;
 
-    var tests = Object.values(testMap).sort(function (a, b) {
+    const tests = Object.values(testMap).sort(function (a, b) {
       return a.date > b.date ? -1 : a.date < b.date ? 1 : 0;
     });
 
-    var totalEntries = 0;
-    for (var t = 0; t < tests.length; t++) totalEntries += tests[t].count;
+    let totalEntries = 0;
+    for (let t = 0; t < tests.length; t++) totalEntries += tests[t].count;
 
     // Build test cards
-    var cards = "";
-    for (var ci = 0; ci < tests.length; ci++) {
-      var test = tests[ci];
-      var safeDate = esc(test.date);
-      var rawLabelLower = test.label.toLowerCase();
-      var escapedDate = escJs(test.date);
-      var escapedLabel = escJs(test.label);
+    let cards = "";
+    for (let ci = 0; ci < tests.length; ci++) {
+      const test = tests[ci];
+      const safeDate = esc(test.date);
+      const rawLabelLower = test.label.toLowerCase();
+      const escapedDate = escJs(test.date);
+      const escapedLabel = escJs(test.label);
 
       // Data completeness
-      var totalMetricSlots =
+      const totalMetricSlots =
         test.athleteDetails.length * TEST_METRIC_KEYS.length;
-      var filledMetricSlots = 0;
-      for (var fmi = 0; fmi < test.athleteDetails.length; fmi++) {
+      let filledMetricSlots = 0;
+      for (let fmi = 0; fmi < test.athleteDetails.length; fmi++) {
         filledMetricSlots += test.athleteDetails[fmi].metrics;
       }
-      var completePct =
+      const completePct =
         totalMetricSlots > 0
           ? Math.round((filledMetricSlots / totalMetricSlots) * 100)
           : 0;
 
       // Is this the most recent test?
-      var isLatest = ci === 0;
+      const isLatest = ci === 0;
 
       cards +=
         '<div class="th-card' +
@@ -3217,17 +3187,17 @@
       cards +=
         '<div class="th-detail" id="thDetail' + ci + '" style="display:none">';
       cards += '<table class="th-detail-table"><thead><tr><th>Athlete</th>';
-      for (var hk = 0; hk < TEST_METRIC_KEYS.length; hk++) {
+      for (let hk = 0; hk < TEST_METRIC_KEYS.length; hk++) {
         cards += "<th>" + TEST_METRIC_KEYS[hk].label + "</th>";
       }
       cards += "</tr></thead><tbody>";
-      for (var ai = 0; ai < test.athleteDetails.length; ai++) {
-        var ad = test.athleteDetails[ai];
+      for (let ai = 0; ai < test.athleteDetails.length; ai++) {
+        const ad = test.athleteDetails[ai];
         cards += "<tr><td><strong>" + esc(ad.name) + "</strong></td>";
-        for (var vk = 0; vk < TEST_METRIC_KEYS.length; vk++) {
-          var jsonKey = TEST_METRIC_KEYS[vk].jsonKey;
-          var val = ad.values[jsonKey];
-          var displayVal = val !== null && val !== undefined ? val : "—";
+        for (let vk = 0; vk < TEST_METRIC_KEYS.length; vk++) {
+          const jsonKey = TEST_METRIC_KEYS[vk].jsonKey;
+          const val = ad.values[jsonKey];
+          const displayVal = val !== null && val !== undefined ? val : "—";
           cards +=
             '<td class="num ie-cell" data-aid="' +
             esc(ad.id) +
@@ -3243,7 +3213,7 @@
         }
         cards += "</tr>";
       }
-      var testStats = computeTestAverages(test.athleteDetails);
+      const testStats = computeTestAverages(test.athleteDetails);
       cards +=
         "</tbody><tfoot>" +
         buildAvgTableRows(testStats, true) +
@@ -3253,12 +3223,12 @@
       cards += "</div>";
     }
 
-    var emptyState =
+    const emptyState =
       athleteIds.length === 0
         ? '<div class="th-empty"><div class="th-empty-icon">📊</div><h3>No Test History Yet</h3><p>Save your first test baseline to start tracking athlete progress over time.</p><button class="btn btn-primary" onclick="document.querySelector(\'.test-history-modal\').remove(); saveAllAsTestDate()">📅 Save Current Team Data</button></div>'
         : "";
 
-    var bodyHTML =
+    const bodyHTML =
       '<div class="th-modal-body">' +
       '<div class="th-modal-header">' +
       "<h2>📋 Test History Manager</h2>" +
@@ -3308,11 +3278,10 @@
       "</div>";
 
     // Remove existing modal if open
-    var existing = document.querySelector(".test-history-modal");
-    if (existing) existing.remove();
+    closeTestHistoryModal();
 
     // Show as a modal overlay
-    var overlay = document.createElement("div");
+    const overlay = document.createElement("div");
     overlay.className = "modal-overlay test-history-modal";
     overlay.innerHTML =
       '<div class="modal-content th-modal-content">' +
@@ -3330,11 +3299,11 @@
 
   /* --- View toggle (List / Calendar) --- */
   window.switchThView = function (view) {
-    var listEl = document.getElementById("thListView");
-    var calEl = document.getElementById("thCalendarView");
+    const listEl = document.getElementById("thListView");
+    const calEl = document.getElementById("thCalendarView");
     if (!listEl || !calEl) return;
-    var btns = document.querySelectorAll(".th-view-btn");
-    for (var i = 0; i < btns.length; i++) {
+    const btns = document.querySelectorAll(".th-view-btn");
+    for (let i = 0; i < btns.length; i++) {
       btns[i].classList.toggle(
         "active",
         btns[i].getAttribute("data-view") === view,
@@ -3346,28 +3315,28 @@
 
   /* --- Calendar view builder --- */
   function buildTestCalendar(tests) {
-    var wrap = document.getElementById("thCalendarView");
+    const wrap = document.getElementById("thCalendarView");
     if (!wrap) return;
 
     // Group tests by YYYY-MM
-    var byMonth = {};
-    var allDates = [];
-    for (var i = 0; i < tests.length; i++) {
-      var d = tests[i].date;
-      var ym = d.substring(0, 7); // "YYYY-MM"
+    const byMonth = {};
+    const allDates = [];
+    for (let i = 0; i < tests.length; i++) {
+      const d = tests[i].date;
+      const ym = d.substring(0, 7); // "YYYY-MM"
       if (!byMonth[ym]) byMonth[ym] = {};
-      var day = parseInt(d.substring(8, 10), 10);
+      const day = parseInt(d.substring(8, 10), 10);
       if (!byMonth[ym][day]) byMonth[ym][day] = [];
       byMonth[ym][day].push(tests[i]);
       if (allDates.indexOf(d) === -1) allDates.push(d);
     }
 
     // Sort months chronologically (newest first)
-    var months = Object.keys(byMonth).sort(function (a, b) {
+    const months = Object.keys(byMonth).sort(function (a, b) {
       return a > b ? -1 : a < b ? 1 : 0;
     });
 
-    var MONTH_NAMES = [
+    const MONTH_NAMES = [
       "January",
       "February",
       "March",
@@ -3381,22 +3350,22 @@
       "November",
       "December",
     ];
-    var DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-    var html = "";
-    for (var mi = 0; mi < months.length; mi++) {
-      var ym = months[mi];
-      var parts = ym.split("-");
-      var year = parseInt(parts[0], 10);
-      var month = parseInt(parts[1], 10) - 1; // 0-indexed
-      var monthName = MONTH_NAMES[month];
-      var daysInMonth = new Date(year, month + 1, 0).getDate();
-      var firstDow = new Date(year, month, 1).getDay(); // 0=Sun
+    let html = "";
+    for (let mi = 0; mi < months.length; mi++) {
+      const ym = months[mi];
+      const parts = ym.split("-");
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // 0-indexed
+      const monthName = MONTH_NAMES[month];
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const firstDow = new Date(year, month, 1).getDay(); // 0=Sun
 
       // Count total sessions this month
-      var monthTests = byMonth[ym];
-      var sessionCount = 0;
-      for (var dk in monthTests) sessionCount += monthTests[dk].length;
+      const monthTests = byMonth[ym];
+      let sessionCount = 0;
+      for (const dk in monthTests) sessionCount += monthTests[dk].length;
 
       html += '<div class="cal-month">';
       html +=
@@ -3411,23 +3380,23 @@
         "</span></div>";
       html += '<div class="cal-grid">';
       // Day-of-week headers
-      for (var dh = 0; dh < 7; dh++) {
+      for (let dh = 0; dh < 7; dh++) {
         html += '<div class="cal-dow">' + DAY_NAMES[dh] + "</div>";
       }
       // Leading blanks
-      for (var lb = 0; lb < firstDow; lb++) {
+      for (let lb = 0; lb < firstDow; lb++) {
         html += '<div class="cal-day cal-blank"></div>';
       }
       // Days
-      for (var day = 1; day <= daysInMonth; day++) {
-        var dayTests = monthTests[day] || [];
-        var hasTests = dayTests.length > 0;
-        var dayClass = "cal-day" + (hasTests ? " cal-has-test" : "");
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dayTests = monthTests[day] || [];
+        const hasTests = dayTests.length > 0;
+        const dayClass = "cal-day" + (hasTests ? " cal-has-test" : "");
         if (hasTests) {
           html += '<div class="' + dayClass + '" onclick="calDayClick(this)">';
           html += '<span class="cal-day-num">' + day + "</span>";
           html += '<div class="cal-dots">';
-          for (var dt = 0; dt < dayTests.length; dt++) {
+          for (let dt = 0; dt < dayTests.length; dt++) {
             html +=
               '<span class="cal-dot" title="' +
               esc(dayTests[dt].label) +
@@ -3438,10 +3407,10 @@
           html += "</div>";
           // Hidden detail panel
           html += '<div class="cal-day-detail" style="display:none">';
-          for (var dt2 = 0; dt2 < dayTests.length; dt2++) {
-            var t = dayTests[dt2];
-            var eDate = escJs(t.date);
-            var eLabel = escJs(t.label);
+          for (let dt2 = 0; dt2 < dayTests.length; dt2++) {
+            const t = dayTests[dt2];
+            const eDate = escJs(t.date);
+            const eLabel = escJs(t.label);
             html += '<div class="cal-test-item">';
             html += '<span class="cal-test-label">' + esc(t.label) + "</span>";
             html +=
@@ -3489,13 +3458,13 @@
     html += '<div class="cal-timeline">';
     html += '<div class="cal-timeline-title">📅 Chronological Timeline</div>';
     // Sort tests oldest to newest for timeline
-    var sorted = tests.slice().sort(function (a, b) {
+    const sorted = tests.slice().sort(function (a, b) {
       return a.date > b.date ? 1 : a.date < b.date ? -1 : 0;
     });
-    for (var ti = 0; ti < sorted.length; ti++) {
-      var st = sorted[ti];
-      var eDate2 = escJs(st.date);
-      var eLabel2 = escJs(st.label);
+    for (let ti = 0; ti < sorted.length; ti++) {
+      const st = sorted[ti];
+      const eDate2 = escJs(st.date);
+      const eLabel2 = escJs(st.label);
       html += '<div class="cal-tl-item">';
       html += '<div class="cal-tl-dot"></div>';
       html += '<div class="cal-tl-content">';
@@ -3529,11 +3498,11 @@
   }
 
   window.calDayClick = function (el) {
-    var detail = el.querySelector(".cal-day-detail");
+    const detail = el.querySelector(".cal-day-detail");
     if (!detail) return;
     // Close any other open details
-    var allOpen = document.querySelectorAll('.cal-day-detail[style*="block"]');
-    for (var i = 0; i < allOpen.length; i++) {
+    const allOpen = document.querySelectorAll('.cal-day-detail[style*="block"]');
+    for (let i = 0; i < allOpen.length; i++) {
       if (allOpen[i] !== detail) allOpen[i].style.display = "none";
     }
     detail.style.display = detail.style.display === "none" ? "block" : "none";
@@ -3543,10 +3512,10 @@
   window.inlineEditCell = function (td) {
     // Don't re-enter if already editing
     if (td.querySelector("input")) return;
-    var current = td.textContent.trim();
+    let current = td.textContent.trim();
     if (current === "—") current = "";
     td.classList.add("ie-editing");
-    var input = document.createElement("input");
+    const input = document.createElement("input");
     input.type = "number";
     input.step = "any";
     input.className = "ie-input";
@@ -3573,23 +3542,23 @@
       if (ev.key === "Tab") {
         ev.preventDefault();
         input.blur();
-        var cells = Array.from(
+        const cells = Array.from(
           td.closest("table").querySelectorAll(".ie-cell"),
         );
-        var idx = cells.indexOf(td);
-        var next = ev.shiftKey ? cells[idx - 1] : cells[idx + 1];
+        const idx = cells.indexOf(td);
+        const next = ev.shiftKey ? cells[idx - 1] : cells[idx + 1];
         if (next) next.click();
       }
     });
   };
 
   window.commitInlineEdit = function (td, input) {
-    var newVal = input.value.trim();
-    var original = input.getAttribute("data-original");
-    var aid = td.getAttribute("data-aid");
-    var date = td.getAttribute("data-date");
-    var label = td.getAttribute("data-label");
-    var key = td.getAttribute("data-key");
+    const newVal = input.value.trim();
+    const original = input.getAttribute("data-original");
+    const aid = td.getAttribute("data-aid");
+    const date = td.getAttribute("data-date");
+    const label = td.getAttribute("data-label");
+    const key = td.getAttribute("data-key");
     td.classList.remove("ie-editing");
 
     // No change
@@ -3599,15 +3568,15 @@
     }
 
     // Update localStorage
-    var h = getTestHistory();
+    const h = getTestHistory();
     if (!h[aid]) h[aid] = [];
-    var found = false;
-    for (var i = 0; i < h[aid].length; i++) {
+    let found = false;
+    for (let i = 0; i < h[aid].length; i++) {
       if (h[aid][i].date === date && h[aid][i].label === label) {
         if (newVal === "") {
           h[aid][i].values[key] = null;
         } else {
-          var parsed = parseFloat(newVal);
+          const parsed = parseFloat(newVal);
           if (isNaN(parsed)) {
             td.textContent = original || "—";
             return;
@@ -3619,12 +3588,12 @@
       }
     }
     if (!found) {
-      var parsedNew = newVal === "" ? null : parseFloat(newVal);
+      const parsedNew = newVal === "" ? null : parseFloat(newVal);
       if (parsedNew !== null && isNaN(parsedNew)) {
         td.textContent = original || "—";
         return;
       }
-      var newEntry = { date: date, label: label, values: {} };
+      const newEntry = { date: date, label: label, values: {} };
       newEntry.values[key] = parsedNew;
       h[aid].push(newEntry);
     }
@@ -3640,17 +3609,17 @@
     }, 800);
 
     // Update progress column if in test entry worksheet
-    var row = td.closest("tr");
+    const row = td.closest("tr");
     if (row) {
-      var progressCell = row.querySelector(".te-progress");
+      const progressCell = row.querySelector(".te-progress");
       if (progressCell) {
-        var cells = row.querySelectorAll(".ie-cell");
-        var filled = 0;
+        const cells = row.querySelectorAll(".ie-cell");
+        let filled = 0;
         cells.forEach(function (c) {
-          var t = c.textContent.trim();
+          const t = c.textContent.trim();
           if (t && t !== "—") filled++;
         });
-        var pct = Math.round((filled / TEST_METRIC_KEYS.length) * 100);
+        const pct = Math.round((filled / TEST_METRIC_KEYS.length) * 100);
         progressCell.textContent = pct + "%";
         progressCell.className =
           "te-progress " +
@@ -3659,29 +3628,29 @@
     }
 
     // Refresh profile if visible
-    var selId = document.getElementById("athleteSelect").value;
+    const selId = document.getElementById("athleteSelect").value;
     if (selId) renderProfile();
   };
 
   window.toggleTestDetail = function (idx) {
-    var el = document.getElementById("thDetail" + idx);
+    const el = document.getElementById("thDetail" + idx);
     if (!el) return;
     el.style.display = el.style.display === "none" ? "block" : "none";
   };
 
   window.renameTestDate = function (date, oldLabel) {
-    var newLabel = prompt(
+    let newLabel = prompt(
       'Rename test "' + oldLabel + '" (' + date + "):",
       oldLabel,
     );
     if (newLabel === null || !newLabel.trim() || newLabel.trim() === oldLabel)
       return;
     newLabel = newLabel.trim();
-    var h = getTestHistory();
-    var ids = Object.keys(h);
-    var renamed = 0;
-    for (var i = 0; i < ids.length; i++) {
-      for (var j = 0; j < h[ids[i]].length; j++) {
+    const h = getTestHistory();
+    const ids = Object.keys(h);
+    let renamed = 0;
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = 0; j < h[ids[i]].length; j++) {
         if (h[ids[i]][j].date === date && h[ids[i]][j].label === oldLabel) {
           h[ids[i]][j].label = newLabel;
           renamed++;
@@ -3690,9 +3659,9 @@
     }
     setTestHistory(h);
     // Migrate test notes to new label
-    var notes = getTestNotes();
-    var oldNk = noteKey(date, oldLabel);
-    var newNk = noteKey(date, newLabel);
+    const notes = getTestNotes();
+    const oldNk = noteKey(date, oldLabel);
+    const newNk = noteKey(date, newLabel);
     if (notes[oldNk]) {
       notes[newNk] = notes[oldNk];
       delete notes[oldNk];
@@ -3703,25 +3672,23 @@
       "success",
     );
     viewSavedTests(); // refresh modal
-    var pid = document.getElementById("athleteSelect").value;
-    if (pid) renderProfile();
+    refreshProfileIfVisible();
   };
 
   window.exportSingleTest = function (date, label) {
-    var h = getTestHistory();
-    var D = window.CLUB;
-    var exportObj = {
+    const h = getTestHistory();
+    const exportObj = {
       source: "BC Personal Fitness Club — Test Export",
       exportDate: new Date().toISOString(),
       testDate: date,
       testLabel: label,
       entries: [],
     };
-    var ids = Object.keys(h);
-    for (var i = 0; i < ids.length; i++) {
-      for (var j = 0; j < h[ids[i]].length; j++) {
+    const ids = Object.keys(h);
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = 0; j < h[ids[i]].length; j++) {
         if (h[ids[i]][j].date === date && h[ids[i]][j].label === label) {
-          var found = getAthleteById(ids[i]);
+          const found = getAthleteById(ids[i]);
           exportObj.entries.push({
             athleteId: ids[i],
             athleteName: found ? found.name : ids[i],
@@ -3732,9 +3699,9 @@
         }
       }
     }
-    var json = JSON.stringify(exportObj, null, 2);
-    var blob = new Blob([json], { type: "application/json" });
-    var link = document.createElement("a");
+    const json = JSON.stringify(exportObj, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download =
       "test_" + label.replace(/\s+/g, "_").toLowerCase() + "_" + date + ".json";
@@ -3749,27 +3716,26 @@
   };
 
   window.exportTestHistoryOnly = function () {
-    var h = getTestHistory();
+    const h = getTestHistory();
     if (Object.keys(h).length === 0) {
       showToast("No test history to export.", "warn");
       return;
     }
-    var D = window.CLUB;
     // Enrich with athlete names for readability
-    var exportObj = {
+    const exportObj = {
       source: "BC Personal Fitness Club — Full Test History",
       exportDate: new Date().toISOString(),
       test_history: h,
       athlete_names: {},
     };
-    var ids = Object.keys(h);
-    for (var i = 0; i < ids.length; i++) {
-      var found = getAthleteById(ids[i]);
+    const ids = Object.keys(h);
+    for (let i = 0; i < ids.length; i++) {
+      const found = getAthleteById(ids[i]);
       if (found) exportObj.athlete_names[ids[i]] = found.name;
     }
-    var json = JSON.stringify(exportObj, null, 2);
-    var blob = new Blob([json], { type: "application/json" });
-    var link = document.createElement("a");
+    const json = JSON.stringify(exportObj, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download =
       "test_history_" + new Date().toISOString().slice(0, 10) + ".json";
@@ -3784,13 +3750,13 @@
   };
 
   window.importTestHistoryOnly = function (inputEl) {
-    var file = inputEl.files && inputEl.files[0];
+    const file = inputEl.files && inputEl.files[0];
     if (!file) return;
-    var reader = new FileReader();
+    const reader = new FileReader();
     reader.onload = function (e) {
       try {
-        var data = JSON.parse(e.target.result);
-        var histData = null;
+        const data = JSON.parse(e.target.result);
+        let histData = null;
 
         // Support full export format
         if (data.test_history && typeof data.test_history === "object") {
@@ -3799,8 +3765,8 @@
         // Support single-test export format
         else if (data.entries && Array.isArray(data.entries)) {
           histData = {};
-          for (var i = 0; i < data.entries.length; i++) {
-            var en = data.entries[i];
+          for (let i = 0; i < data.entries.length; i++) {
+            const en = data.entries[i];
             if (!histData[en.athleteId]) histData[en.athleteId] = [];
             histData[en.athleteId].push({
               date: en.date,
@@ -3816,8 +3782,8 @@
           return;
         }
 
-        var incoming = Object.keys(histData);
-        var mode = confirm(
+        const incoming = Object.keys(histData);
+        const mode = confirm(
           "Found test data for " +
             incoming.length +
             ' athlete(s) in "' +
@@ -3828,16 +3794,16 @@
 
         if (mode) {
           // Merge
-          var h = getTestHistory();
-          for (var ai = 0; ai < incoming.length; ai++) {
-            var aid = incoming[ai];
+          const h = getTestHistory();
+          for (let ai = 0; ai < incoming.length; ai++) {
+            const aid = incoming[ai];
             if (!h[aid]) h[aid] = [];
-            var newEntries = histData[aid];
-            for (var ni = 0; ni < newEntries.length; ni++) {
-              var ne = newEntries[ni];
+            const newEntries = histData[aid];
+            for (let ni = 0; ni < newEntries.length; ni++) {
+              const ne = newEntries[ni];
               // Skip duplicates
-              var exists = false;
-              for (var ei = 0; ei < h[aid].length; ei++) {
+              let exists = false;
+              for (let ei = 0; ei < h[aid].length; ei++) {
                 if (
                   h[aid][ei].date === ne.date &&
                   h[aid][ei].label === ne.label
@@ -3859,8 +3825,7 @@
 
         // Refresh
         viewSavedTests();
-        var pid = document.getElementById("athleteSelect").value;
-        if (pid) renderProfile();
+        refreshProfileIfVisible();
       } catch (err) {
         console.error("Import test history error:", err);
         showToast("Import failed: " + err.message, "error");
@@ -3873,12 +3838,11 @@
   /* --- Open a blank test entry worksheet for all athletes --- */
   window.openNewTestEntry = function (prefillDate, prefillLabel) {
     // Close test history modal if open
-    var existing = document.querySelector(".test-history-modal");
-    if (existing) existing.remove();
+    closeTestHistoryModal();
 
-    var today = new Date().toISOString().slice(0, 10);
-    var dateStr = prefillDate || null;
-    var label = prefillLabel || null;
+    const today = new Date().toISOString().slice(0, 10);
+    let dateStr = prefillDate || null;
+    let label = prefillLabel || null;
 
     if (!dateStr) {
       dateStr = prompt("Test date (YYYY-MM-DD):", today);
@@ -3891,17 +3855,17 @@
       label = label.trim();
     }
 
-    var D = window.CLUB;
-    var athletes = D.athletes.slice().sort(function (a, b) {
+    const D = window.CLUB;
+    const athletes = D.athletes.slice().sort(function (a, b) {
       return a.name.localeCompare(b.name);
     });
-    var h = getTestHistory();
+    const h = getTestHistory();
 
     // Ensure every athlete has an entry for this date+label (even if empty)
-    for (var i = 0; i < athletes.length; i++) {
-      var aid = athletes[i].id;
+    for (let i = 0; i < athletes.length; i++) {
+      const aid = athletes[i].id;
       if (!h[aid]) h[aid] = [];
-      var exists = h[aid].some(function (e) {
+      const exists = h[aid].some(function (e) {
         return e.date === dateStr && e.label === label;
       });
       if (!exists) {
@@ -3911,29 +3875,29 @@
     setTestHistory(h);
 
     // Build the worksheet table
-    var safeDate = esc(dateStr);
-    var safeLabel = esc(label);
-    var rows = "";
-    var filledCount = 0;
-    for (var ai = 0; ai < athletes.length; ai++) {
-      var a = athletes[ai];
-      var entry = null;
+    const safeDate = esc(dateStr);
+    const safeLabel = esc(label);
+    let rows = "";
+    let filledCount = 0;
+    for (let ai = 0; ai < athletes.length; ai++) {
+      const a = athletes[ai];
+      let entry = null;
       if (h[a.id]) {
-        for (var ei = 0; ei < h[a.id].length; ei++) {
+        for (let ei = 0; ei < h[a.id].length; ei++) {
           if (h[a.id][ei].date === dateStr && h[a.id][ei].label === label) {
             entry = h[a.id][ei];
             break;
           }
         }
       }
-      var vals = entry ? entry.values : {};
-      var metricCount = 0;
+      const vals = entry ? entry.values : {};
+      let metricCount = 0;
       rows += "<tr>";
       rows += '<td class="te-athlete-name">' + esc(a.name) + "</td>";
-      for (var mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
-        var key = TEST_METRIC_KEYS[mk].jsonKey;
-        var val = vals[key];
-        var display = val !== null && val !== undefined ? val : "";
+      for (let mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
+        const key = TEST_METRIC_KEYS[mk].jsonKey;
+        const val = vals[key];
+        const display = val !== null && val !== undefined ? val : "";
         if (display !== "") metricCount++;
         rows +=
           '<td class="ie-cell" data-aid="' +
@@ -3951,14 +3915,14 @@
           "</td>";
       }
       if (metricCount > 0) filledCount++;
-      var pct = Math.round((metricCount / TEST_METRIC_KEYS.length) * 100);
-      var pctClass =
+      const pct = Math.round((metricCount / TEST_METRIC_KEYS.length) * 100);
+      const pctClass =
         pct === 100 ? "te-complete" : pct > 0 ? "te-partial" : "te-none";
       rows += '<td class="te-progress ' + pctClass + '">' + pct + "%</td>";
       rows += "</tr>";
     }
 
-    var bodyHTML =
+    let bodyHTML =
       '<div class="th-modal-body">' +
       '<div class="th-modal-header">' +
       "<h2>📝 " +
@@ -3976,7 +3940,7 @@
       '<div class="te-table-wrap">' +
       '<table class="th-detail-table te-table">' +
       '<thead><tr><th class="te-athlete-col">Athlete</th>';
-    for (var hk = 0; hk < TEST_METRIC_KEYS.length; hk++) {
+    for (let hk = 0; hk < TEST_METRIC_KEYS.length; hk++) {
       bodyHTML +=
         "<th>" +
         TEST_METRIC_KEYS[hk].label +
@@ -3987,11 +3951,11 @@
     bodyHTML += "<th>Done</th></tr></thead>";
     bodyHTML += "<tbody>" + rows + "</tbody>";
     // Compute and append team averages footer
-    var wsStats = computeTestAverages(
+    const wsStats = computeTestAverages(
       athletes.map(function (a) {
-        var entry = null;
+        let entry = null;
         if (h[a.id]) {
-          for (var ei2 = 0; ei2 < h[a.id].length; ei2++) {
+          for (let ei2 = 0; ei2 < h[a.id].length; ei2++) {
             if (h[a.id][ei2].date === dateStr && h[a.id][ei2].label === label) {
               entry = h[a.id][ei2];
               break;
@@ -4025,7 +3989,7 @@
       '<button class="btn btn-sm btn-primary" onclick="document.querySelector(\'.te-modal\').remove(); viewSavedTests()">✅ Done</button>';
     bodyHTML += "</div></div></div>";
 
-    var overlay = document.createElement("div");
+    const overlay = document.createElement("div");
     overlay.className = "modal-overlay te-modal";
     overlay.innerHTML =
       '<div class="modal-content th-modal-content te-content">' +
@@ -4050,26 +4014,26 @@
       )
     )
       return;
-    var h = getTestHistory();
-    var ids = Object.keys(h);
-    var edits = safeLSGet("lc_edits", []);
-    var count = 0;
+    const h = getTestHistory();
+    const ids = Object.keys(h);
+    const edits = safeLSGet("lc_edits", []);
+    let count = 0;
 
-    for (var i = 0; i < ids.length; i++) {
-      var aid = ids[i];
-      for (var j = 0; j < h[aid].length; j++) {
+    for (let i = 0; i < ids.length; i++) {
+      const aid = ids[i];
+      for (let j = 0; j < h[aid].length; j++) {
         if (h[aid][j].date === date && h[aid][j].label === label) {
-          var vals = h[aid][j].values;
-          var changes = {};
-          var hasData = false;
-          for (var k in vals) {
+          const vals = h[aid][j].values;
+          const changes = {};
+          let hasData = false;
+          for (const k in vals) {
             if (vals[k] !== null && vals[k] !== undefined) {
               changes[k] = vals[k];
               hasData = true;
             }
           }
           if (hasData) {
-            var existing = edits.find(function (e) {
+            const existing = edits.find(function (e) {
               return e.id === aid;
             });
             if (existing) {
@@ -4092,11 +4056,10 @@
     safeLSSet("lc_edits", JSON.stringify(edits));
     rebuildFromStorage();
     markTabsDirty();
-    var activeTab = document.querySelector(".tab.active");
+    const activeTab = document.querySelector(".tab.active");
     if (activeTab) renderIfDirty(activeTab.dataset.tab);
     updateDataStatus();
-    var pid = document.getElementById("athleteSelect").value;
-    if (pid) renderProfile();
+    refreshProfileIfVisible();
     showToast(
       'Applied "' +
         label +
@@ -4114,11 +4077,11 @@
       )
     )
       return;
-    var h = getTestHistory();
-    var count = 0;
-    var ids = Object.keys(h);
-    for (var i = 0; i < ids.length; i++) {
-      var before = h[ids[i]].length;
+    const h = getTestHistory();
+    let count = 0;
+    const ids = Object.keys(h);
+    for (let i = 0; i < ids.length; i++) {
+      const before = h[ids[i]].length;
       h[ids[i]] = h[ids[i]].filter(function (e) {
         return !(e.date === date && e.label === label);
       });
@@ -4128,17 +4091,15 @@
     setTestHistory(h);
     showToast("Deleted " + count + ' entries for "' + label + '"', "info");
     // Close and re-open to refresh
-    var existing = document.querySelector(".test-history-modal");
-    if (existing) existing.remove();
+    closeTestHistoryModal();
     viewSavedTests();
     // Refresh profile if open
-    var pid = document.getElementById("athleteSelect").value;
-    if (pid) renderProfile();
+    refreshProfileIfVisible();
   };
 
   /* --- Change the date of a test session --- */
   window.changeTestDate = function (oldDate, label) {
-    var newDate = prompt(
+    let newDate = prompt(
       'Change date for "' + label + '" (currently ' + oldDate + "):",
       oldDate,
     );
@@ -4148,11 +4109,11 @@
       showToast("Invalid date format. Use YYYY-MM-DD.", "error");
       return;
     }
-    var h = getTestHistory();
-    var ids = Object.keys(h);
-    var changed = 0;
-    for (var i = 0; i < ids.length; i++) {
-      for (var j = 0; j < h[ids[i]].length; j++) {
+    const h = getTestHistory();
+    const ids = Object.keys(h);
+    let changed = 0;
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = 0; j < h[ids[i]].length; j++) {
         if (h[ids[i]][j].date === oldDate && h[ids[i]][j].label === label) {
           h[ids[i]][j].date = newDate;
           changed++;
@@ -4161,9 +4122,9 @@
     }
     setTestHistory(h);
     // Migrate notes
-    var notes = getTestNotes();
-    var oldNk = noteKey(oldDate, label);
-    var newNk = noteKey(newDate, label);
+    const notes = getTestNotes();
+    const oldNk = noteKey(oldDate, label);
+    const newNk = noteKey(newDate, label);
     if (notes[oldNk]) {
       notes[newNk] = notes[oldNk];
       delete notes[oldNk];
@@ -4174,33 +4135,31 @@
       "success",
     );
     rebuildFromStorage();
-    var existing = document.querySelector(".test-history-modal");
-    if (existing) existing.remove();
+    closeTestHistoryModal();
     viewSavedTests();
-    var pid = document.getElementById("athleteSelect").value;
-    if (pid) renderProfile();
+    refreshProfileIfVisible();
   };
 
   /* --- Duplicate a test session --- */
   window.duplicateTest = function (date, label) {
-    var newDate = prompt("Date for the duplicate (YYYY-MM-DD):", date);
+    let newDate = prompt("Date for the duplicate (YYYY-MM-DD):", date);
     if (!newDate || !newDate.trim()) return;
     newDate = newDate.trim();
-    var newLabel = prompt("Label for the duplicate:", label + " (copy)");
+    let newLabel = prompt("Label for the duplicate:", label + " (copy)");
     if (!newLabel || !newLabel.trim()) return;
     newLabel = newLabel.trim();
     if (newDate === date && newLabel === label) {
       showToast("Duplicate must have a different date or label.", "warn");
       return;
     }
-    var h = getTestHistory();
-    var ids = Object.keys(h);
-    var duped = 0;
-    for (var i = 0; i < ids.length; i++) {
-      for (var j = 0; j < h[ids[i]].length; j++) {
+    const h = getTestHistory();
+    const ids = Object.keys(h);
+    let duped = 0;
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = 0; j < h[ids[i]].length; j++) {
         if (h[ids[i]][j].date === date && h[ids[i]][j].label === label) {
           // Deep clone values
-          var clonedVals = JSON.parse(JSON.stringify(h[ids[i]][j].values));
+          const clonedVals = structuredClone(h[ids[i]][j].values);
           h[ids[i]].push({
             date: newDate,
             label: newLabel,
@@ -4222,17 +4181,16 @@
         " athletes)",
       "success",
     );
-    var existing = document.querySelector(".test-history-modal");
-    if (existing) existing.remove();
+    closeTestHistoryModal();
     viewSavedTests();
   };
 
   /* --- Edit notes on a test session --- */
   window.editTestNote = function (date, label) {
-    var notes = getTestNotes();
-    var nk = noteKey(date, label);
-    var current = notes[nk] || "";
-    var newNote = prompt('Notes for "' + label + '" (' + date + "):", current);
+    const notes = getTestNotes();
+    const nk = noteKey(date, label);
+    const current = notes[nk] || "";
+    const newNote = prompt('Notes for "' + label + '" (' + date + "):", current);
     if (newNote === null) return;
     if (newNote.trim()) {
       notes[nk] = newNote.trim();
@@ -4241,39 +4199,38 @@
     }
     setTestNotes(notes);
     showToast(newNote.trim() ? "Note saved." : "Note cleared.", "success");
-    var existing = document.querySelector(".test-history-modal");
-    if (existing) existing.remove();
+    closeTestHistoryModal();
     viewSavedTests();
   };
 
   /* --- Add athletes to an existing test session --- */
   window.addAthletesToTest = function (date, label) {
-    var D = window.CLUB;
-    var h = getTestHistory();
+    const D = window.CLUB;
+    const h = getTestHistory();
     // Find athletes NOT in this test
-    var inTest = {};
-    var ids = Object.keys(h);
-    for (var i = 0; i < ids.length; i++) {
-      for (var j = 0; j < h[ids[i]].length; j++) {
+    const inTest = {};
+    const ids = Object.keys(h);
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = 0; j < h[ids[i]].length; j++) {
         if (h[ids[i]][j].date === date && h[ids[i]][j].label === label) {
           inTest[ids[i]] = true;
           break;
         }
       }
     }
-    var missing = D.athletes.filter(function (a) {
+    const missing = D.athletes.filter(function (a) {
       return !inTest[a.id];
     });
     if (missing.length === 0) {
       showToast("All athletes are already in this test.", "info");
       return;
     }
-    var names = missing
+    const names = missing
       .map(function (a, idx) {
         return idx + 1 + ". " + a.name;
       })
       .join("\n");
-    var reply = prompt(
+    let reply = prompt(
       'Add athletes to "' +
         label +
         '" (' +
@@ -4285,14 +4242,14 @@
     );
     if (!reply || !reply.trim()) return;
     reply = reply.trim().toLowerCase();
-    var toAdd = [];
+    let toAdd = [];
     if (reply === "all") {
       toAdd = missing;
     } else {
-      var nums = reply.split(",").map(function (s) {
+      const nums = reply.split(",").map(function (s) {
         return parseInt(s.trim(), 10);
       });
-      for (var ni = 0; ni < nums.length; ni++) {
+      for (let ni = 0; ni < nums.length; ni++) {
         if (nums[ni] >= 1 && nums[ni] <= missing.length) {
           toAdd.push(missing[nums[ni] - 1]);
         }
@@ -4302,8 +4259,8 @@
       showToast("No valid athletes selected.", "warn");
       return;
     }
-    for (var ai = 0; ai < toAdd.length; ai++) {
-      var aid = toAdd[ai].id;
+    for (let ai = 0; ai < toAdd.length; ai++) {
+      const aid = toAdd[ai].id;
       if (!h[aid]) h[aid] = [];
       h[aid].push({ date: date, label: label, values: {} });
     }
@@ -4312,22 +4269,21 @@
       "Added " + toAdd.length + ' athlete(s) to "' + label + '"',
       "success",
     );
-    var existing = document.querySelector(".test-history-modal");
-    if (existing) existing.remove();
+    closeTestHistoryModal();
     viewSavedTests();
   };
 
   /* --- Remove an athlete from a test session --- */
   window.removeAthleteFromTest = function (date, label) {
-    var D = window.CLUB;
-    var h = getTestHistory();
+    const D = window.CLUB;
+    const h = getTestHistory();
     // Find athletes IN this test
-    var inTest = [];
-    var ids = Object.keys(h);
-    for (var i = 0; i < ids.length; i++) {
-      for (var j = 0; j < h[ids[i]].length; j++) {
+    const inTest = [];
+    const ids = Object.keys(h);
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = 0; j < h[ids[i]].length; j++) {
         if (h[ids[i]][j].date === date && h[ids[i]][j].label === label) {
-          var found = getAthleteById(ids[i]);
+          const found = getAthleteById(ids[i]);
           inTest.push({ id: ids[i], name: found ? found.name : ids[i] });
           break;
         }
@@ -4337,12 +4293,12 @@
       showToast("No athletes in this test.", "warn");
       return;
     }
-    var names = inTest
+    const names = inTest
       .map(function (a, idx) {
         return idx + 1 + ". " + a.name;
       })
       .join("\n");
-    var reply = prompt(
+    const reply = prompt(
       'Remove athletes from "' +
         label +
         '" (' +
@@ -4352,16 +4308,16 @@
         "\n\nEnter numbers separated by commas (e.g. 1,3):",
     );
     if (!reply || !reply.trim()) return;
-    var nums = reply
+    const nums = reply
       .trim()
       .split(",")
       .map(function (s) {
         return parseInt(s.trim(), 10);
       });
-    var removed = 0;
-    for (var ni = 0; ni < nums.length; ni++) {
+    let removed = 0;
+    for (let ni = 0; ni < nums.length; ni++) {
       if (nums[ni] >= 1 && nums[ni] <= inTest.length) {
-        var rid = inTest[nums[ni] - 1].id;
+        const rid = inTest[nums[ni] - 1].id;
         if (h[rid]) {
           h[rid] = h[rid].filter(function (e) {
             return !(e.date === date && e.label === label);
@@ -4380,17 +4336,15 @@
       "Removed " + removed + ' athlete(s) from "' + label + '"',
       "success",
     );
-    var existing = document.querySelector(".test-history-modal");
-    if (existing) existing.remove();
+    closeTestHistoryModal();
     viewSavedTests();
-    var pid = document.getElementById("athleteSelect").value;
-    if (pid) renderProfile();
+    refreshProfileIfVisible();
   };
 
   /* --- More actions dropdown toggle --- */
   window.toggleThMore = function (btn) {
-    var menu = btn.nextElementSibling;
-    var isOpen = menu.classList.contains("th-more-open");
+    const menu = btn.nextElementSibling;
+    const isOpen = menu.classList.contains("th-more-open");
     // Close all open menus
     document
       .querySelectorAll(".th-more-menu.th-more-open")
@@ -4413,11 +4367,11 @@
   /* --- Search / filter test cards --- */
   window.filterTestCards = function (query) {
     query = (query || "").toLowerCase();
-    var cards = document.querySelectorAll("#thListView .th-card");
-    for (var i = 0; i < cards.length; i++) {
-      var label = cards[i].getAttribute("data-label") || "";
-      var date = cards[i].getAttribute("data-date") || "";
-      var match =
+    const cards = document.querySelectorAll("#thListView .th-card");
+    for (let i = 0; i < cards.length; i++) {
+      const label = cards[i].getAttribute("data-label") || "";
+      const date = cards[i].getAttribute("data-date") || "";
+      const match =
         !query || label.indexOf(query) >= 0 || date.indexOf(query) >= 0;
       cards[i].style.display = match ? "" : "none";
     }
@@ -4425,20 +4379,20 @@
 
   /* --- Sort test cards --- */
   window.sortTestCards = function (mode) {
-    var list = document.getElementById("thListView");
+    const list = document.getElementById("thListView");
     if (!list) return;
-    var cards = Array.from(list.querySelectorAll(".th-card"));
+    const cards = Array.from(list.querySelectorAll(".th-card"));
     cards.sort(function (a, b) {
-      var aDate = a.getAttribute("data-date") || "";
-      var bDate = b.getAttribute("data-date") || "";
-      var aLabel = a.getAttribute("data-label") || "";
-      var bLabel = b.getAttribute("data-label") || "";
+      const aDate = a.getAttribute("data-date") || "";
+      const bDate = b.getAttribute("data-date") || "";
+      const aLabel = a.getAttribute("data-label") || "";
+      const bLabel = b.getAttribute("data-label") || "";
       // Count athletes from the stat text
-      var aCount = parseInt(
+      const aCount = parseInt(
         (a.querySelector(".th-stat strong") || {}).textContent || "0",
         10,
       );
-      var bCount = parseInt(
+      const bCount = parseInt(
         (b.querySelector(".th-stat strong") || {}).textContent || "0",
         10,
       );
@@ -4457,13 +4411,13 @@
           return 0;
       }
     });
-    for (var i = 0; i < cards.length; i++) list.appendChild(cards[i]);
+    for (let i = 0; i < cards.length; i++) list.appendChild(cards[i]);
   };
 
   /* --- Compare two test sessions side-by-side --- */
   window.compareTests = function () {
-    var result = buildTestMap();
-    var tests = Object.values(result.testMap).sort(function (a, b) {
+    const result = buildTestMap();
+    const tests = Object.values(result.testMap).sort(function (a, b) {
       return a.date > b.date ? -1 : a.date < b.date ? 1 : 0;
     });
     if (tests.length < 2) {
@@ -4471,22 +4425,22 @@
       return;
     }
 
-    var options = tests
+    const options = tests
       .map(function (t, i) {
         return i + 1 + ". " + t.label + " (" + t.date + ")";
       })
       .join("\n");
-    var pick1 = prompt(
+    const pick1 = prompt(
       "Compare Tests — pick FIRST test:\n\n" + options + "\n\nEnter number:",
     );
     if (!pick1) return;
-    var idx1 = parseInt(pick1.trim(), 10) - 1;
+    const idx1 = parseInt(pick1.trim(), 10) - 1;
     if (isNaN(idx1) || idx1 < 0 || idx1 >= tests.length) {
       showToast("Invalid selection.", "warn");
       return;
     }
 
-    var pick2 = prompt(
+    const pick2 = prompt(
       'Pick SECOND test to compare with "' +
         tests[idx1].label +
         '":\n\n' +
@@ -4494,32 +4448,31 @@
         "\n\nEnter number:",
     );
     if (!pick2) return;
-    var idx2 = parseInt(pick2.trim(), 10) - 1;
+    const idx2 = parseInt(pick2.trim(), 10) - 1;
     if (isNaN(idx2) || idx2 < 0 || idx2 >= tests.length || idx2 === idx1) {
       showToast("Invalid or same selection.", "warn");
       return;
     }
 
-    var t1 = tests[idx1];
-    var t2 = tests[idx2];
+    const t1 = tests[idx1];
+    const t2 = tests[idx2];
     // Determine older/newer
-    var older = t1.date <= t2.date ? t1 : t2;
-    var newer = t1.date <= t2.date ? t2 : t1;
+    const older = t1.date <= t2.date ? t1 : t2;
+    const newer = t1.date <= t2.date ? t2 : t1;
 
     // Build athlete lookup for both
-    var olderMap = {};
-    for (var oi = 0; oi < older.athleteDetails.length; oi++)
+    const olderMap = {};
+    for (let oi = 0; oi < older.athleteDetails.length; oi++)
       olderMap[older.athleteDetails[oi].id] = older.athleteDetails[oi];
-    var newerMap = {};
-    for (var ni = 0; ni < newer.athleteDetails.length; ni++)
+    const newerMap = {};
+    for (let ni = 0; ni < newer.athleteDetails.length; ni++)
       newerMap[newer.athleteDetails[ni].id] = newer.athleteDetails[ni];
     // All athlete IDs in either
-    var allIds = {};
-    for (var ki in olderMap) allIds[ki] = true;
-    for (var ki2 in newerMap) allIds[ki2] = true;
-    var D = window.CLUB;
+    const allIds = {};
+    for (const ki in olderMap) allIds[ki] = true;
+    for (const ki2 in newerMap) allIds[ki2] = true;
 
-    var html = '<div class="th-modal-body">';
+    let html = '<div class="th-modal-body">';
     html += '<div class="th-modal-header"><h2>🔀 Compare Tests</h2>';
     html +=
       '<p class="th-summary">' +
@@ -4536,29 +4489,29 @@
     html +=
       '<div class="te-table-wrap"><table class="th-detail-table te-table"><thead><tr>';
     html += "<th>Athlete</th>";
-    for (var mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
+    for (let mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
       html += "<th>" + TEST_METRIC_KEYS[mk].label + "</th>";
     }
     html += "</tr></thead><tbody>";
 
-    var sortedIds = Object.keys(allIds).sort(function (a, b) {
-      var na = (getAthleteById(a) || {}).name || a;
-      var nb = (getAthleteById(b) || {}).name || b;
+    const sortedIds = Object.keys(allIds).sort(function (a, b) {
+      const na = (getAthleteById(a) || {}).name || a;
+      const nb = (getAthleteById(b) || {}).name || b;
       return na.localeCompare(nb);
     });
 
-    for (var si = 0; si < sortedIds.length; si++) {
-      var aid = sortedIds[si];
-      var found = getAthleteById(aid);
-      var name = found ? found.name : aid;
-      var oEntry = olderMap[aid];
-      var nEntry = newerMap[aid];
+    for (let si = 0; si < sortedIds.length; si++) {
+      const aid = sortedIds[si];
+      const found = getAthleteById(aid);
+      const name = found ? found.name : aid;
+      const oEntry = olderMap[aid];
+      const nEntry = newerMap[aid];
       html += "<tr><td><strong>" + esc(name) + "</strong></td>";
-      for (var cmk = 0; cmk < TEST_METRIC_KEYS.length; cmk++) {
-        var jk = TEST_METRIC_KEYS[cmk].jsonKey;
-        var lower = TEST_METRIC_KEYS[cmk].lower;
-        var oVal = oEntry ? oEntry.values[jk] : null;
-        var nVal = nEntry ? nEntry.values[jk] : null;
+      for (let cmk = 0; cmk < TEST_METRIC_KEYS.length; cmk++) {
+        const jk = TEST_METRIC_KEYS[cmk].jsonKey;
+        const lower = TEST_METRIC_KEYS[cmk].lower;
+        const oVal = oEntry ? oEntry.values[jk] : null;
+        const nVal = nEntry ? nEntry.values[jk] : null;
         if (oVal == null && nVal == null) {
           html += '<td class="num">—</td>';
         } else if (oVal == null) {
@@ -4572,16 +4525,16 @@
             oVal +
             ' <small class="text-muted">only old</small></td>';
         } else {
-          var diff = nVal - oVal;
-          var improved = lower ? diff < 0 : diff > 0;
-          var declined = lower ? diff > 0 : diff < 0;
-          var cls = improved
+          const diff = nVal - oVal;
+          const improved = lower ? diff < 0 : diff > 0;
+          const declined = lower ? diff > 0 : diff < 0;
+          const cls = improved
             ? "delta-up"
             : declined
               ? "delta-down"
               : "delta-flat";
-          var arrow = improved ? "▲" : declined ? "▼" : "—";
-          var sign = diff > 0 ? "+" : "";
+          const arrow = improved ? "▲" : declined ? "▼" : "—";
+          const sign = diff > 0 ? "+" : "";
           html +=
             '<td class="num ' +
             cls +
@@ -4604,10 +4557,10 @@
     html += "</div></div></div>";
 
     // Close test history modal
-    var existingTh = document.querySelector(".test-history-modal");
+    const existingTh = document.querySelector(".test-history-modal");
     if (existingTh) existingTh.remove();
 
-    var overlay = document.createElement("div");
+    const overlay = document.createElement("div");
     overlay.className = "modal-overlay cmp-modal";
     overlay.innerHTML =
       '<div class="modal-content th-modal-content">' +
@@ -4943,15 +4896,16 @@
     tbody.innerHTML = sprinters
       .map((a) => {
         const sk = getStaleKeys(a.id);
+        const _s = { stale: true };
         const sN = (key, dec) =>
-          sk.has(key) ? tdNumStale(a[key], dec) : tdNum(a[key], dec);
+          sk.has(key) ? tdNum(a[key], dec, _s) : tdNum(a[key], dec);
         const sG = (key, dec, grade) =>
           sk.has(key)
-            ? tdGradedStale(a[key], dec, grade)
+            ? tdGraded(a[key], dec, grade, _s)
             : tdGraded(a[key], dec, grade);
         const sC = (key, dec) =>
           sk.has(key)
-            ? tdNumColoredStale(a[key], dec)
+            ? tdNumColored(a[key], dec, _s)
             : tdNumColored(a[key], dec);
         return `
       <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${escJs(a.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectAthlete('${escJs(a.id)}')}">
@@ -5006,11 +4960,12 @@
     tbody.innerHTML = list
       .map((a) => {
         const sk = getStaleKeys(a.id);
+        const _s = { stale: true };
         const sN = (key, dec) =>
-          sk.has(key) ? tdNumStale(a[key], dec) : tdNum(a[key], dec);
+          sk.has(key) ? tdNum(a[key], dec, _s) : tdNum(a[key], dec);
         const sG = (key, dec, grade) =>
           sk.has(key)
-            ? tdGradedStale(a[key], dec, grade)
+            ? tdGraded(a[key], dec, grade, _s)
             : tdGraded(a[key], dec, grade);
         return `
       <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${escJs(a.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectAthlete('${escJs(a.id)}')}">
@@ -5096,221 +5051,6 @@
       </tr>`;
       })
       .join("");
-  };
-
-  /* ========== PERFORMANCE STANDARDS ========== */
-  window.updateBmGroupOptions = function () {
-    const sport = document.getElementById("bmSport")?.value || "Football";
-    const sel = document.getElementById("bmGroup");
-    if (!sel) return;
-    const STD = window.CLUB?.hsStandards;
-    if (!STD || !STD[sport]) return;
-    const sp = window.CLUB.sportPositions[sport];
-    const curVal = sel.value;
-    let opts = '<option value="all">All Groups</option>';
-    for (const g of Object.keys(STD[sport])) {
-      const posInGroup = sp?.groups[g] || [];
-      const lbl =
-        g + (posInGroup.length ? " (" + posInGroup.join("/") + ")" : "");
-      opts += '<option value="' + g + '">' + lbl + "</option>";
-    }
-    sel.innerHTML = opts;
-    if (curVal) sel.value = curVal;
-  };
-
-  window.renderBenchmarks = function () {
-    const D = window.CLUB;
-    const STD = D.hsStandards;
-
-    // Dynamically populate sport dropdown from data
-    const bmSportSel = document.getElementById("bmSport");
-    if (bmSportSel && bmSportSel.options.length === 0) {
-      const sports = Object.keys(STD).filter((k) => !k.startsWith("_"));
-      for (const s of sports) {
-        const o = document.createElement("option");
-        o.value = s;
-        o.textContent = s;
-        bmSportSel.appendChild(o);
-      }
-    }
-
-    const sFilter = bmSportSel?.value || "Football";
-    // Ensure group options match selected sport
-    window.updateBmGroupOptions();
-    const gFilter = document.getElementById("bmGroup").value;
-    const mFilter = document.getElementById("bmMetric").value;
-    const container = document.getElementById("benchmarksContent");
-
-    const sportStds = STD[sFilter];
-    if (!sportStds) {
-      container.innerHTML =
-        '<p class="placeholder-text">No standards defined for ' +
-        sFilter +
-        ".</p>";
-      return;
-    }
-    const allGroups = Object.keys(sportStds);
-    const groups = gFilter === "all" ? allGroups : [gFilter];
-    const metricMeta = STD._meta;
-    const shownMetrics =
-      mFilter === "all"
-        ? metricMeta
-        : metricMeta.filter((m) => m.key === mFilter);
-
-    let html = "";
-
-    // Grade legend
-    html += `<div class="grade-legend">
-      <span class="grade-badge grade-bg-elite">Elite</span>
-      <span class="grade-badge grade-bg-excellent">Excellent</span>
-      <span class="grade-badge grade-bg-good">Good</span>
-      <span class="grade-badge grade-bg-average">Average</span>
-      <span class="grade-badge grade-bg-below">Below Avg</span>
-    </div>`;
-
-    for (const g of groups) {
-      const gs = sportStds[g];
-      if (!gs) continue;
-      const groupAthletes = D.athletes.filter(
-        (a) => a.group === g && a.sport === sFilter,
-      );
-      // Build label showing positions in this group
-      const sp = D.sportPositions[sFilter];
-      const posInGroup = sp?.groups[g] || [];
-      const groupLabel =
-        g + (posInGroup.length ? " (" + posInGroup.join("/") + ")" : "");
-
-      html += `<div class="standards-group"><h3>${groupLabel} <small>(n=${groupAthletes.length})</small></h3>`;
-
-      // Standards reference table
-      html += `<div class="benchmark-table-wrap"><table class="data-table standards-ref-table"><thead><tr>
-        <th>Metric</th>
-        <th class="std-tier-header" style="color:var(--green)">Elite</th>
-        <th class="std-tier-header" style="color:var(--blue)">Excellent</th>
-        <th class="std-tier-header" style="color:var(--yellow)">Good</th>
-        <th class="std-tier-header" style="color:var(--orange)">Average</th>
-        <th class="std-tier-header" style="color:var(--red)">Below Avg</th>
-        <th>Team Avg</th>
-        <th>Grade Distribution</th>
-      </tr></thead><tbody>`;
-
-      for (const mm of shownMetrics) {
-        const thresholds = gs[mm.key];
-        if (!thresholds) continue;
-        const athKey = mm.key;
-        const vals = groupAthletes
-          .map((a) => a[athKey])
-          .filter((v) => v !== null);
-        const avg = vals.length
-          ? vals.reduce((s, v) => s + v, 0) / vals.length
-          : null;
-        const avgStr =
-          avg !== null
-            ? mm.unit === "xBW" || mm.unit === "in/lb"
-              ? avg.toFixed(2)
-              : mm.unit === "s" || mm.unit === "m/s" || mm.unit === "W/kg"
-                ? avg.toFixed(1)
-                : Math.round(avg)
-            : "—";
-
-        // Count athletes per tier
-        const tierCounts = {
-          elite: 0,
-          excellent: 0,
-          good: 0,
-          average: 0,
-          below: 0,
-        };
-        for (const a of groupAthletes) {
-          const g2 = a.grades[athKey];
-          if (g2) tierCounts[g2.tier]++;
-        }
-        const tested = Object.values(tierCounts).reduce((s, v) => s + v, 0);
-
-        // Grade distribution bar
-        const distBar =
-          tested > 0
-            ? `<div class="dist-bar">
-          ${tierCounts.elite ? `<div class="dist-seg dist-elite" style="flex:${tierCounts.elite}" title="Elite: ${tierCounts.elite}">${tierCounts.elite}</div>` : ""}
-          ${tierCounts.excellent ? `<div class="dist-seg dist-excellent" style="flex:${tierCounts.excellent}" title="Excellent: ${tierCounts.excellent}">${tierCounts.excellent}</div>` : ""}
-          ${tierCounts.good ? `<div class="dist-seg dist-good" style="flex:${tierCounts.good}" title="Good: ${tierCounts.good}">${tierCounts.good}</div>` : ""}
-          ${tierCounts.average ? `<div class="dist-seg dist-average" style="flex:${tierCounts.average}" title="Average: ${tierCounts.average}">${tierCounts.average}</div>` : ""}
-          ${tierCounts.below ? `<div class="dist-seg dist-below" style="flex:${tierCounts.below}" title="Below Avg: ${tierCounts.below}">${tierCounts.below}</div>` : ""}
-        </div>`
-            : '<span class="na">—</span>';
-
-        const op = mm.invert ? "≤" : "≥";
-        const belowOp = mm.invert ? ">" : "<";
-
-        html += `<tr>
-          <td><strong>${mm.label}</strong> <small>(${mm.unit})</small></td>
-          <td class="num std-value grade-text-elite">${op}${thresholds[0]}</td>
-          <td class="num std-value grade-text-excellent">${op}${thresholds[1]}</td>
-          <td class="num std-value grade-text-good">${op}${thresholds[2]}</td>
-          <td class="num std-value grade-text-average">${op}${thresholds[3]}</td>
-          <td class="num std-value grade-text-below">${belowOp}${thresholds[3]}</td>
-          <td class="num">${avgStr}</td>
-          <td>${distBar}</td>
-        </tr>`;
-      }
-      html += "</tbody></table></div>";
-
-      // Athlete grade cards (when filtering to single metric)
-      if (mFilter !== "all") {
-        const athKey = mFilter;
-        const mm = metricMeta.find((m) => m.key === mFilter);
-        const sorted = groupAthletes
-          .filter((a) => a[athKey] !== null)
-          .sort((a, b) =>
-            mm?.invert ? a[athKey] - b[athKey] : b[athKey] - a[athKey],
-          );
-
-        if (sorted.length > 0) {
-          html += '<div class="std-athlete-list">';
-          for (const a of sorted) {
-            const grade = a.grades[athKey];
-            html += `<div class="std-athlete-row">
-              <span class="std-athlete-name">${esc(a.name)}</span>
-              <span class="std-athlete-val">${typeof a[athKey] === "number" ? (Number.isInteger(a[athKey]) ? a[athKey] : a[athKey].toFixed(2)) : a[athKey]} ${mm ? mm.unit : ""}</span>
-              <span class="std-athlete-tier">${grade ? gradeBadge(grade) : '<span class="na">—</span>'}</span>
-            </div>`;
-          }
-          html += "</div>";
-        }
-      }
-
-      // Team grade summary cards (when showing all metrics)
-      if (mFilter === "all") {
-        html += '<div class="std-summary-row">';
-        for (const a of groupAthletes.sort((x, y) => {
-          const sx = x.overallGrade ? x.overallGrade.score : 0;
-          const sy = y.overallGrade ? y.overallGrade.score : 0;
-          return sy - sx;
-        })) {
-          const og = a.overallGrade;
-          if (!og) continue;
-          const gradeChips = Object.entries(a.grades)
-            .map(([k, g]) => {
-              const mm2 = metricMeta.find((m) => m.key === k);
-              return `<span class="grade-chip grade-bg-${g.tier}" title="${mm2 ? mm2.label : k}: ${g.label}">${mm2 ? mm2.label.substring(0, 6) : k}</span>`;
-            })
-            .join("");
-          html += `<div class="grade-summary-card">
-            <div class="grade-summary-header">
-              <strong>${esc(a.name)}</strong> <small>${esc(a.position) || ""}</small>
-              <span class="grade-badge grade-bg-${og.tier}" style="margin-left:auto">${og.label} (${og.score})</span>
-            </div>
-            <div class="grade-chips-row">${gradeChips}</div>
-          </div>`;
-        }
-        html += "</div>";
-      }
-
-      html += "</div>";
-    }
-
-    container.innerHTML =
-      html || '<p class="placeholder-text">No standards data available.</p>';
   };
 
   /* ========== TESTING LOG ========== */
@@ -5994,24 +5734,24 @@
 
   /* --- Print Sprint Analysis table --- */
   window.printSprintTable = function () {
-    var D = window.CLUB;
-    var sprinters = D.athletes.filter(function (a) {
+    const D = window.CLUB;
+    const sprinters = D.athletes.filter(function (a) {
       return a.sprint020 !== null;
     });
     if (sprinters.length === 0) {
       showToast("No sprint data to print.", "warn");
       return;
     }
-    var html = '<div class="print-page">';
+    let html = '<div class="print-page">';
     html +=
       '<div class="print-header-bar"><span class="print-logo">BC Personal Fitness Club</span><span class="print-date">Sprint Analysis — ' +
       new Date().toLocaleDateString() +
       "</span></div>";
     html +=
       '<table class="print-data-table"><thead><tr><th>Athlete</th><th>Pos</th><th>Mass</th><th>0-20</th><th>20-30</th><th>30-40</th><th>40yd</th><th>vMax</th><th>v10</th><th>MPH</th><th>F1</th><th>momMax</th><th>Pow1</th></tr></thead><tbody>';
-    for (var i = 0; i < sprinters.length; i++) {
-      var a = sprinters[i];
-      var f = function (v, d) {
+    for (let i = 0; i < sprinters.length; i++) {
+      const a = sprinters[i];
+      const f = function (v, d) {
         return v !== null && v !== undefined
           ? typeof d === "number"
             ? v.toFixed(d)
@@ -6055,8 +5795,8 @@
 
   /* --- Print Strength & Power table --- */
   window.printStrengthTable = function () {
-    var D = window.CLUB;
-    var list = D.athletes.filter(function (a) {
+    const D = window.CLUB;
+    const list = D.athletes.filter(function (a) {
       return (
         a.bench !== null ||
         a.squat !== null ||
@@ -6068,16 +5808,16 @@
       showToast("No strength data to print.", "warn");
       return;
     }
-    var html = '<div class="print-page">';
+    let html = '<div class="print-page">';
     html +=
       '<div class="print-header-bar"><span class="print-logo">BC Personal Fitness Club</span><span class="print-date">Strength &amp; Power — ' +
       new Date().toLocaleDateString() +
       "</span></div>";
     html +=
       '<table class="print-data-table"><thead><tr><th>Athlete</th><th>Pos</th><th>Wt</th><th>Bench</th><th>Rel B</th><th>Squat</th><th>Rel S</th><th>MB</th><th>Vert</th><th>Broad</th><th>PP</th><th>Rel PP</th><th>Str Util</th></tr></thead><tbody>';
-    for (var i = 0; i < list.length; i++) {
-      var a = list[i];
-      var f = function (v, d) {
+    for (let i = 0; i < list.length; i++) {
+      const a = list[i];
+      const f = function (v, d) {
         return v !== null && v !== undefined
           ? typeof d === "number"
             ? v.toFixed(d)
@@ -6121,16 +5861,16 @@
 
   /* --- Print Team Summary One-Pager --- */
   window.printTeamSummary = function () {
-    var D = window.CLUB;
-    var athletes = D.athletes;
-    var total = athletes.length;
+    const D = window.CLUB;
+    const athletes = D.athletes;
+    const total = athletes.length;
     if (total === 0) {
       showToast("No athlete data to summarize.", "warn");
       return;
     }
 
     // Compute averages
-    var sumKeys = [
+    const sumKeys = [
       { key: "bench", label: "Bench 1RM", unit: "lb", dec: 0 },
       { key: "squat", label: "Squat 1RM", unit: "lb", dec: 0 },
       { key: "medball", label: "Med Ball", unit: "in", dec: 0 },
@@ -6141,31 +5881,28 @@
       { key: "relBench", label: "Rel Bench", unit: "xBW", dec: 2 },
       { key: "relSquat", label: "Rel Squat", unit: "xBW", dec: 2 },
     ];
-    var sums = {},
-      counts = {},
-      maxVals = {},
-      maxNames = {};
-    for (var sk = 0; sk < sumKeys.length; sk++) {
+    const sums = {}, counts = {}, maxVals = {}, maxNames = {};
+    for (let sk = 0; sk < sumKeys.length; sk++) {
       sums[sumKeys[sk].key] = 0;
       counts[sumKeys[sk].key] = 0;
       maxVals[sumKeys[sk].key] = null;
       maxNames[sumKeys[sk].key] = "";
     }
-    var coreFields = ["bench", "squat", "medball", "vert", "broad", "forty"];
-    var fullyTested = 0;
-    for (var ai = 0; ai < athletes.length; ai++) {
-      var a = athletes[ai];
-      var allCore = true;
-      for (var cf = 0; cf < coreFields.length; cf++) {
+    const coreFields = ["bench", "squat", "medball", "vert", "broad", "forty"];
+    let fullyTested = 0;
+    for (let ai = 0; ai < athletes.length; ai++) {
+      const a = athletes[ai];
+      let allCore = true;
+      for (let cf = 0; cf < coreFields.length; cf++) {
         if (a[coreFields[cf]] === null) allCore = false;
       }
       if (allCore) fullyTested++;
-      for (var sk2 = 0; sk2 < sumKeys.length; sk2++) {
-        var k = sumKeys[sk2].key;
+      for (let sk2 = 0; sk2 < sumKeys.length; sk2++) {
+        const k = sumKeys[sk2].key;
         if (a[k] !== null && a[k] !== undefined) {
           sums[k] += a[k];
           counts[k]++;
-          var isBetter =
+          const isBetter =
             maxVals[k] === null
               ? true
               : k === "forty"
@@ -6180,20 +5917,20 @@
     }
 
     // Grade distribution
-    var gradeCounts = { elite: 0, excellent: 0, good: 0, average: 0, below: 0 };
-    for (var gi = 0; gi < athletes.length; gi++) {
-      var og = athletes[gi].overallGrade;
+    const gradeCounts = { elite: 0, excellent: 0, good: 0, average: 0, below: 0 };
+    for (let gi = 0; gi < athletes.length; gi++) {
+      const og = athletes[gi].overallGrade;
       if (og && gradeCounts[og.tier] !== undefined) gradeCounts[og.tier]++;
     }
 
     // Top improvements (if test history exists)
-    var improvements = [];
-    for (var ti = 0; ti < athletes.length; ti++) {
-      var ath = athletes[ti];
-      var hist = getAthleteHistory(ath.id);
+    const improvements = [];
+    for (let ti = 0; ti < athletes.length; ti++) {
+      const ath = athletes[ti];
+      const hist = getAthleteHistory(ath.id);
       if (hist.length < 2) continue;
-      var newest = hist[0];
-      var prior = hist[1];
+      const newest = hist[0];
+      const prior = hist[1];
       // Check bench improvement
       if (
         newest.values.bench_1rm != null &&
@@ -6225,14 +5962,14 @@
     improvements.sort(function (a, b) {
       return b.delta - a.delta;
     });
-    var topImprov = improvements.slice(0, 6);
+    const topImprov = improvements.slice(0, 6);
 
     // Data quality flags
-    var flagCount = D.flags ? D.flags.length : 0;
-    var warnCount = D.warnings ? D.warnings.length : 0;
+    const flagCount = D.flags ? D.flags.length : 0;
+    const warnCount = D.warnings ? D.warnings.length : 0;
 
     // Build HTML
-    var html = '<div class="print-page">';
+    let html = '<div class="print-page">';
     html +=
       '<div class="print-header-bar"><span class="print-logo">BC Personal Fitness Club</span><span class="print-date">Team Summary — ' +
       new Date().toLocaleDateString() +
@@ -6259,21 +5996,21 @@
     html += '<h3 class="print-section">Grade Distribution</h3>';
     html +=
       '<div style="display:flex;gap:8px;margin-bottom:10px;font-size:8pt">';
-    var tierColors = {
+    const tierColors = {
       elite: "#d4edda",
       excellent: "#cce5ff",
       good: "#fff3cd",
       average: "#ffe0cc",
       below: "#f8d7da",
     };
-    var tierLabels = {
+    const tierLabels = {
       elite: "Elite",
       excellent: "Excellent",
       good: "Good",
       average: "Average",
       below: "Below",
     };
-    for (var tk in tierLabels) {
+    for (const tk in tierLabels) {
       html +=
         '<span style="background:' +
         tierColors[tk] +
@@ -6289,13 +6026,13 @@
     html += '<h3 class="print-section">Team Averages &amp; Leaders</h3>';
     html +=
       '<table class="print-data-table"><thead><tr><th>Metric</th><th>Team Avg</th><th>Tested</th><th>Best</th><th>Leader</th></tr></thead><tbody>';
-    for (var ski = 0; ski < sumKeys.length; ski++) {
-      var sm = sumKeys[ski];
-      var avg =
+    for (let ski = 0; ski < sumKeys.length; ski++) {
+      const sm = sumKeys[ski];
+      const avg =
         counts[sm.key] > 0
           ? (sums[sm.key] / counts[sm.key]).toFixed(sm.dec)
           : "—";
-      var best =
+      const best =
         maxVals[sm.key] !== null
           ? typeof sm.dec === "number"
             ? maxVals[sm.key].toFixed(sm.dec)
@@ -6325,8 +6062,8 @@
       html += '<h3 class="print-section">Biggest Improvements</h3>';
       html +=
         '<table class="print-data-table"><thead><tr><th>Athlete</th><th>Metric</th><th>Previous</th><th>Current</th><th>Change</th></tr></thead><tbody>';
-      for (var ii = 0; ii < topImprov.length; ii++) {
-        var imp = topImprov[ii];
+      for (let ii = 0; ii < topImprov.length; ii++) {
+        const imp = topImprov[ii];
         html +=
           "<tr><td>" +
           esc(imp.name) +
@@ -6367,12 +6104,12 @@
 
   /* --- Print progress section (for profile printout) --- */
   function buildPrintProgressSection(a) {
-    var history = getAthleteHistory(a.id);
+    const history = getAthleteHistory(a.id);
     if (history.length === 0) return "";
-    var current = currentTestValues(a);
-    var shown = history.slice(0, 4); // up to 4 previous tests
+    const current = currentTestValues(a);
+    const shown = history.slice(0, 4); // up to 4 previous tests
 
-    var html =
+    let html =
       '<div class="print-progress" style="margin-top:10px;page-break-inside:avoid">';
     html +=
       '<h3 class="print-section">Progress History (' +
@@ -6384,7 +6121,7 @@
     // Build header
     html +=
       '<table class="print-metric-table print-progress-table" style="width:100%"><thead><tr><th>Metric</th><th>Current</th>';
-    for (var ti = 0; ti < shown.length; ti++) {
+    for (let ti = 0; ti < shown.length; ti++) {
       html +=
         "<th>" +
         esc(shown[ti].label || shown[ti].date) +
@@ -6402,13 +6139,13 @@
     }
 
     // Metric rows — skip entirely if current AND all history values are null
-    for (var i = 0; i < TEST_METRIC_KEYS.length; i++) {
-      var mk = TEST_METRIC_KEYS[i];
-      var cv = current[mk.jsonKey];
-      var hasAny = cv !== null && cv !== undefined;
-      var histVals = [];
-      for (var si = 0; si < shown.length; si++) {
-        var hv = shown[si].values[mk.jsonKey];
+    for (let i = 0; i < TEST_METRIC_KEYS.length; i++) {
+      const mk = TEST_METRIC_KEYS[i];
+      const cv = current[mk.jsonKey];
+      let hasAny = cv !== null && cv !== undefined;
+      const histVals = [];
+      for (let si = 0; si < shown.length; si++) {
+        const hv = shown[si].values[mk.jsonKey];
         histVals.push(hv);
         if (hv !== null && hv !== undefined) hasAny = true;
       }
@@ -6421,13 +6158,12 @@
         mk.unit +
         "</small></td>";
       html += '<td class="num">' + fmtVal(cv, mk) + "</td>";
-      for (var hi = 0; hi < histVals.length; hi++) {
+      for (let hi = 0; hi < histVals.length; hi++) {
         html += '<td class="num">' + fmtVal(histVals[hi], mk) + "</td>";
       }
 
       // Delta column: current vs oldest shown, or newest vs second-newest
-      var newV = null,
-        oldV = null;
+      let newV = null, oldV = null;
       if (shown.length >= 2) {
         newV = shown[0].values[mk.jsonKey];
         oldV = shown[1].values[mk.jsonKey];
@@ -6436,16 +6172,15 @@
         oldV = shown[0].values[mk.jsonKey];
       }
       if (newV != null && oldV != null) {
-        var d = newV - oldV;
+        const d = newV - oldV;
         if (d === 0) {
           html += '<td class="num" style="color:#999">—</td>';
         } else {
-          var pctChange =
+          const pctChange =
             oldV !== 0 ? Math.round((d / Math.abs(oldV)) * 100) : 0;
-          var improved = mk.lower ? d < 0 : d > 0;
-          var declined = mk.lower ? d > 0 : d < 0;
-          var arrow = improved ? "▲" : "▼";
-          var sign = d > 0 ? "+" : "";
+          const improved = mk.lower ? d < 0 : d > 0;
+          const arrow = improved ? "▲" : "▼";
+          const sign = d > 0 ? "+" : "";
           html +=
             '<td class="num ' +
             (improved ? "print-delta-up" : "print-delta-down") +
@@ -6466,12 +6201,12 @@
     }
 
     // 40 yd Total composite row (derived from sprint splits)
-    var curForty = a.forty;
-    var fortyHasAny = curForty != null;
-    var fortyHist = [];
-    for (var fi = 0; fi < shown.length; fi++) {
-      var fv = shown[fi].values;
-      var hForty =
+    const curForty = a.forty;
+    let fortyHasAny = curForty != null;
+    const fortyHist = [];
+    for (let fi = 0; fi < shown.length; fi++) {
+      const fv = shown[fi].values;
+      const hForty =
         fv.sprint_020 != null &&
         fv.sprint_2030 != null &&
         fv.sprint_3040 != null
@@ -6485,15 +6220,14 @@
         '<tr style="border-top:1px solid #bbb"><td><strong>40 yd Total</strong> <small>s</small></td>';
       html +=
         '<td class="num">' + (curForty != null ? curForty : "—") + "</td>";
-      for (var fhi = 0; fhi < fortyHist.length; fhi++) {
+      for (let fhi = 0; fhi < fortyHist.length; fhi++) {
         html +=
           '<td class="num">' +
           (fortyHist[fhi] !== null ? fortyHist[fhi] : "—") +
           "</td>";
       }
       // Delta for forty
-      var newForty = null,
-        oldForty = null;
+      let newForty = null, oldForty = null;
       if (shown.length >= 2) {
         newForty = fortyHist[0];
         oldForty = fortyHist[1];
@@ -6502,16 +6236,15 @@
         oldForty = fortyHist[0];
       }
       if (newForty != null && oldForty != null) {
-        var fd = newForty - oldForty;
+        const fd = newForty - oldForty;
         if (fd === 0) {
           html += '<td class="num" style="color:#999">—</td>';
         } else {
-          var fpct =
+          const fpct =
             oldForty !== 0 ? Math.round((fd / Math.abs(oldForty)) * 100) : 0;
-          var fImproved = fd < 0;
-          var fDeclined = fd > 0;
-          var fArrow = fImproved ? "▲" : "▼";
-          var fSign = fd > 0 ? "+" : "";
+          const fImproved = fd < 0;
+          const fArrow = fImproved ? "▲" : "▼";
+          const fSign = fd > 0 ? "+" : "";
           html +=
             '<td class="num ' +
             (fImproved ? "print-delta-up" : "print-delta-down") +
@@ -7468,12 +7201,7 @@
 
   /* ===== SHARED: Delta table builder ===== */
   function _buildDeltaTable(athletes, deltas, metrics) {
-    const weightMeta = {
-      key: "weight",
-      label: "Weight",
-      unit: "lb",
-      dec: 0,
-    };
+    const weightKey = "weight";
     let html =
       '<div class="table-wrap"><table class="cmp-table"><thead><tr><th>Athlete</th><th>Group</th><th>Wt Δ</th>';
     for (const m of metrics) html += "<th>" + m.label + "</th>";
@@ -7492,7 +7220,7 @@
         esc(a.group || "—") +
         "</span></td>";
       // Weight delta column (neutral styling — gaining/losing neither good nor bad)
-      const wd = deltas[i][weightMeta.key];
+      const wd = deltas[i][weightKey];
       if (!wd) {
         html += '<td class="num na">—</td>';
       } else {
@@ -7917,7 +7645,7 @@
     }
 
     // Build a snapshot of the current state (original + additions - deletions + edits)
-    const rawCopy = JSON.parse(JSON.stringify(window._rawDataCache));
+    const rawCopy = structuredClone(window._rawDataCache);
 
     // Apply additions
     const added = safeLSGet("lc_added", []);
@@ -7971,7 +7699,7 @@
     localStorage.removeItem("lc_edits");
     localStorage.removeItem("lc_added");
     localStorage.removeItem("lc_deleted");
-    window.CLUB = window._processData(JSON.parse(JSON.stringify(snap.data)));
+    window.CLUB = window._processData(structuredClone(snap.data));
     reRenderAll();
     updateDataStatus();
     showToast('Snapshot "' + name + '" loaded!', "success");
@@ -7992,46 +7720,25 @@
     updateDataStatus();
   };
 
-  /* ---------- BC Standards Toggle ---------- */
-  window.toggleBCStandards = function (on) {
-    safeLSSet("lc_bc_standards", on ? "true" : "false");
-    // Sync both BC toggles
-    var bc1 = document.getElementById("bcStdToggle");
-    var bc2 = document.getElementById("overviewBCToggle");
-    if (bc1) bc1.checked = on;
-    if (bc2) bc2.checked = on;
+  /* ---------- Standards / Feature Toggle Helper ---------- */
+  function _toggleSetting(storageKey, elementIds, on, toastMsg) {
+    safeLSSet(storageKey, on ? "true" : "false");
+    for (const id of elementIds) {
+      const el = document.getElementById(id);
+      if (el) el.checked = on;
+    }
     rebuildFromStorage();
     markTabsDirty();
     const activeTab = document.querySelector(".tab.active");
     if (activeTab) renderIfDirty(activeTab.dataset.tab);
     renderProfile();
-    showToast(
-      on
-        ? "BC Standards enabled — using Burke Catholic program-specific thresholds"
-        : "BC Standards disabled — using national HS norms",
-      "info",
-    );
-  };
+    if (toastMsg) showToast(toastMsg, "info");
+  }
 
-  /* ---------- Age-Adjusted Standards Toggle ---------- */
   window.toggleAgeAdjusted = function (on) {
-    safeLSSet("lc_age_adjusted", on ? "true" : "false");
-    // Sync both age-adj toggles
-    var ageT1 = document.getElementById("ageAdjToggle");
-    var ageT2 = document.getElementById("overviewAgeToggle");
-    if (ageT1) ageT1.checked = on;
-    if (ageT2) ageT2.checked = on;
-    rebuildFromStorage();
-    markTabsDirty();
-    const activeTab = document.querySelector(".tab.active");
-    if (activeTab) renderIfDirty(activeTab.dataset.tab);
-    renderProfile();
-    showToast(
-      on
-        ? "Age-adjusted standards enabled — grades scaled by training age"
-        : "Age-adjusted standards disabled — using senior (12th grade) standards",
-      "info",
-    );
+    _toggleSetting("lc_age_adjusted", ["ageAdjToggle", "overviewAgeToggle"], on,
+      on ? "Age-adjusted standards enabled — grades scaled by training age"
+         : "Age-adjusted standards disabled — using senior (12th grade) standards");
   };
 
   /* ---------- Overview Relatives Toggle ---------- */
@@ -8040,46 +7747,16 @@
     renderOverview();
   };
 
-  /* ---------- Body-Adjusted Standards Toggle ---------- */
   window.toggleBodyAdjusted = function (on) {
-    safeLSSet("lc_body_adjusted", on ? "true" : "false");
-    // Sync both body-adj toggles
-    var bt1 = document.getElementById("bodyAdjToggle");
-    var bt2 = document.getElementById("overviewBodyToggle");
-    if (bt1) bt1.checked = on;
-    if (bt2) bt2.checked = on;
-    rebuildFromStorage();
-    markTabsDirty();
-    const activeTab = document.querySelector(".tab.active");
-    if (activeTab) renderIfDirty(activeTab.dataset.tab);
-    renderProfile();
-    showToast(
-      on
-        ? "Body-adjusted standards enabled — thresholds scaled by weight class & height"
-        : "Body-adjusted standards disabled — using baseline thresholds",
-      "info",
-    );
+    _toggleSetting("lc_body_adjusted", ["bodyAdjToggle", "overviewBodyToggle"], on,
+      on ? "Body-adjusted standards enabled — thresholds scaled by weight class & height"
+         : "Body-adjusted standards disabled — using baseline thresholds");
   };
 
-  /* ---------- Cohort Percentile Toggle ---------- */
   window.toggleCohortMode = function (on) {
-    safeLSSet("lc_cohort_mode", on ? "true" : "false");
-    // Sync both cohort toggles
-    var ct1 = document.getElementById("cohortToggle");
-    var ct2 = document.getElementById("overviewCohortToggle");
-    if (ct1) ct1.checked = on;
-    if (ct2) ct2.checked = on;
-    rebuildFromStorage();
-    markTabsDirty();
-    const activeTab = document.querySelector(".tab.active");
-    if (activeTab) renderIfDirty(activeTab.dataset.tab);
-    renderProfile();
-    showToast(
-      on
-        ? "Cohort percentiles enabled — ranking against peers with same body profile & position"
-        : "Cohort percentiles disabled",
-      "info",
-    );
+    _toggleSetting("lc_cohort_mode", ["cohortToggle", "overviewCohortToggle"], on,
+      on ? "Cohort percentiles enabled — ranking against peers with same body profile & position"
+         : "Cohort percentiles disabled");
   };
 
   window.resetToOriginal = function () {
@@ -8092,7 +7769,7 @@
     localStorage.removeItem("lc_edits");
     localStorage.removeItem("lc_added");
     localStorage.removeItem("lc_deleted");
-    const raw = JSON.parse(JSON.stringify(window._rawDataCache));
+    const raw = structuredClone(window._rawDataCache);
     window.CLUB = window._processData(raw);
     // Close edit panel if open
     const panel = document.getElementById("editPanel");
@@ -8205,12 +7882,12 @@
 
   /* ========== REBUILD DATA FROM LOCALSTORAGE ========== */
   function rebuildFromStorage() {
-    const rawCopy = JSON.parse(JSON.stringify(window._rawDataCache));
+    const rawCopy = structuredClone(window._rawDataCache);
 
     // Build coach timestamp lookup from original JSON
-    var coachTimestamps = {};
-    for (var ci = 0; ci < rawCopy.athletes.length; ci++) {
-      var ca = rawCopy.athletes[ci];
+    const coachTimestamps = {};
+    for (let ci = 0; ci < rawCopy.athletes.length; ci++) {
+      const ca = rawCopy.athletes[ci];
       if (ca.lastUpdated) coachTimestamps[ca.id] = ca.lastUpdated;
     }
 
@@ -8237,24 +7914,24 @@
     // Apply test history values as current data.
     // Test history (including coach-provided entries from the JSON) is applied
     // unconditionally.  Newest-first sorting ensures the latest value wins.
-    var testH = getTestHistory();
-    var testIds = Object.keys(testH);
-    for (var ti = 0; ti < testIds.length; ti++) {
-      var tAid = testIds[ti];
-      var tEntries = testH[tAid];
+    const testH = getTestHistory();
+    const testIds = Object.keys(testH);
+    for (let ti = 0; ti < testIds.length; ti++) {
+      const tAid = testIds[ti];
+      const tEntries = testH[tAid];
       if (!tEntries || tEntries.length === 0) continue;
-      var tAthlete = rawCopy.athletes.find(function (a) {
+      const tAthlete = rawCopy.athletes.find(function (a) {
         return a.id === tAid;
       });
       if (!tAthlete) continue;
       // Sort entries newest-first
-      var sorted = tEntries.slice().sort(function (a, b) {
+      const sorted = tEntries.slice().sort(function (a, b) {
         return a.date > b.date ? -1 : a.date < b.date ? 1 : 0;
       });
-      var applied = {}; // track which jsonKeys we've already set
-      for (var si = 0; si < sorted.length; si++) {
-        var vals = sorted[si].values;
-        for (var vk in vals) {
+      const applied = {}; // track which jsonKeys we've already set
+      for (let si = 0; si < sorted.length; si++) {
+        const vals = sorted[si].values;
+        for (const vk in vals) {
           if (applied[vk]) continue; // already set from a newer entry
           if (vals[vk] !== null && vals[vk] !== undefined && vals[vk] !== "") {
             if (typeof vals[vk] === "number" && !isFinite(vals[vk])) continue;
@@ -8273,8 +7950,8 @@
         return a.id === edit.id;
       });
       if (!athlete) continue;
-      var cTS = coachTimestamps[edit.id] || "";
-      var eTS = edit.timestamp || "";
+      const cTS = coachTimestamps[edit.id] || "";
+      const eTS = edit.timestamp || "";
       if (cTS && eTS && eTS <= cTS) continue; // stale edit, skip
       Object.assign(athlete, edit.changes);
     }
@@ -8346,20 +8023,20 @@
     safeLSSet("lc_added", JSON.stringify(added));
 
     // Create blank test history entries for all existing test dates
-    var h = getTestHistory();
-    var existingDates = {}; // "date|label" -> true
-    var allIds = Object.keys(h);
-    for (var hi = 0; hi < allIds.length; hi++) {
-      for (var hj = 0; hj < h[allIds[hi]].length; hj++) {
-        var ent = h[allIds[hi]][hj];
+    const h = getTestHistory();
+    const existingDates = {}; // "date|label" -> true
+    const allIds = Object.keys(h);
+    for (let hi = 0; hi < allIds.length; hi++) {
+      for (let hj = 0; hj < h[allIds[hi]].length; hj++) {
+        const ent = h[allIds[hi]][hj];
         existingDates[ent.date + "|" + ent.label] = true;
       }
     }
-    var dateKeys = Object.keys(existingDates);
+    const dateKeys = Object.keys(existingDates);
     if (dateKeys.length > 0) {
       if (!h[id]) h[id] = [];
-      for (var dk = 0; dk < dateKeys.length; dk++) {
-        var parts = dateKeys[dk].split("|");
+      for (let dk = 0; dk < dateKeys.length; dk++) {
+        const parts = dateKeys[dk].split("|");
         h[id].push({
           date: parts[0],
           label: parts.slice(1).join("|"),
@@ -8380,7 +8057,7 @@
     renderProfile();
     openEditPanel(id);
 
-    var testMsg =
+    const testMsg =
       dateKeys.length > 0
         ? " — " + dateKeys.length + " test date(s) pre-populated"
         : "";
@@ -8780,12 +8457,12 @@
     html += "</div>";
     if (history.length > 0) {
       html += '<div class="edit-history-list">';
-      for (var hi = 0; hi < history.length; hi++) {
-        var he = history[hi];
-        var metricsWithData = 0;
-        var metricChips = "";
-        for (var tki = 0; tki < TEST_METRIC_KEYS.length; tki++) {
-          var tkVal = he.values[TEST_METRIC_KEYS[tki].jsonKey];
+      for (let hi = 0; hi < history.length; hi++) {
+        const he = history[hi];
+        let metricsWithData = 0;
+        let metricChips = "";
+        for (let tki = 0; tki < TEST_METRIC_KEYS.length; tki++) {
+          const tkVal = he.values[TEST_METRIC_KEYS[tki].jsonKey];
           if (tkVal !== null && tkVal !== undefined) {
             metricsWithData++;
             metricChips +=
@@ -8797,9 +8474,7 @@
           }
         }
         // Compute 40yd from sprints if available
-        var s020 = he.values.sprint_020,
-          s2030 = he.values.sprint_2030,
-          s3040 = he.values.sprint_3040;
+        const s020 = he.values.sprint_020, s2030 = he.values.sprint_2030, s3040 = he.values.sprint_3040;
         if (
           s020 !== null &&
           s020 !== undefined &&
@@ -8829,9 +8504,9 @@
           "</div>" +
           "</div>";
         html += '<div class="edit-history-btns">';
-        var _heId = escJs(a.id);
-        var _heDate = escJs(he.date);
-        var _heLabel = escJs(he.label);
+        const _heId = escJs(a.id);
+        const _heDate = escJs(he.date);
+        const _heLabel = escJs(he.label);
         html +=
           '<button class="btn btn-xs btn-muted" onclick="editHistoryEntry(\'' +
           _heId +
@@ -8872,8 +8547,8 @@
       '<div class="edit-field"><label>Label (e.g. "Spring 2025")</label><input type="text" id="prevTestLabel" placeholder="Spring 2025" /></div>';
     html += "</div>";
     html += '<div class="edit-grid">';
-    for (var pti = 0; pti < TEST_METRIC_KEYS.length; pti++) {
-      var ptk = TEST_METRIC_KEYS[pti];
+    for (let pti = 0; pti < TEST_METRIC_KEYS.length; pti++) {
+      const ptk = TEST_METRIC_KEYS[pti];
       if (ptk.jsonKey === "weight_lb") continue; // Weight is in the fields above, skip dupe
       html +=
         '<div class="edit-field"><label>' +
@@ -9053,7 +8728,7 @@
     const a = getAthleteById(editingAthleteId);
     if (!a) return;
 
-    var dateStr = prompt(
+    const dateStr = prompt(
       "Enter test date (YYYY-MM-DD):",
       new Date().toISOString().slice(0, 10),
     );
@@ -9065,14 +8740,14 @@
       showToast("Invalid date format. Please use YYYY-MM-DD.", "warn");
       return;
     }
-    var label = prompt(
+    let label = prompt(
       "Enter a label for this test (e.g. 'Spring 2025', 'Pre-Season'):",
       "",
     );
     if (label === null) return;
     if (!label.trim()) label = dateStr;
 
-    var vals = currentTestValues(a);
+    const vals = currentTestValues(a);
     saveTestEntry(a.id, dateStr, label.trim(), vals);
     showToast(
       "Saved test entry: " + label.trim() + " (" + dateStr + ")",
@@ -9084,7 +8759,7 @@
 
   window.openAddPreviousTest = function () {
     // Reset form to "add" mode
-    var form = document.getElementById("prevTestForm");
+    const form = document.getElementById("prevTestForm");
     if (!form) return;
     document.getElementById("prevTestEditMode").value = "";
     document.getElementById("prevTestOrigDate").value = "";
@@ -9095,8 +8770,8 @@
       "💾 Save Previous Test";
     document.getElementById("prevTestDate").value = "";
     document.getElementById("prevTestLabel").value = "";
-    for (var i = 0; i < TEST_METRIC_KEYS.length; i++) {
-      var el = document.getElementById(
+    for (let i = 0; i < TEST_METRIC_KEYS.length; i++) {
+      const el = document.getElementById(
         "prevTest_" + TEST_METRIC_KEYS[i].jsonKey,
       );
       if (el) el.value = "";
@@ -9106,9 +8781,9 @@
   };
 
   window.editHistoryEntry = function (athleteId, date, label) {
-    var history = getAthleteHistory(athleteId);
-    var entry = null;
-    for (var i = 0; i < history.length; i++) {
+    const history = getAthleteHistory(athleteId);
+    let entry = null;
+    for (let i = 0; i < history.length; i++) {
       if (history[i].date === date && history[i].label === label) {
         entry = history[i];
         break;
@@ -9119,7 +8794,7 @@
       return;
     }
 
-    var form = document.getElementById("prevTestForm");
+    const form = document.getElementById("prevTestForm");
     if (!form) return;
 
     // Set edit mode
@@ -9136,11 +8811,11 @@
     document.getElementById("prevTestLabel").value = entry.label;
 
     // Pre-fill metric values
-    for (var i = 0; i < TEST_METRIC_KEYS.length; i++) {
-      var mk = TEST_METRIC_KEYS[i];
-      var el = document.getElementById("prevTest_" + mk.jsonKey);
+    for (let i = 0; i < TEST_METRIC_KEYS.length; i++) {
+      const mk = TEST_METRIC_KEYS[i];
+      const el = document.getElementById("prevTest_" + mk.jsonKey);
       if (el) {
-        var v = entry.values[mk.jsonKey];
+        const v = entry.values[mk.jsonKey];
         el.value = v !== null && v !== undefined ? v : "";
       }
     }
@@ -9150,26 +8825,33 @@
   };
 
   window.closePrevTestForm = function () {
-    var form = document.getElementById("prevTestForm");
+    const form = document.getElementById("prevTestForm");
     if (form) form.style.display = "none";
   };
 
   window.submitPreviousTest = function () {
     if (!editingAthleteId) return;
-    var dateEl = document.getElementById("prevTestDate");
-    var labelEl = document.getElementById("prevTestLabel");
+    const dateEl = document.getElementById("prevTestDate");
+    const labelEl = document.getElementById("prevTestLabel");
     if (!dateEl || !dateEl.value) {
       showToast("Please enter a test date.", "warn");
       return;
     }
 
-    var dateStr = dateEl.value;
-    var label = (labelEl && labelEl.value.trim()) || dateStr;
+    const dateStr = dateEl.value;
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(dateStr) ||
+      isNaN(new Date(dateStr + "T00:00:00").getTime())
+    ) {
+      showToast("Invalid date format. Please use YYYY-MM-DD.", "warn");
+      return;
+    }
+    const label = (labelEl && labelEl.value.trim()) || dateStr;
 
-    var vals = {};
-    for (var i = 0; i < TEST_METRIC_KEYS.length; i++) {
-      var mk = TEST_METRIC_KEYS[i];
-      var el = document.getElementById("prevTest_" + mk.jsonKey);
+    const vals = {};
+    for (let i = 0; i < TEST_METRIC_KEYS.length; i++) {
+      const mk = TEST_METRIC_KEYS[i];
+      const el = document.getElementById("prevTest_" + mk.jsonKey);
       if (el && el.value.trim() !== "") {
         vals[mk.jsonKey] = parseFloat(el.value);
       } else {
@@ -9178,16 +8860,16 @@
     }
 
     // If in edit mode, delete the original entry first
-    var editMode = document.getElementById("prevTestEditMode");
+    const editMode = document.getElementById("prevTestEditMode");
     if (editMode && editMode.value === "edit") {
-      var origDate = document.getElementById("prevTestOrigDate").value;
-      var origLabel = document.getElementById("prevTestOrigLabel").value;
+      const origDate = document.getElementById("prevTestOrigDate").value;
+      const origLabel = document.getElementById("prevTestOrigLabel").value;
       deleteTestEntry(editingAthleteId, origDate, origLabel);
     }
 
     saveTestEntry(editingAthleteId, dateStr, label, vals);
 
-    var isEdit = editMode && editMode.value === "edit";
+    const isEdit = editMode && editMode.value === "edit";
     showToast(
       (isEdit ? "Updated" : "Saved") + " test: " + label + " (" + dateStr + ")",
       "success",
@@ -9196,7 +8878,7 @@
     // Refresh edit panel & profile
     rebuildFromStorage();
     markTabsDirty();
-    var a = getAthleteById(editingAthleteId);
+    const a = getAthleteById(editingAthleteId);
     if (a) buildEditFields(a);
     renderProfile();
   };
@@ -9354,7 +9036,7 @@
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
       // Close topmost modal overlay first
-      var modals = document.querySelectorAll(".modal-overlay");
+      const modals = document.querySelectorAll(".modal-overlay");
       if (modals.length > 0) {
         modals[modals.length - 1].remove();
         return;
@@ -9440,7 +9122,7 @@
     }
 
     // Include test history
-    var testHist = getTestHistory();
+    const testHist = getTestHistory();
     if (Object.keys(testHist).length > 0) {
       exportData.test_history = testHist;
     }
@@ -9593,7 +9275,7 @@
         }
 
         /* --- Set new raw cache and reprocess --- */
-        window._rawDataCache = JSON.parse(JSON.stringify(rawData));
+        window._rawDataCache = structuredClone(rawData);
         window.CLUB = window._processData(rawData);
         reRenderAll();
         updateDataStatus();

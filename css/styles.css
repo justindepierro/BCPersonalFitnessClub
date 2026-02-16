@@ -816,6 +816,19 @@ select:focus,
   .leaderboard-grid {
     grid-template-columns: 1fr;
   }
+  .plan-day-body {
+    grid-template-columns: 1fr;
+  }
+  .scorecard-mini {
+    grid-template-columns: 1fr;
+  }
+  .cmp-profile-row.cols-2,
+  .cmp-profile-row.cols-3 {
+    grid-template-columns: 1fr;
+  }
+  .grp-chart-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
@@ -853,6 +866,54 @@ select:focus,
   .profile-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .plan-day-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+  .plan-day-focus {
+    margin-left: 0;
+  }
+  .constants-grid {
+    grid-template-columns: 1fr;
+  }
+  .cmp-summary-banner {
+    grid-template-columns: 1fr;
+  }
+
+  .data-mgmt-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .data-mgmt-left {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+  .data-mgmt-sep {
+    display: none;
+  }
+  .tabs::after {
+    content: "→ swipe";
+    position: sticky;
+    right: 0;
+    padding: 0.3rem 0.5rem;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    background: linear-gradient(90deg, transparent, var(--surface) 40%);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .edit-panel {
+    width: 100vw;
+    max-width: 100vw;
+  }
+  .edit-panel.open {
+    transform: translateX(0);
+  }
+  .edit-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1509,33 +1570,6 @@ select:focus,
   opacity: 0.3;
 }
 
-/* ---------- Additional responsive ---------- */
-@media (max-width: 900px) {
-  .plan-day-body {
-    grid-template-columns: 1fr;
-  }
-  .scorecard-mini {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .plan-day-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.35rem;
-  }
-  .plan-day-focus {
-    margin-left: 0;
-  }
-  .constants-grid {
-    grid-template-columns: 1fr;
-  }
-  .cmp-summary-banner {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* ---------- Absolute Grade System ---------- */
 /* Text colors for graded table cells */
 .grade-text-elite {
@@ -1832,6 +1866,39 @@ select:focus,
 }
 
 /* ---------- Compare & Improvement Tracker ---------- */
+#rosterSearch {
+  min-width: 160px;
+}
+.ref-positive {
+  color: var(--green);
+}
+.ref-negative {
+  color: var(--red);
+}
+.cmp-vs-label {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+.cmp-baseline-label {
+  font-weight: 600;
+  margin-right: 0.5rem;
+  font-size: 0.82rem;
+}
+#cmpBaselineSession {
+  min-width: 170px;
+}
+#cmpBaselineInfo {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-left: 0.5rem;
+}
+#snapshotSelect {
+  min-width: 150px;
+}
+#editAthleteSelect {
+  flex: 1;
+  min-width: 0;
+}
 .cmp-sub-filters {
   display: flex;
   align-items: center;
@@ -2343,52 +2410,6 @@ select:focus,
 @keyframes spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-/* ---------- Responsive for new features ---------- */
-@media (max-width: 900px) {
-  .cmp-profile-row.cols-2,
-  .cmp-profile-row.cols-3 {
-    grid-template-columns: 1fr;
-  }
-  .grp-chart-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .data-mgmt-inner {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .data-mgmt-left {
-    flex-wrap: wrap;
-    gap: 0.35rem;
-  }
-  .data-mgmt-sep {
-    display: none;
-  }
-  .tabs::after {
-    content: "→ swipe";
-    position: sticky;
-    right: 0;
-    padding: 0.3rem 0.5rem;
-    font-size: 0.65rem;
-    color: var(--text-muted);
-    background: linear-gradient(90deg, transparent, var(--surface) 40%);
-    pointer-events: none;
-    white-space: nowrap;
-  }
-  .edit-panel {
-    width: 100vw;
-    max-width: 100vw;
-  }
-  .edit-panel.open {
-    transform: translateX(0);
-  }
-  .edit-grid {
-    grid-template-columns: 1fr;
   }
 }
 
@@ -3057,10 +3078,10 @@ select:focus,
   white-space: nowrap;
 }
 .te-complete {
-  color: #4ade80;
+  color: var(--green);
 }
 .te-partial {
-  color: #facc15;
+  color: var(--yellow);
 }
 .te-none {
   color: var(--text-muted);
@@ -3146,13 +3167,13 @@ select:focus,
   background: rgba(74, 222, 128, 0.06) !important;
 }
 .ta-best-row td {
-  color: #4ade80 !important;
+  color: var(--green) !important;
 }
 .ta-worst-row {
   background: rgba(248, 113, 113, 0.06) !important;
 }
 .ta-worst-row td {
-  color: #f87171 !important;
+  color: var(--red) !important;
 }
 
 /* ---------- Inline Cell Editing ---------- */
@@ -3314,7 +3335,7 @@ select:focus,
   background: var(--surface);
 }
 .th-more-danger {
-  color: #f87171 !important;
+  color: var(--red) !important;
 }
 .th-more-danger:hover {
   background: rgba(248, 113, 113, 0.1) !important;

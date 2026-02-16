@@ -147,20 +147,6 @@
       >
         Groups
       </button>
-      <!-- BC Standards tab hidden — not ready yet
-      <button
-        class="tab"
-        role="tab"
-        id="tab-btn-benchmarks"
-        aria-selected="false"
-        aria-controls="tab-benchmarks"
-        tabindex="-1"
-        data-tab="benchmarks"
-        onclick="showTab('benchmarks')"
-      >
-        Standards
-      </button>
-      -->
       <button
         class="tab"
         role="tab"
@@ -215,7 +201,6 @@
             placeholder="Search athletes…"
             aria-label="Search athletes"
             oninput="debouncedOverview()"
-            style="min-width: 160px"
           />
           <select
             id="overviewPosFilter"
@@ -269,19 +254,6 @@
             />
             <span>Relatives</span>
           </label>
-          <!-- BC Standards toggle hidden — not ready yet
-          <label
-            class="toggle-label overview-toggle"
-            title="Use Burke Catholic program-specific standards (calibrated for our athlete pool)"
-          >
-            <input
-              type="checkbox"
-              id="overviewBCToggle"
-              onchange="toggleBCStandards(this.checked)"
-            />
-            <span>BC Stds</span>
-          </label>
-          -->
           <label
             class="toggle-label overview-toggle"
             title="Adjust performance standards based on each athlete's grade level (training age)"
@@ -634,8 +606,8 @@
                     Rate of velocity change during transition.
                     <strong>Positive = still speeding up.</strong> Near-zero
                     means plateauing. This is color-coded:
-                    <span style="color: #4ade80">green = positive</span>,
-                    <span style="color: #f87171">red = negative</span>
+                    <span class="ref-positive">green = positive</span>,
+                    <span class="ref-negative">red = negative</span>
                     (decelerating).
                   </p>
                 </div>
@@ -675,8 +647,8 @@
                   <p>
                     Average horizontal force during transition. Usually small or
                     slightly positive — athlete is near top speed. Color-coded:
-                    <span style="color: #4ade80">green if positive</span>,
-                    <span style="color: #f87171">red if negative</span>.
+                    <span class="ref-positive">green if positive</span>,
+                    <span class="ref-negative">red if negative</span>.
                   </p>
                 </div>
                 <div class="ref-item">
@@ -1382,7 +1354,7 @@
           >
             <option value="">— Athlete A —</option>
           </select>
-          <span style="color: var(--text-muted); font-weight: 700">vs</span>
+          <span class="cmp-vs-label">vs</span>
           <select
             id="cmpB"
             aria-label="Select athlete B"
@@ -1403,22 +1375,16 @@
         <div class="cmp-sub-filters">
           <label
             for="cmpBaselineSession"
-            style="font-weight: 600; margin-right: 0.5rem; font-size: 0.82rem"
+            class="cmp-baseline-label"
             >Compare against:</label
           >
           <select
             id="cmpBaselineSession"
             onchange="renderComparison()"
-            style="min-width: 170px"
           >
             <option value="">— pick baseline test —</option>
           </select>
           <span
-            style="
-              font-size: 0.72rem;
-              color: var(--text-muted);
-              margin-left: 0.5rem;
-            "
             id="cmpBaselineInfo"
           ></span>
         </div>
@@ -1448,64 +1414,6 @@
           </div>
         </div>
         <div id="groupDashContent"></div>
-      </section>
-
-      <!-- ——— TAB: Benchmarks (hidden — not ready yet) ——— -->
-      <section
-        id="tab-benchmarks"
-        class="tab-panel"
-        role="tabpanel"
-        aria-labelledby="tab-btn-benchmarks"
-        style="display: none !important"
-      >
-        <div class="section-header">
-          <h2>Performance Standards</h2>
-        </div>
-        <p class="section-desc">
-          Absolute HS performance standards by sport and position group. Grades
-          are based on published norms (NSCA, state combine data, S&amp;C
-          literature) with 5 tiers: Elite, Excellent, Good, Average, Below Avg.
-          Filter by sport, group, and metric to drill down.
-        </p>
-        <div class="filters">
-          <select
-            id="bmSport"
-            aria-label="Sport"
-            onchange="updateBmGroupOptions(); renderBenchmarks()"
-          >
-            <!-- Dynamically populated by renderBenchmarks() -->
-          </select>
-          <select
-            id="bmGroup"
-            aria-label="Position group"
-            onchange="renderBenchmarks()"
-          >
-            <option value="all">All Groups</option>
-          </select>
-          <select
-            id="bmMetric"
-            aria-label="Metric"
-            onchange="renderBenchmarks()"
-          >
-            <option value="all">All Metrics</option>
-            <option value="forty">40-Yard Dash</option>
-            <option value="bench">Bench 1RM</option>
-            <option value="squat">Squat 1RM</option>
-            <option value="relBench">Relative Bench</option>
-            <option value="relSquat">Relative Squat</option>
-            <option value="vert">Vertical Jump</option>
-            <option value="broad">Broad Jump</option>
-            <option value="medball">Med Ball Throw</option>
-            <option value="mbRel">MB Relative</option>
-            <option value="vMax">Max Velocity</option>
-            <option value="v10Max">Best 10yd Velocity</option>
-            <option value="peakPower">Peak Power</option>
-            <option value="relPeakPower">Rel Peak Power</option>
-            <option value="F1">Sprint Force</option>
-            <option value="momMax">Peak Momentum</option>
-          </select>
-        </div>
-        <div id="benchmarksContent"></div>
       </section>
 
       <!-- ——— TAB: Testing Log ——— -->
@@ -1586,7 +1494,6 @@
             id="snapshotSelect"
             aria-label="Select snapshot"
             class="input"
-            style="min-width: 150px"
           >
             <option value="">— Load Snapshot —</option>
           </select>
@@ -1658,19 +1565,6 @@
             📥 Import JSON
           </button>
           <span class="data-mgmt-sep">|</span>
-          <!-- BC Standards toggle hidden — not ready yet
-          <label
-            class="toggle-label"
-            title="Use Burke Catholic program-specific standards (calibrated for our athlete pool)"
-          >
-            <input
-              type="checkbox"
-              id="bcStdToggle"
-              onchange="toggleBCStandards(this.checked)"
-            />
-            <span>BC Standards</span>
-          </label>
-          -->
           <label
             class="toggle-label"
             title="Adjust performance standards based on each athlete's grade level (training age)"
@@ -1742,7 +1636,6 @@
           class="input"
           aria-label="Select athlete to edit"
           onchange="editPanelSelectAthlete(this.value)"
-          style="flex: 1; min-width: 0"
         ></select>
         <button
           class="btn btn-sm"

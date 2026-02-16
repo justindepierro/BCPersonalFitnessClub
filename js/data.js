@@ -95,14 +95,18 @@
   }
 
   /* ---------- Statistical helpers ---------- */
+  function filterValid(arr) {
+    return arr.filter((v) => v !== null && v !== undefined);
+  }
+
   function mean(arr) {
-    const vals = arr.filter((v) => v !== null && v !== undefined);
+    const vals = filterValid(arr);
     if (vals.length === 0) return null;
     return vals.reduce((s, v) => s + v, 0) / vals.length;
   }
 
   function stddev(arr) {
-    const vals = arr.filter((v) => v !== null && v !== undefined);
+    const vals = filterValid(arr);
     if (vals.length < 2) return null;
     const m = vals.reduce((s, v) => s + v, 0) / vals.length;
     // Bessel's correction (N-1): correct for small-sample bias
@@ -757,20 +761,21 @@
     return { tier: "below", label: "Below Avg", score: 1 };
   }
 
+  /* ---------- Overall grade thresholds ---------- */
+  const OVERALL_GRADE_MAP = [
+    { min: 4.5, tier: "elite", label: "Elite" },
+    { min: 3.5, tier: "excellent", label: "Excellent" },
+    { min: 2.5, tier: "good", label: "Good" },
+    { min: 1.5, tier: "average", label: "Average" },
+    { min: -Infinity, tier: "below", label: "Below Avg" },
+  ];
+
   function overallGradeTier(score) {
-    if (score >= 4.5) return "elite";
-    if (score >= 3.5) return "excellent";
-    if (score >= 2.5) return "good";
-    if (score >= 1.5) return "average";
-    return "below";
+    return (OVERALL_GRADE_MAP.find((g) => score >= g.min) || OVERALL_GRADE_MAP[4]).tier;
   }
 
   function overallGradeLabel(score) {
-    if (score >= 4.5) return "Elite";
-    if (score >= 3.5) return "Excellent";
-    if (score >= 2.5) return "Good";
-    if (score >= 1.5) return "Average";
-    return "Below Avg";
+    return (OVERALL_GRADE_MAP.find((g) => score >= g.min) || OVERALL_GRADE_MAP[4]).label;
   }
 
   /* ---------- Process raw JSON ---------- */
@@ -826,7 +831,6 @@
 
       // Unit conversions
       const massKg = wt !== null ? rd(wt * C.LB_TO_KG, 2) : null;
-      const htCm = ht !== null ? rd(ht * C.IN_TO_CM, 1) : null;
       const vertCm = vert !== null ? rd(vert * C.IN_TO_CM, 1) : null;
       const broadCm = broad !== null ? rd(broad * C.IN_TO_CM, 1) : null;
       const benchKg = bench !== null ? rd(bench * C.LB_TO_KG, 1) : null;
@@ -920,7 +924,6 @@
         trainingAge,
         group,
         height: ht,
-        heightCm: htCm,
         weight: wt,
         massKg,
         sprint020: s020,
@@ -1157,42 +1160,6 @@
       }
     }
 
-    // Group standards
-    // Collect all active groups dynamically from athletes
-    const groupStandards = {};
-    const stdMetricKeys = [
-      "medball",
-      "bench",
-      "squat",
-      "vert",
-      "broad",
-      "forty",
-    ];
-    const allGroups = new Set(athletes.map((a) => a.group));
-    for (const grp of allGroups) {
-      const ga = athletes.filter((a) => a.group === grp);
-      if (ga.length === 0) continue;
-      const stds = {};
-      for (const mKey of stdMetricKeys) {
-        const vals = ga
-          .map((a) => a[mKey])
-          .filter((v) => v !== null)
-          .sort((a, b) => a - b);
-        if (vals.length === 0) continue;
-        stds[mKey] = {
-          n: vals.length,
-          min: vals[0],
-          max: vals[vals.length - 1],
-          p10: pctValue(vals, 10),
-          p25: pctValue(vals, 25),
-          p50: pctValue(vals, 50),
-          p75: pctValue(vals, 75),
-          p90: pctValue(vals, 90),
-        };
-      }
-      groupStandards[grp] = stds;
-    }
-
     // Cohort percentile ranking
     // Cohort = same position-group + weight tier + height tier + grade band
     // Provides "how does this athlete compare to peers with a similar body profile?"
@@ -1300,133 +1267,39 @@
         n: countWith("forty"),
         msg: "Sprint data is limited — velocity and force metrics should be interpreted cautiously.",
       });
-    // Flag suspicious individual values
+    // Flag suspicious individual values via data-driven rules
+    const FLAG_RULES = [
+      { test: (a) => a.bench !== null && a.squat !== null && a.bench > a.squat,
+        msg: (a) => "Bench (" + a.bench + ") > Squat (" + a.squat + ") — verify data." },
+      { test: (a) => a.squat !== null && a.weight !== null && a.squat / a.weight < 0.4,
+        msg: (a) => "Squat (" + a.squat + " lb) is very low relative to body weight (" + a.weight + " lb) — possible data entry error." },
+      { test: (a) => a.weight !== null && (a.weight < 80 || a.weight > 400),
+        msg: (a) => "Weight (" + a.weight + " lb) is outside plausible HS range (80–400) — verify data." },
+      { test: (a) => a.height !== null && (a.height < 54 || a.height > 84),
+        msg: (a) => "Height (" + a.height + " in) is outside plausible HS range (54–84\u2033) — verify data." },
+      { test: (a) => a.forty !== null && (a.forty < 4.0 || a.forty > 8.0),
+        msg: (a) => "40-yd time (" + a.forty + " s) is outside plausible HS range (4.0–8.0) — verify data." },
+      { test: (a) => a.bench !== null && a.weight !== null && a.bench / a.weight > 2.5,
+        msg: (a) => "Bench (" + a.bench + " lb) is >2.5× body weight — exceptional or data error." },
+      { test: (a) => a.squat !== null && a.weight !== null && a.squat / a.weight > 3.5,
+        msg: (a) => "Squat (" + a.squat + " lb) is >3.5× body weight — exceptional or data error." },
+      { test: (a) => a.vert !== null && a.vert > 48,
+        msg: (a) => "Vertical (" + a.vert + " in) exceeds 48\u2033 — world-class level, verify data." },
+      { test: (a) => a.proAgility !== null && (a.proAgility < 3.5 || a.proAgility > 7.0),
+        msg: (a) => "5-10-5 (" + a.proAgility + " s) is outside plausible HS range (3.5–7.0) — verify data." },
+      { test: (a) => a.lDrill !== null && (a.lDrill < 5.5 || a.lDrill > 10.0),
+        msg: (a) => "L-Drill (" + a.lDrill + " s) is outside plausible HS range (5.5–10.0) — verify data." },
+      { test: (a) => a.backpedal !== null && (a.backpedal < 2.5 || a.backpedal > 6.0),
+        msg: (a) => "Backpedal (" + a.backpedal + " s) is outside plausible HS range (2.5–6.0) — verify data." },
+      { test: (a) => a.wDrill !== null && (a.wDrill < 3.5 || a.wDrill > 8.0),
+        msg: (a) => "W-Drill (" + a.wDrill + " s) is outside plausible HS range (3.5–8.0) — verify data." },
+    ];
     const flags = [];
     for (const a of athletes) {
-      if (a.bench !== null && a.squat !== null && a.bench > a.squat) {
-        flags.push({
-          athlete: a.name,
-          id: a.id,
-          msg:
-            "Bench (" + a.bench + ") > Squat (" + a.squat + ") — verify data.",
-        });
-      }
-      if (a.squat !== null && a.weight !== null && a.squat / a.weight < 0.4) {
-        flags.push({
-          athlete: a.name,
-          id: a.id,
-          msg:
-            "Squat (" +
-            a.squat +
-            " lb) is very low relative to body weight (" +
-            a.weight +
-            " lb) — possible data entry error.",
-        });
-      }
-      // Unrealistic body metrics
-      if (a.weight !== null && (a.weight < 80 || a.weight > 400)) {
-        flags.push({
-          athlete: a.name,
-          id: a.id,
-          msg:
-            "Weight (" +
-            a.weight +
-            " lb) is outside plausible HS range (80–400) — verify data.",
-        });
-      }
-      if (a.height !== null && (a.height < 54 || a.height > 84)) {
-        flags.push({
-          athlete: a.name,
-          id: a.id,
-          msg:
-            "Height (" +
-            a.height +
-            " in) is outside plausible HS range (54–84\u2033) — verify data.",
-        });
-      }
-      // Unrealistic sprint
-      if (a.forty !== null && (a.forty < 4.0 || a.forty > 8.0)) {
-        flags.push({
-          athlete: a.name,
-          id: a.id,
-          msg:
-            "40-yd time (" +
-            a.forty +
-            " s) is outside plausible HS range (4.0–8.0) — verify data.",
-        });
-      }
-      // Unrealistic lifts relative to bodyweight
-      if (a.bench !== null && a.weight !== null && a.bench / a.weight > 2.5) {
-        flags.push({
-          athlete: a.name,
-          id: a.id,
-          msg:
-            "Bench (" +
-            a.bench +
-            " lb) is >2.5× body weight — exceptional or data error.",
-        });
-      }
-      if (a.squat !== null && a.weight !== null && a.squat / a.weight > 3.5) {
-        flags.push({
-          athlete: a.name,
-          id: a.id,
-          msg:
-            "Squat (" +
-            a.squat +
-            " lb) is >3.5× body weight — exceptional or data error.",
-        });
-      }
-      // Unrealistic vertical
-      if (a.vert !== null && a.vert > 48) {
-        flags.push({
-          athlete: a.name,
-          id: a.id,
-          msg:
-            "Vertical (" +
-            a.vert +
-            " in) exceeds 48\u2033 — world-class level, verify data.",
-        });
-      }
-      // Unrealistic agility times
-      if (a.proAgility !== null && (a.proAgility < 3.5 || a.proAgility > 7.0)) {
-        flags.push({
-          athlete: a.name,
-          id: a.id,
-          msg:
-            "5-10-5 (" +
-            a.proAgility +
-            " s) is outside plausible HS range (3.5–7.0) — verify data.",
-        });
-      }
-      if (a.lDrill !== null && (a.lDrill < 5.5 || a.lDrill > 10.0)) {
-        flags.push({
-          athlete: a.name,
-          id: a.id,
-          msg:
-            "L-Drill (" +
-            a.lDrill +
-            " s) is outside plausible HS range (5.5–10.0) — verify data.",
-        });
-      }
-      if (a.backpedal !== null && (a.backpedal < 2.5 || a.backpedal > 6.0)) {
-        flags.push({
-          athlete: a.name,
-          id: a.id,
-          msg:
-            "Backpedal (" +
-            a.backpedal +
-            " s) is outside plausible HS range (2.5–6.0) — verify data.",
-        });
-      }
-      if (a.wDrill !== null && (a.wDrill < 3.5 || a.wDrill > 8.0)) {
-        flags.push({
-          athlete: a.name,
-          id: a.id,
-          msg:
-            "W-Drill (" +
-            a.wDrill +
-            " s) is outside plausible HS range (3.5–8.0) — verify data.",
-        });
+      for (const rule of FLAG_RULES) {
+        if (rule.test(a)) {
+          flags.push({ athlete: a.name, id: a.id, msg: rule.msg(a) });
+        }
       }
     }
 
@@ -1441,12 +1314,8 @@
       bodyAdjusted: bodyAdj,
       cohortMode: cohortMode,
       positions: [...positions].sort(),
-      groupStandards,
-      stats: statsSummary,
-      groupedMB,
       testingLog,
       testingWeekPlan: raw.testing_week_plan || [],
-      benchmarks: raw.benchmarks || {},
       scorecardMetrics,
       warnings,
       flags,
