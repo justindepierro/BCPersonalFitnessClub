@@ -27,7 +27,6 @@
     getStaleKeys,
     METRIC_INFO,
     TEST_METRIC_KEYS,
-    GRADE_TIER_LABELS,
   } = APP;
 
   /* ========== LEADERBOARDS ========== */
@@ -749,5 +748,8 @@
   APP.renderers["log"] = window.renderTestingLog;
   APP.renderers["plan"] = renderTestingWeekPlan;
   APP.renderers["constants"] = renderConstants;
-  Object.assign(APP, { renderSprintAnalysis, renderStrengthPower, renderTestingWeekPlan, renderConstants, handleSort, SPRINT_GRADE_KEYS, STRENGTH_GRADE_KEYS });
+  Object.assign(APP, {
+    renderSprintAnalysis, renderStrengthPower, renderTestingWeekPlan,
+    renderConstants, handleSort, SPRINT_GRADE_KEYS, STRENGTH_GRADE_KEYS,
+  });
 })();

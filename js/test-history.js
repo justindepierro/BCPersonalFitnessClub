@@ -98,11 +98,6 @@
     });
   }
 
-  /* ---------- Shared grade tier constants (single source of truth) ---------- */
-  /* These are referenced by donut charts, group dashboards, etc.
-     Tier names, labels, and scores come from HS_STANDARDS in data.js.
-     Colors are presentation-only, defined once here. */
-
   function getTestHistory() {
     if (APP._testHistoryCache !== null) return APP._testHistoryCache;
     APP._testHistoryCache = safeLSGet("lc_test_history", {});
@@ -148,8 +143,7 @@
     return vals;
   }
 
-  /* ---------- Safe localStorage (quota-aware) ---------- */
-
+  /* ---------- Test Notes ---------- */
   function getTestNotes() {
     return safeLSGet("lc_test_notes", {});
   }
@@ -365,5 +359,12 @@
     APP._staleKeysCache[athleteId] = stale;
     return stale;
   }
-  Object.assign(APP, { getWeekKey, fmtWeekLabel, getWeightLog, saveWeightLog, logWeight, getWeightHistory, getTestHistory, setTestHistory, getAthleteHistory, saveTestEntry, deleteTestEntry, currentTestValues, getTestNotes, setTestNotes, noteKey, computeTestAverages, buildAvgSummaryHTML, buildAvgTableRows, getPrevTestValues, getStaleKeys });
+  Object.assign(APP, {
+    getWeekKey, fmtWeekLabel, getWeightLog, saveWeightLog, logWeight,
+    getWeightHistory, getTestHistory, setTestHistory, getAthleteHistory,
+    saveTestEntry, deleteTestEntry, currentTestValues,
+    getTestNotes, setTestNotes, noteKey,
+    computeTestAverages, buildAvgSummaryHTML, buildAvgTableRows,
+    getPrevTestValues, getStaleKeys,
+  });
 })();

@@ -119,8 +119,6 @@
     return `<div class="pct-bar-wrap"><div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${pct}%;background:${col}"></div></div></div>`;
   }
 
-  /* Get the most recent previous test value for a given metric key (jsonKey) */
-
   function tdNum(val, decimals, opts) {
     if (val === null || val === undefined) return '<td class="num na">—</td>';
     const stale = opts && opts.stale;
@@ -181,5 +179,10 @@
       <span class="grade-score">${og.score}</span>
     </td>`;
   }
-  Object.assign(APP, { esc, escJs, debounce, sortedAthletes, fmtHeight, ordGrade, tierLabelFromAvg, fmt, fmtZ, formatLogDate, buildAgeFactorRows, tierBadge, pctBarHTML, tdNum, heatBg, tdGraded, tdNumColored, gradeBadge, overallGradeCell });
+  Object.assign(APP, {
+    esc, escJs, debounce, sortedAthletes, fmtHeight, ordGrade,
+    tierLabelFromAvg, fmt, fmtZ, formatLogDate, buildAgeFactorRows,
+    tierBadge, pctBarHTML, tdNum, heatBg, tdGraded, tdNumColored,
+    gradeBadge, overallGradeCell,
+  });
 })();

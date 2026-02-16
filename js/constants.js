@@ -103,10 +103,6 @@
     },
   ];
 
-  /* ---------- Test History helpers ---------- */
-
-  /* Compute team averages, min, max for a set of athlete values */
-
   /* ---------- Metric Descriptions (for tooltips) ---------- */
   const METRIC_INFO = {
     bench: {

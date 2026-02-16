@@ -10,14 +10,12 @@
     escJs,
     ordGrade,
     sortedAthletes,
-    fmt,
     getAthleteById,
     showToast,
     safeLSGet,
     safeLSSet,
     markTabsDirty,
     renderIfDirty,
-    chartAnimOpts,
     getAthleteHistory,
     currentTestValues,
     saveTestEntry,
@@ -216,9 +214,6 @@
       section: "Agility",
     },
   ];
-
-  /* ---------- Toast Notifications ---------- */
-
 
   /* ---------- Edit Panel helpers ---------- */
   function populateEditAthleteSelect() {
@@ -558,7 +553,7 @@
     }
 
     // Reprocess data
-    APP.rebuildFromStorage();
+    rebuildFromStorage();
 
     // Skip chart animations during auto-save re-renders
     APP._skipChartAnimation = true;
@@ -567,7 +562,7 @@
     markTabsDirty();
     const activeTab = document.querySelector(".tab.active");
     if (activeTab) renderIfDirty(activeTab.dataset.tab);
-    APP.updateDataStatus();
+    updateDataStatus();
 
     // Keep athlete selected & profile visible
     const athSel = document.getElementById("athleteSelect");
@@ -647,7 +642,7 @@
       "Saved test entry: " + label.trim() + " (" + dateStr + ")",
       "success",
     );
-    APP.buildEditFields(a); // refresh the edit panel
+    buildEditFields(a); // refresh the edit panel
     renderProfile();
   };
 
@@ -770,10 +765,10 @@
     );
 
     // Refresh edit panel & profile
-    APP.rebuildFromStorage();
+    rebuildFromStorage();
     markTabsDirty();
     const a = getAthleteById(APP.editingAthleteId);
-    if (a) APP.buildEditFields(a);
+    if (a) buildEditFields(a);
     renderProfile();
   };
 
@@ -797,7 +792,7 @@
     document.getElementById("editPanelTitle").textContent = "Edit: " + a.name;
 
     // Build fields
-    APP.buildEditFields(a);
+    buildEditFields(a);
 
     // Open panel with animation
     document.getElementById("editPanel").classList.add("open");
@@ -871,14 +866,14 @@
     safeLSSet("lc_edits", JSON.stringify(edits));
 
     // Reprocess from original + remaining edits
-    APP.rebuildFromStorage();
-    APP.reRenderAll();
-    APP.updateDataStatus();
+    rebuildFromStorage();
+    reRenderAll();
+    updateDataStatus();
 
     // Refresh the panel with original data
     const a = getAthleteById(APP.editingAthleteId);
     if (a) {
-      APP.buildEditFields(a);
+      buildEditFields(a);
       document.getElementById("editPanelTitle").textContent = "Edit: " + a.name;
       populateEditAthleteSelect();
       document.getElementById("editAthleteSelect").value = APP.editingAthleteId;
@@ -1171,8 +1166,8 @@
         /* --- Set new raw cache and reprocess --- */
         window._rawDataCache = structuredClone(rawData);
         window.CLUB = window._processData(rawData);
-        APP.reRenderAll();
-        APP.updateDataStatus();
+        reRenderAll();
+        updateDataStatus();
         showToast(
           "Imported " + rawAthletes.length + " athletes from " + file.name,
           "success",
@@ -1273,7 +1268,7 @@
       });
 
     // Populate snapshot selector
-    APP.refreshSnapshotList();
+    refreshSnapshotList();
 
     // Only render the visible tab; mark the rest dirty for lazy rendering
     markTabsDirty();
@@ -1281,7 +1276,7 @@
     APP._tabDirty["overview"] = false;
     renderConstants();
     APP._tabDirty["constants"] = false;
-    APP.updateDataStatus();
+    updateDataStatus();
 
     // Sortable bindings (delegated to survive thead rebuilds)
     document.querySelectorAll(".data-table.sortable").forEach((table) => {
