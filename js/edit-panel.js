@@ -174,6 +174,16 @@
       section: "Sprint",
     },
     {
+      key: "sprintFly10",
+      jsonKey: "sprint_fly10",
+      label: "10y Fly (s)",
+      type: "number",
+      step: "0.01",
+      min: "0.5",
+      max: "3.0",
+      section: "Sprint",
+    },
+    {
       key: "proAgility",
       jsonKey: "pro_agility",
       label: "5-10-5 Shuttle (s)",
@@ -546,6 +556,20 @@
       });
     }
     safeLSSet("lc_edits", JSON.stringify(edits));
+
+    // Auto-timestamp: create/update a test history entry for today's edits
+    if (Object.keys(changes).length > 0) {
+      var today = new Date().toISOString().slice(0, 10);
+      var label = "Edit " + today;
+      var histValues = {};
+      // Map edit field jsonKeys to test history jsonKeys
+      for (var ck in changes) {
+        if (changes[ck] !== null) histValues[ck] = changes[ck];
+      }
+      if (Object.keys(histValues).length > 0) {
+        saveTestEntry(APP.editingAthleteId, today, label, histValues);
+      }
+    }
 
     // Also log weight to weekly weight log if weight changed
     if (changes.weight_lb !== undefined && changes.weight_lb !== null) {
@@ -1204,6 +1228,7 @@
       [["overviewRelToggle"], "lc_show_relatives"],
       [["bodyAdjToggle", "overviewBodyToggle"], "lc_body_adjusted"],
       [["cohortToggle", "overviewCohortToggle"], "lc_cohort_mode"],
+      [["overviewPRToggle"], "lc_show_prs"],
     ];
     for (const [ids, key] of togglePairs) {
       for (const id of ids) restoreToggle(id, key);

@@ -122,9 +122,10 @@
   function tdNum(val, decimals, opts) {
     if (val === null || val === undefined) return '<td class="num na">—</td>';
     const stale = opts && opts.stale;
+    const pr = opts && opts.pr;
     const v = fmt(val, decimals);
-    const cls = stale ? "num stale-val" : "num";
-    const title = stale ? ' title="Previous test data"' : "";
+    const cls = pr ? "num pr-val" : stale ? "num stale-val" : "num";
+    const title = pr ? ' title="Personal record"' : stale ? ' title="Previous test data"' : "";
     return `<td class="${cls}"${title}>${v}</td>`;
   }
 

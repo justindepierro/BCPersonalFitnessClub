@@ -22,6 +22,7 @@
     markTabsDirty,
     getPrevTestValues,
     getStaleKeys,
+    getBestValues,
     getWeekKey,
     fmtWeekLabel,
     logWeight,
@@ -32,6 +33,11 @@
   window.debouncedOverview = debounce(function () {
     renderOverview();
   }, 250);
+
+  window.toggleShowPRs = function (on) {
+    localStorage.setItem("lc_show_prs", on ? "true" : "false");
+    renderOverview();
+  };
 
   window.renderOverview = function () {
     const D = window.CLUB;
@@ -236,8 +242,17 @@
         const prev = getPrevTestValues(a.id);
         const staleKeys = getStaleKeys(a.id);
         const _stale = { stale: true };
+        const showPR = localStorage.getItem("lc_show_prs") === "true";
+        const prVals = showPR ? getBestValues(a.id) : null;
+        const _pr = { pr: true };
         // Helper: render current value (stale-styled if from older test) or fall back to previous
+        // In PR mode, show best-ever value with PR styling
         function cellG(key, dec, grade) {
+          if (showPR && prVals && prVals[key] !== null && prVals[key] !== undefined) {
+            // Show PR value; highlight if different from current
+            var isPRDiff = a[key] === null || a[key] === undefined || prVals[key] !== a[key];
+            return isPRDiff ? tdNum(prVals[key], dec, _pr) : tdGraded(a[key], dec, grade);
+          }
           if (a[key] !== null && a[key] !== undefined) {
             return staleKeys.has(key)
               ? tdGraded(a[key], dec, grade, _stale)
@@ -248,6 +263,10 @@
           return '<td class="num na">—</td>';
         }
         function cellN(key, dec) {
+          if (showPR && prVals && prVals[key] !== null && prVals[key] !== undefined) {
+            var isPRDiff = a[key] === null || a[key] === undefined || prVals[key] !== a[key];
+            return isPRDiff ? tdNum(prVals[key], dec, _pr) : tdNum(a[key], dec);
+          }
           if (a[key] !== null && a[key] !== undefined) {
             return staleKeys.has(key)
               ? tdNum(a[key], dec, _stale)

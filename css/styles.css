@@ -686,6 +686,10 @@ select:focus,
   font-style: italic;
   opacity: 0.6;
 }
+.data-table td.pr-val {
+  color: var(--purple, #a78bfa);
+  font-weight: 700;
+}
 
 /* Positive / Negative z-score colouring */
 .z-pos {

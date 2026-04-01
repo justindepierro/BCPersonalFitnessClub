@@ -334,6 +334,17 @@
             />
             <span>Cohort</span>
           </label>
+          <label
+            class="toggle-label overview-toggle"
+            title="Show personal records (all-time bests) instead of current values"
+          >
+            <input
+              type="checkbox"
+              id="overviewPRToggle"
+              onchange="toggleShowPRs(this.checked)"
+            />
+            <span>PRs</span>
+          </label>
         </div>
         <div class="table-wrap roster-table-wrap">
           <table id="rosterTable" class="data-table sortable">
@@ -846,6 +857,12 @@
                   30–40 (s)
                 </th>
                 <th
+                  data-sort="sprintFly10"
+                  title="10-yard flying start sprint time. Measures pure top-end speed without acceleration."
+                >
+                  Fly 10 (s)
+                </th>
+                <th
                   data-sort="forty"
                   title="Total 40-yard time = sum of all splits."
                 >
@@ -870,14 +887,20 @@
                   v3 (m/s)
                 </th>
                 <th
+                  data-sort="vFly10"
+                  title="Velocity from 10-yard flying sprint (m/s). Pure max velocity indicator."
+                >
+                  vFly (m/s)
+                </th>
+                <th
                   data-sort="vMax"
-                  title="Highest velocity across all segments. The athlete's raw top speed."
+                  title="Highest velocity across all segments including fly 10. The athlete's raw top speed."
                 >
                   vMax
                 </th>
                 <th
                   data-sort="v10Max"
-                  title="Best 10-yd velocity = max(v2, v3). Pure top-end speed without 20-yd acceleration bias."
+                  title="Best 10-yd velocity = max(v2, v3, vFly10). Pure top-end speed without 20-yd acceleration bias."
                 >
                   v10 Best
                 </th>

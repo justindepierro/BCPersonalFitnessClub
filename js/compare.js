@@ -222,7 +222,9 @@
             const v1 = C.TWENTY_YD_M / s020,
               v2 = C.TEN_YD_M / s2030,
               v3 = C.TEN_YD_M / s3040;
-            baseVal = +Math.max(v1, v2, v3).toFixed(3);
+            const sFly10 = baseline.sprint_fly10;
+            const vFly = sFly10 != null && sFly10 > 0 ? C.TEN_YD_M / sFly10 : 0;
+            baseVal = +Math.max(v1, v2, v3, vFly).toFixed(3);
           }
           if (m.key === "F1" && hasSprints && massKg != null) {
             const v1 = C.TWENTY_YD_M / s020;
@@ -231,7 +233,9 @@
           if (m.key === "momMax" && hasSprints && massKg != null) {
             const v2 = C.TEN_YD_M / s2030,
               v3 = C.TEN_YD_M / s3040;
-            baseVal = +(massKg * Math.max(v2, v3)).toFixed(1);
+            const sFly10 = baseline.sprint_fly10;
+            const vFly = sFly10 != null && sFly10 > 0 ? C.TEN_YD_M / sFly10 : 0;
+            baseVal = +(massKg * Math.max(v2, v3, vFly)).toFixed(1);
           }
           if (m.key === "peakPower" && bVert != null && massKg != null) {
             baseVal = +(

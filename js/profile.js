@@ -101,6 +101,7 @@
         ${metricCard("0–20 yd", a.sprint020, "s", a.v1 ? "v=" + a.v1 + " m/s" : null)}
         ${metricCard("20–30 yd", a.sprint2030, "s", a.v2 ? "v=" + a.v2 + " m/s" : null)}
         ${metricCard("30–40 yd", a.sprint3040, "s", a.v3 ? "v=" + a.v3 + " m/s" : null)}
+        ${metricCard("10y Fly", a.sprintFly10, "s", a.vFly10 ? "v=" + a.vFly10 + " m/s" : null)}
         ${metricCard("40 yd Total", a.forty, "s", a.vMax ? "vMax=" + a.vMax + " m/s" : null, a.grades.forty)}
         ${metricCard("Max Velocity", a.vMax, "m/s", null, a.grades.vMax)}
         ${metricCard("Best 10yd Vel", a.v10Max, "m/s", null, a.grades.v10Max)}
@@ -448,10 +449,15 @@
 
     const phases = ["0–20 yd", "20–30 yd", "30–40 yd"];
     const athleteVels = [a.v1, a.v2, a.v3];
+    if (a.vFly10 !== null && a.vFly10 !== undefined) {
+      phases.push("Fly 10");
+      athleteVels.push(a.vFly10);
+    }
 
     // Compute team averages
     const teamAvgs = [null, null, null];
     let count = [0, 0, 0];
+    let fly10Sum = 0, fly10Count = 0;
     for (const t of D.athletes) {
       if (t.v1 !== null) {
         teamAvgs[0] = (teamAvgs[0] || 0) + t.v1;
@@ -465,9 +471,16 @@
         teamAvgs[2] = (teamAvgs[2] || 0) + t.v3;
         count[2]++;
       }
+      if (t.vFly10 !== null && t.vFly10 !== undefined) {
+        fly10Sum += t.vFly10;
+        fly10Count++;
+      }
     }
     for (let i = 0; i < 3; i++) {
       if (count[i] > 0) teamAvgs[i] = +(teamAvgs[i] / count[i]).toFixed(2);
+    }
+    if (a.vFly10 !== null && a.vFly10 !== undefined) {
+      teamAvgs.push(fly10Count > 0 ? +(fly10Sum / fly10Count).toFixed(2) : null);
     }
 
     var T = APP.getChartTheme();

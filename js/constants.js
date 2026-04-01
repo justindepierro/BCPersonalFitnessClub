@@ -74,6 +74,13 @@
       lower: true,
     },
     {
+      key: "sprintFly10",
+      jsonKey: "sprint_fly10",
+      label: "10y Fly",
+      unit: "s",
+      lower: true,
+    },
+    {
       key: "proAgility",
       jsonKey: "pro_agility",
       label: "5-10-5",
@@ -440,6 +447,20 @@
       measures: "Time for final 10 yards",
       tellsYou:
         "Top-end speed maintenance. If slower than 20-30 split, athlete is decelerating.",
+    },
+    sprintFly10: {
+      name: "10-Yard Fly",
+      unit: "s",
+      measures: "Flying 10-yard sprint time (rolling start)",
+      tellsYou:
+        "Pure top-end speed without acceleration bias. Compared against 30-40 split to determine true max velocity.",
+    },
+    vFly10: {
+      name: "Fly 10 Velocity",
+      unit: "m/s",
+      measures: "Velocity during flying 10-yard sprint",
+      tellsYou:
+        "Speed from a rolling start — isolates top-end speed. If faster than v3 (30-40), this is the athlete's true max velocity.",
     },
   };
 

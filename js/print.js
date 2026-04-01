@@ -482,7 +482,7 @@
       new Date().toLocaleDateString() +
       "</span></div>";
     html +=
-      '<table class="print-data-table"><thead><tr><th>Athlete</th><th>Pos</th><th>Mass</th><th>0-20</th><th>20-30</th><th>30-40</th><th>40yd</th><th>vMax</th><th>v10</th><th>MPH</th><th>F1</th><th>momMax</th><th>Pow1</th></tr></thead><tbody>';
+      '<table class="print-data-table"><thead><tr><th>Athlete</th><th>Pos</th><th>Mass</th><th>0-20</th><th>20-30</th><th>30-40</th><th>Fly10</th><th>40yd</th><th>vMax</th><th>v10</th><th>MPH</th><th>F1</th><th>momMax</th><th>Pow1</th></tr></thead><tbody>';
     for (let i = 0; i < sprinters.length; i++) {
       const a = sprinters[i];
       const f = function (v, d) {
@@ -505,6 +505,8 @@
         f(a.sprint2030, 2) +
         '</td><td class="num">' +
         f(a.sprint3040, 2) +
+        '</td><td class="num">' +
+        f(a.sprintFly10, 2) +
         '</td><td class="num">' +
         f(a.forty, 2) +
         '</td><td class="num">' +

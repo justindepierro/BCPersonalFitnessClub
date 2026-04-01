@@ -810,6 +810,7 @@
       const s020 = num(a.sprint_020);
       const s2030 = num(a.sprint_2030);
       const s3040 = num(a.sprint_3040);
+      const sFly10 = num(a.sprint_fly10);
       const sprintNotes = txt(a.sprint_notes);
 
       let forty = null;
@@ -845,15 +846,18 @@
       const v2 = s2030 !== null && s2030 > 0 ? rd(d2 / s2030, 3) : null;
       const v3 = s3040 !== null && s3040 > 0 ? rd(d3 / s3040, 3) : null;
 
+      // Flying 10-yard velocity
+      const vFly10 = sFly10 !== null && sFly10 > 0 ? rd(C.TEN_YD_M / sFly10, 3) : null;
+
       const vMax =
-        v1 !== null || v2 !== null || v3 !== null
-          ? rd(Math.max(...[v1, v2, v3].filter((v) => v !== null)), 3)
+        v1 !== null || v2 !== null || v3 !== null || vFly10 !== null
+          ? rd(Math.max(...[v1, v2, v3, vFly10].filter((v) => v !== null)), 3)
           : null;
 
-      // Best 10-yard split velocity (from 20-30 or 30-40 segment)
+      // Best 10-yard split velocity (from 20-30, 30-40, or fly 10)
       const v10Max =
-        v2 !== null || v3 !== null
-          ? rd(Math.max(...[v2, v3].filter((v) => v !== null)), 3)
+        v2 !== null || v3 !== null || vFly10 !== null
+          ? rd(Math.max(...[v2, v3, vFly10].filter((v) => v !== null)), 3)
           : null;
 
       // Top speed in MPH (convert vMax from m/s)
@@ -929,6 +933,7 @@
         sprint020: s020,
         sprint2030: s2030,
         sprint3040: s3040,
+        sprintFly10: sFly10,
         sprintNotes,
         forty,
         vert,
@@ -943,6 +948,7 @@
         v1,
         v2,
         v3,
+        vFly10,
         vMax,
         v10Max,
         topMph,

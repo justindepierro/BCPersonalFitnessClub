@@ -349,6 +349,9 @@
     if (stale.has("sprint3040")) {
       for (const k of ["v3", "a3", "F3", "pow3"]) stale.add(k);
     }
+    if (stale.has("sprintFly10")) {
+      stale.add("vFly10");
+    }
     if (
       stale.has("sprint020") &&
       stale.has("sprint2030") &&
@@ -359,12 +362,57 @@
     APP._staleKeysCache[athleteId] = stale;
     return stale;
   }
+  /**
+   * Return an object of personal-record (best-ever) values for an athlete.
+   * "Best" = highest for most metrics, lowest for sprint times (lower===true).
+   * Walks current values + all test history entries.
+   */
+  function getBestValues(athleteId) {
+    const athlete = (window.CLUB || []).find(function (a) {
+      return String(a.id) === String(athleteId);
+    });
+    const entries = getAthleteHistory(athleteId);
+    const best = {};
+
+    // Seed with current athlete values
+    if (athlete) {
+      for (var i = 0; i < TEST_METRIC_KEYS.length; i++) {
+        var mk = TEST_METRIC_KEYS[i];
+        var cur = athlete[mk.key];
+        if (cur !== null && cur !== undefined && !isNaN(cur)) {
+          best[mk.key] = cur;
+        }
+      }
+    }
+
+    // Walk history entries for better values
+    for (var ei = 0; ei < entries.length; ei++) {
+      var vals = entries[ei].values;
+      for (var mi = 0; mi < TEST_METRIC_KEYS.length; mi++) {
+        var mk2 = TEST_METRIC_KEYS[mi];
+        var v = vals[mk2.jsonKey];
+        if (v === null || v === undefined || isNaN(v)) continue;
+        v = +v;
+        if (best[mk2.key] === undefined) {
+          best[mk2.key] = v;
+        } else if (mk2.lower) {
+          // Lower is better (sprint times)
+          if (v < best[mk2.key]) best[mk2.key] = v;
+        } else {
+          // Higher is better
+          if (v > best[mk2.key]) best[mk2.key] = v;
+        }
+      }
+    }
+    return best;
+  }
+
   Object.assign(APP, {
     getWeekKey, fmtWeekLabel, getWeightLog, saveWeightLog, logWeight,
     getWeightHistory, getTestHistory, setTestHistory, getAthleteHistory,
     saveTestEntry, deleteTestEntry, currentTestValues,
     getTestNotes, setTestNotes, noteKey,
     computeTestAverages, buildAvgSummaryHTML, buildAvgTableRows,
-    getPrevTestValues, getStaleKeys,
+    getPrevTestValues, getStaleKeys, getBestValues,
   });
 })();

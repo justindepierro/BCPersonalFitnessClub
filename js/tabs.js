@@ -371,10 +371,12 @@
         ${sN("sprint020", 2)}
         ${sN("sprint2030", 2)}
         ${sN("sprint3040", 2)}
+        ${sN("sprintFly10", 2)}
         ${sG("forty", 2, a.grades.forty)}
         ${sN("v1", 2)}
         ${sN("v2", 2)}
         ${sN("v3", 2)}
+        ${sN("vFly10", 2)}
         ${sG("vMax", 2, a.grades.vMax)}
         ${sG("v10Max", 2, a.grades.v10Max)}
         ${sN("topMph", 1)}
@@ -396,7 +398,7 @@
 
     if (sprinters.length === 0) {
       tbody.innerHTML =
-        '<tr><td colspan="24" class="placeholder-text">No sprint data available.</td></tr>';
+        '<tr><td colspan="26" class="placeholder-text">No sprint data available.</td></tr>';
     }
   }
 
