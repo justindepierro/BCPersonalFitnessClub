@@ -92,8 +92,7 @@
           "</td>";
       }
       // Delta column
-      let newV = null,
-        oldV = null;
+      let newV = null, oldV = null;
       if (shown.length >= 2) {
         newV = shown[0].values[mk.jsonKey];
         oldV = shown[1].values[mk.jsonKey];
@@ -506,49 +505,49 @@
         escapedDate +
         "','" +
         escapedLabel +
-        '\')"><i data-lucide="pencil" class="icon"></i> Rename</button>';
+        "')\"><i data-lucide=\"pencil\" class=\"icon\"></i> Rename</button>";
       cards +=
         "<button onclick=\"changeTestDate('" +
         escapedDate +
         "','" +
         escapedLabel +
-        '\')"><i data-lucide="calendar" class="icon"></i> Change Date</button>';
+        "')\"><i data-lucide=\"calendar\" class=\"icon\"></i> Change Date</button>";
       cards +=
         "<button onclick=\"duplicateTest('" +
         escapedDate +
         "','" +
         escapedLabel +
-        '\')"><i data-lucide="copy" class="icon"></i> Duplicate</button>';
+        "')\"><i data-lucide=\"copy\" class=\"icon\"></i> Duplicate</button>";
       cards +=
         "<button onclick=\"editTestNote('" +
         escapedDate +
         "','" +
         escapedLabel +
-        '\')"><i data-lucide="notebook-pen" class="icon"></i> Notes</button>';
+        "')\"><i data-lucide=\"notebook-pen\" class=\"icon\"></i> Notes</button>";
       cards +=
         "<button onclick=\"addAthletesToTest('" +
         escapedDate +
         "','" +
         escapedLabel +
-        '\')"><i data-lucide="plus" class="icon"></i> Add Athletes</button>';
+        "')\"><i data-lucide=\"plus\" class=\"icon\"></i> Add Athletes</button>";
       cards +=
         "<button onclick=\"removeAthleteFromTest('" +
         escapedDate +
         "','" +
         escapedLabel +
-        '\')"><i data-lucide="minus" class="icon"></i> Remove Athlete</button>';
+        "')\"><i data-lucide=\"minus\" class=\"icon\"></i> Remove Athlete</button>";
       cards +=
         "<button onclick=\"exportSingleTest('" +
         escapedDate +
         "','" +
         escapedLabel +
-        '\')"><i data-lucide="share" class="icon"></i> Export</button>';
+        "')\"><i data-lucide=\"share\" class=\"icon\"></i> Export</button>";
       cards +=
         '<button class="th-more-danger" onclick="deleteBulkTestEntry(\'' +
         escapedDate +
         "','" +
         escapedLabel +
-        '\')"><i data-lucide="trash-2" class="icon"></i> Delete</button>';
+        "')\"><i data-lucide=\"trash-2\" class=\"icon\"></i> Delete</button>";
       cards += "</div></div>";
       cards += "</div>";
       // Expandable detail
@@ -599,7 +598,7 @@
     const bodyHTML =
       '<div class="th-modal-body">' +
       '<div class="th-modal-header">' +
-      '<h2><i data-lucide="clipboard-list" class="icon"></i> Test History Manager</h2>' +
+      "<h2><i data-lucide=\"clipboard-list\" class=\"icon\"></i> Test History Manager</h2>" +
       '<p class="th-summary">' +
       (tests.length > 0
         ? tests.length +
@@ -824,8 +823,7 @@
 
     // Timeline below the calendar
     html += '<div class="cal-timeline">';
-    html +=
-      '<div class="cal-timeline-title"><i data-lucide="calendar" class="icon"></i> Chronological Timeline</div>';
+    html += '<div class="cal-timeline-title"><i data-lucide="calendar" class="icon"></i> Chronological Timeline</div>';
     // Sort tests oldest to newest for timeline
     const sorted = tests.slice().sort(function (a, b) {
       return a.date > b.date ? 1 : a.date < b.date ? -1 : 0;
@@ -870,9 +868,7 @@
     const detail = el.querySelector(".cal-day-detail");
     if (!detail) return;
     // Close any other open details
-    const allOpen = document.querySelectorAll(
-      '.cal-day-detail[style*="block"]',
-    );
+    const allOpen = document.querySelectorAll('.cal-day-detail[style*="block"]');
     for (let i = 0; i < allOpen.length; i++) {
       if (allOpen[i] !== detail) allOpen[i].style.display = "none";
     }
@@ -1561,10 +1557,7 @@
     const notes = getTestNotes();
     const nk = noteKey(date, label);
     const current = notes[nk] || "";
-    const newNote = prompt(
-      'Notes for "' + label + '" (' + date + "):",
-      current,
-    );
+    const newNote = prompt('Notes for "' + label + '" (' + date + "):", current);
     if (newNote === null) return;
     if (newNote.trim()) {
       notes[nk] = newNote.trim();

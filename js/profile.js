@@ -996,12 +996,5 @@
   }
 
   APP.renderers["profiles"] = window.renderProfile;
-  Object.assign(APP, {
-    normMetric,
-    normMetricInv,
-    invalidateNormCache,
-    metricCard,
-    metricCardZ,
-    metricCardPct,
-  });
+  Object.assign(APP, { normMetric, normMetricInv, invalidateNormCache, metricCard, metricCardZ, metricCardPct });
 })();

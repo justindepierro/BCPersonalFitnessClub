@@ -173,6 +173,7 @@
     "relPeakPower",
   ];
 
+
   function renderGradingSection(containerId, category) {
     const D = window.CLUB;
     const container = document.getElementById(containerId);
@@ -749,12 +750,7 @@
   APP.renderers["plan"] = renderTestingWeekPlan;
   APP.renderers["constants"] = renderConstants;
   Object.assign(APP, {
-    renderSprintAnalysis,
-    renderStrengthPower,
-    renderTestingWeekPlan,
-    renderConstants,
-    handleSort,
-    SPRINT_GRADE_KEYS,
-    STRENGTH_GRADE_KEYS,
+    renderSprintAnalysis, renderStrengthPower, renderTestingWeekPlan,
+    renderConstants, handleSort, SPRINT_GRADE_KEYS, STRENGTH_GRADE_KEYS,
   });
 })();
