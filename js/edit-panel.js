@@ -37,9 +37,6 @@
 
   /* ========== EDIT PANEL (slide-in) ========== */
 
-
-
-
   const EDITABLE_FIELDS = [
     {
       key: "name",
@@ -363,7 +360,9 @@
           }
         }
         // Compute 40yd from sprints if available
-        const s020 = he.values.sprint_020, s2030 = he.values.sprint_2030, s3040 = he.values.sprint_3040;
+        const s020 = he.values.sprint_020,
+          s2030 = he.values.sprint_2030,
+          s3040 = he.values.sprint_3040;
         if (
           s020 !== null &&
           s020 !== undefined &&
@@ -1180,7 +1179,6 @@
     };
     reader.readAsText(file);
   };
-
 
   /* ---------- Boot ---------- */
   document.addEventListener("club-data-ready", function () {

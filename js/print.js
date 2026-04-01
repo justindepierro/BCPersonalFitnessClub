@@ -615,7 +615,10 @@
       { key: "relBench", label: "Rel Bench", unit: "xBW", dec: 2 },
       { key: "relSquat", label: "Rel Squat", unit: "xBW", dec: 2 },
     ];
-    const sums = {}, counts = {}, maxVals = {}, maxNames = {};
+    const sums = {},
+      counts = {},
+      maxVals = {},
+      maxNames = {};
     for (let sk = 0; sk < sumKeys.length; sk++) {
       sums[sumKeys[sk].key] = 0;
       counts[sumKeys[sk].key] = 0;
@@ -651,7 +654,13 @@
     }
 
     // Grade distribution
-    const gradeCounts = { elite: 0, excellent: 0, good: 0, average: 0, below: 0 };
+    const gradeCounts = {
+      elite: 0,
+      excellent: 0,
+      good: 0,
+      average: 0,
+      below: 0,
+    };
     for (let gi = 0; gi < athletes.length; gi++) {
       const og = athletes[gi].overallGrade;
       if (og && gradeCounts[og.tier] !== undefined) gradeCounts[og.tier]++;
@@ -897,7 +906,8 @@
       }
 
       // Delta column: current vs oldest shown, or newest vs second-newest
-      let newV = null, oldV = null;
+      let newV = null,
+        oldV = null;
       if (shown.length >= 2) {
         newV = shown[0].values[mk.jsonKey];
         oldV = shown[1].values[mk.jsonKey];
@@ -961,7 +971,8 @@
           "</td>";
       }
       // Delta for forty
-      let newForty = null, oldForty = null;
+      let newForty = null,
+        oldForty = null;
       if (shown.length >= 2) {
         newForty = fortyHist[0];
         oldForty = fortyHist[1];
@@ -1119,7 +1130,9 @@
     }
 
     const today = new Date().toLocaleDateString("en-US", {
-      year: "numeric", month: "long", day: "numeric",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
 
     // Summary stats
@@ -1129,8 +1142,18 @@
     }).length;
 
     function avg(key) {
-      var vals = D.athletes.filter(function (a) { return a[key] !== null; }).map(function (a) { return a[key]; });
-      return vals.length ? (vals.reduce(function (s, v) { return s + v; }, 0) / vals.length) : null;
+      var vals = D.athletes
+        .filter(function (a) {
+          return a[key] !== null;
+        })
+        .map(function (a) {
+          return a[key];
+        });
+      return vals.length
+        ? vals.reduce(function (s, v) {
+            return s + v;
+          }, 0) / vals.length
+        : null;
     }
 
     var avgBench = avg("bench");
@@ -1139,60 +1162,101 @@
     var avgVert = avg("vert");
 
     // Build roster rows
-    var rosterRows = D.athletes.map(function (a) {
-      var og = a.overallGrade;
-      return "<tr>" +
-        "<td style='text-align:left;font-weight:600'>" + esc(a.name) + "</td>" +
-        "<td>" + (esc(a.position) || "—") + "</td>" +
-        "<td>" + (esc(a.group) || "—") + "</td>" +
-        "<td class='num'>" + (a.bench !== null ? a.bench : "—") + "</td>" +
-        "<td class='num'>" + (a.squat !== null ? a.squat : "—") + "</td>" +
-        "<td class='num'>" + (a.medball !== null ? a.medball : "—") + "</td>" +
-        "<td class='num'>" + (a.vert !== null ? a.vert.toFixed(1) : "—") + "</td>" +
-        "<td class='num'>" + (a.forty !== null ? a.forty.toFixed(2) : "—") + "</td>" +
-        "<td>" + (og ? og.label : "—") + "</td>" +
-        "</tr>";
-    }).join("");
+    var rosterRows = D.athletes
+      .map(function (a) {
+        var og = a.overallGrade;
+        return (
+          "<tr>" +
+          "<td style='text-align:left;font-weight:600'>" +
+          esc(a.name) +
+          "</td>" +
+          "<td>" +
+          (esc(a.position) || "—") +
+          "</td>" +
+          "<td>" +
+          (esc(a.group) || "—") +
+          "</td>" +
+          "<td class='num'>" +
+          (a.bench !== null ? a.bench : "—") +
+          "</td>" +
+          "<td class='num'>" +
+          (a.squat !== null ? a.squat : "—") +
+          "</td>" +
+          "<td class='num'>" +
+          (a.medball !== null ? a.medball : "—") +
+          "</td>" +
+          "<td class='num'>" +
+          (a.vert !== null ? a.vert.toFixed(1) : "—") +
+          "</td>" +
+          "<td class='num'>" +
+          (a.forty !== null ? a.forty.toFixed(2) : "—") +
+          "</td>" +
+          "<td>" +
+          (og ? og.label : "—") +
+          "</td>" +
+          "</tr>"
+        );
+      })
+      .join("");
 
-    var bodyHTML = '<div class="pdf-report">' +
+    var bodyHTML =
+      '<div class="pdf-report">' +
       '<div class="pdf-header">' +
-        '<h1>BC Personal Fitness Club</h1>' +
-        '<h2>Team Performance Report</h2>' +
-        '<p class="pdf-date">' + today + '</p>' +
-      '</div>' +
+      "<h1>BC Personal Fitness Club</h1>" +
+      "<h2>Team Performance Report</h2>" +
+      '<p class="pdf-date">' +
+      today +
+      "</p>" +
+      "</div>" +
       '<div class="pdf-summary">' +
-        '<div class="pdf-stat"><span class="pdf-stat-val">' + total + '</span><span class="pdf-stat-label">Athletes</span></div>' +
-        '<div class="pdf-stat"><span class="pdf-stat-val">' + tested + '</span><span class="pdf-stat-label">Tested</span></div>' +
-        '<div class="pdf-stat"><span class="pdf-stat-val">' + (avgBench ? avgBench.toFixed(0) : "—") + '</span><span class="pdf-stat-label">Avg Bench (lb)</span></div>' +
-        '<div class="pdf-stat"><span class="pdf-stat-val">' + (avgSquat ? avgSquat.toFixed(0) : "—") + '</span><span class="pdf-stat-label">Avg Squat (lb)</span></div>' +
-        '<div class="pdf-stat"><span class="pdf-stat-val">' + (avgVert ? avgVert.toFixed(1) : "—") + '</span><span class="pdf-stat-label">Avg Vert (in)</span></div>' +
-        '<div class="pdf-stat"><span class="pdf-stat-val">' + (avg40 ? avg40.toFixed(2) : "—") + '</span><span class="pdf-stat-label">Avg 40yd (s)</span></div>' +
-      '</div>' +
-      '<h3>Full Roster</h3>' +
+      '<div class="pdf-stat"><span class="pdf-stat-val">' +
+      total +
+      '</span><span class="pdf-stat-label">Athletes</span></div>' +
+      '<div class="pdf-stat"><span class="pdf-stat-val">' +
+      tested +
+      '</span><span class="pdf-stat-label">Tested</span></div>' +
+      '<div class="pdf-stat"><span class="pdf-stat-val">' +
+      (avgBench ? avgBench.toFixed(0) : "—") +
+      '</span><span class="pdf-stat-label">Avg Bench (lb)</span></div>' +
+      '<div class="pdf-stat"><span class="pdf-stat-val">' +
+      (avgSquat ? avgSquat.toFixed(0) : "—") +
+      '</span><span class="pdf-stat-label">Avg Squat (lb)</span></div>' +
+      '<div class="pdf-stat"><span class="pdf-stat-val">' +
+      (avgVert ? avgVert.toFixed(1) : "—") +
+      '</span><span class="pdf-stat-label">Avg Vert (in)</span></div>' +
+      '<div class="pdf-stat"><span class="pdf-stat-val">' +
+      (avg40 ? avg40.toFixed(2) : "—") +
+      '</span><span class="pdf-stat-label">Avg 40yd (s)</span></div>' +
+      "</div>" +
+      "<h3>Full Roster</h3>" +
       '<table class="pdf-table"><thead><tr>' +
-        '<th style="text-align:left">Name</th><th>Pos</th><th>Group</th>' +
-        '<th>Bench</th><th>Squat</th><th>MB</th><th>Vert</th><th>40yd</th><th>Rating</th>' +
-      '</tr></thead><tbody>' + rosterRows + '</tbody></table>' +
-      '</div>';
+      '<th style="text-align:left">Name</th><th>Pos</th><th>Group</th>' +
+      "<th>Bench</th><th>Squat</th><th>MB</th><th>Vert</th><th>40yd</th><th>Rating</th>" +
+      "</tr></thead><tbody>" +
+      rosterRows +
+      "</tbody></table>" +
+      "</div>";
 
-    openPrintWindow(bodyHTML, "Team Report — " + today,
+    openPrintWindow(
+      bodyHTML,
+      "Team Report — " + today,
       '.pdf-report { font-family: "Inter", system-ui, sans-serif; color: #1a1d27; }' +
-      '.pdf-header { text-align: center; margin-bottom: 24px; border-bottom: 2px solid #6c63ff; padding-bottom: 16px; }' +
-      '.pdf-header h1 { font-size: 20pt; color: #6c63ff; margin-bottom: 4px; }' +
-      '.pdf-header h2 { font-size: 12pt; font-weight: 600; color: #555; }' +
-      '.pdf-date { font-size: 9pt; color: #888; margin-top: 4px; }' +
-      '.pdf-summary { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 24px; }' +
-      '.pdf-stat { text-align: center; padding: 12px 8px; border: 1px solid #ddd; border-radius: 6px; background: #f9f9fb; }' +
-      '.pdf-stat-val { display: block; font-size: 18pt; font-weight: 800; color: #6c63ff; }' +
-      '.pdf-stat-label { display: block; font-size: 7pt; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }' +
-      'h3 { font-size: 11pt; margin-bottom: 8px; color: #333; }' +
-      '.pdf-table { width: 100%; border-collapse: collapse; font-size: 8pt; }' +
-      '.pdf-table th { background: #f4f5f7; padding: 6px 8px; text-align: center; font-weight: 700; font-size: 7pt; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 2px solid #ddd; }' +
-      '.pdf-table td { padding: 5px 8px; text-align: center; border-bottom: 1px solid #eee; }' +
-      '.pdf-table tbody tr:nth-child(even) { background: #fafbfc; }' +
-      '.num { font-variant-numeric: tabular-nums; }' +
-      '@page { size: landscape; margin: 0.4in; }' +
-      '@media print { body { padding: 0; } }'
+        ".pdf-header { text-align: center; margin-bottom: 24px; border-bottom: 2px solid #6c63ff; padding-bottom: 16px; }" +
+        ".pdf-header h1 { font-size: 20pt; color: #6c63ff; margin-bottom: 4px; }" +
+        ".pdf-header h2 { font-size: 12pt; font-weight: 600; color: #555; }" +
+        ".pdf-date { font-size: 9pt; color: #888; margin-top: 4px; }" +
+        ".pdf-summary { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 24px; }" +
+        ".pdf-stat { text-align: center; padding: 12px 8px; border: 1px solid #ddd; border-radius: 6px; background: #f9f9fb; }" +
+        ".pdf-stat-val { display: block; font-size: 18pt; font-weight: 800; color: #6c63ff; }" +
+        ".pdf-stat-label { display: block; font-size: 7pt; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }" +
+        "h3 { font-size: 11pt; margin-bottom: 8px; color: #333; }" +
+        ".pdf-table { width: 100%; border-collapse: collapse; font-size: 8pt; }" +
+        ".pdf-table th { background: #f4f5f7; padding: 6px 8px; text-align: center; font-weight: 700; font-size: 7pt; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 2px solid #ddd; }" +
+        ".pdf-table td { padding: 5px 8px; text-align: center; border-bottom: 1px solid #eee; }" +
+        ".pdf-table tbody tr:nth-child(even) { background: #fafbfc; }" +
+        ".num { font-variant-numeric: tabular-nums; }" +
+        "@page { size: landscape; margin: 0.4in; }" +
+        "@media print { body { padding: 0; } }",
     );
     showToast("PDF report opened — use browser Print > Save as PDF.", "info");
   };

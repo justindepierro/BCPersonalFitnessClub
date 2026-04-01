@@ -27,8 +27,6 @@
 
   /* ========== COMPARE & IMPROVEMENT TRACKER ========== */
 
-
-
   function _destroyAllCmpCharts() {
     APP.charts.cmp = destroyChart(APP.charts.cmp);
     for (const c of APP.charts._cmpCharts) destroyChart(c);
@@ -649,11 +647,7 @@
     const cols = athletes.length;
     var T = APP.getChartTheme();
     const palette = [T.purple, T.green, T.blue];
-    const paletteBg = [
-      T.purple + "33",
-      T.green + "33",
-      T.blue + "33",
-    ];
+    const paletteBg = [T.purple + "33", T.green + "33", T.blue + "33"];
 
     // Profile cards
     let html = '<div class="cmp-profile-row cols-' + cols + '">';
@@ -916,11 +910,7 @@
       values.push(+pct.toFixed(1));
       const improved = s.invert ? pct < 0 : pct > 0;
       colors.push(
-        improved
-          ? T.green + "b3"
-          : pct === 0
-            ? T.muted + "80"
-            : T.red + "b3",
+        improved ? T.green + "b3" : pct === 0 ? T.muted + "80" : T.red + "b3",
       );
     }
     const chart = new Chart(canvas, {

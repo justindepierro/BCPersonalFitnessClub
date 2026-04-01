@@ -8,10 +8,15 @@
 
   const APP = (window.APP = {
     charts: {
-      lb: null, profileRadar: null, profilePct: null,
-      profileSprint: null, profileDonut: null,
-      profileQuadrant: null, profileProgress: null,
-      cmp: null, _cmpCharts: [],
+      lb: null,
+      profileRadar: null,
+      profilePct: null,
+      profileSprint: null,
+      profileDonut: null,
+      profileQuadrant: null,
+      profileProgress: null,
+      cmp: null,
+      _cmpCharts: [],
     },
     _athleteMap: null,
     _testHistoryCache: null,
@@ -90,19 +95,32 @@
     btn.className = "toast-dismiss";
     btn.setAttribute("aria-label", "Dismiss");
     btn.innerHTML = "&times;";
-    btn.addEventListener("click", function () { t.remove(); });
+    btn.addEventListener("click", function () {
+      t.remove();
+    });
     t.appendChild(span);
     t.appendChild(btn);
     container.appendChild(t);
     const dur = type === "error" ? 6000 : 3200;
-    setTimeout(function () { t.remove(); }, dur);
+    setTimeout(function () {
+      t.remove();
+    }, dur);
   }
 
   /* ---------- Lazy rendering ---------- */
   function markTabsDirty() {
     const tabs = [
-      "overview", "leaderboards", "sprint", "strength", "scorecard",
-      "log", "plan", "constants", "groups", "profiles", "compare",
+      "overview",
+      "leaderboards",
+      "sprint",
+      "strength",
+      "scorecard",
+      "log",
+      "plan",
+      "constants",
+      "groups",
+      "profiles",
+      "compare",
     ];
     for (const t of tabs) APP._tabDirty[t] = true;
     APP._normCache.clear();
@@ -148,7 +166,9 @@
 
   window.showTab = function (tabId) {
     if (document.startViewTransition) {
-      document.startViewTransition(function () { _doTabSwitch(tabId); });
+      document.startViewTransition(function () {
+        _doTabSwitch(tabId);
+      });
     } else {
       _doTabSwitch(tabId);
     }
@@ -213,7 +233,9 @@
           // ease-out cubic
           var ease = 1 - Math.pow(1 - progress, 3);
           var current = target * ease;
-          el.textContent = (decimals > 0 ? current.toFixed(decimals) : Math.round(current)) + suffix;
+          el.textContent =
+            (decimals > 0 ? current.toFixed(decimals) : Math.round(current)) +
+            suffix;
           if (progress < 1) requestAnimationFrame(step);
         }
         requestAnimationFrame(step);
@@ -242,7 +264,9 @@
   /* ---------- Chart.js theme helper ---------- */
   function getChartTheme() {
     var s = getComputedStyle(document.documentElement);
-    var v = function (prop) { return s.getPropertyValue(prop).trim(); };
+    var v = function (prop) {
+      return s.getPropertyValue(prop).trim();
+    };
     return {
       grid: v("--chart-grid") || "rgba(255,255,255,0.06)",
       tick: v("--chart-tick") || "#8b90a0",
@@ -291,20 +315,30 @@
     if ((e.ctrlKey || e.metaKey) && e.key === "k") {
       e.preventDefault();
       var search = document.getElementById("rosterSearch");
-      if (search) { search.focus(); search.select(); }
+      if (search) {
+        search.focus();
+        search.select();
+      }
       // Switch to overview tab if not already there
       var activeTab = document.querySelector(".tab.active");
-      if (activeTab && activeTab.dataset.tab !== "overview") showTab("overview");
+      if (activeTab && activeTab.dataset.tab !== "overview")
+        showTab("overview");
       return;
     }
     // Escape → close panels/modals
     if (e.key === "Escape") {
       // Close edit panel if open
       var editPanel = document.querySelector(".edit-panel.open");
-      if (editPanel && window.closeEditPanel) { window.closeEditPanel(); return; }
+      if (editPanel && window.closeEditPanel) {
+        window.closeEditPanel();
+        return;
+      }
       // Close any open modal
       var modal = document.querySelector(".modal-overlay[style*='flex']");
-      if (modal) { modal.style.display = "none"; return; }
+      if (modal) {
+        modal.style.display = "none";
+        return;
+      }
     }
     // Alt+1-9 → switch to tab by number
     if (e.altKey && e.key >= "1" && e.key <= "9") {
@@ -328,7 +362,9 @@
     if (saved && Array.isArray(saved)) {
       var tabs = Array.from(nav.querySelectorAll(".tab[role='tab']"));
       var tabMap = {};
-      tabs.forEach(function (t) { tabMap[t.dataset.tab] = t; });
+      tabs.forEach(function (t) {
+        tabMap[t.dataset.tab] = t;
+      });
       saved.forEach(function (id) {
         if (tabMap[id]) nav.appendChild(tabMap[id]);
       });
@@ -379,19 +415,30 @@
         nav.insertBefore(dragging, target);
       }
       // Save order
-      var newOrder = Array.from(nav.querySelectorAll(".tab[role='tab']")).map(function (t) {
-        return t.dataset.tab;
-      });
+      var newOrder = Array.from(nav.querySelectorAll(".tab[role='tab']")).map(
+        function (t) {
+          return t.dataset.tab;
+        },
+      );
       safeLSSet("lc_tab_order", newOrder);
       target.classList.remove("drag-over");
     });
   })();
 
   Object.assign(APP, {
-    getAthleteMap, getAthleteById, invalidateAthleteMap,
-    chartAnimOpts, destroyChart,
-    safeLSGet, safeLSSet, showToast,
-    markTabsDirty, renderIfDirty, refreshIcons, animateCounters,
-    applyCardViewLabels, getChartTheme,
+    getAthleteMap,
+    getAthleteById,
+    invalidateAthleteMap,
+    chartAnimOpts,
+    destroyChart,
+    safeLSGet,
+    safeLSSet,
+    showToast,
+    markTabsDirty,
+    renderIfDirty,
+    refreshIcons,
+    animateCounters,
+    applyCardViewLabels,
+    getChartTheme,
   });
 })();
