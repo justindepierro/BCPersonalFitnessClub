@@ -5,13 +5,7 @@
 (function () {
   "use strict";
   const APP = window.APP;
-  const {
-    safeLSGet,
-    safeLSSet,
-    showToast,
-    TEST_METRIC_KEYS,
-  } = APP;
-
+  const { safeLSGet, safeLSSet, showToast, TEST_METRIC_KEYS } = APP;
 
   /* ---------- Weekly Weight Log ---------- */
   /** Get ISO week key like "2026-W07" from a Date */
@@ -158,7 +152,10 @@
     const stats = {};
     for (let mk = 0; mk < TEST_METRIC_KEYS.length; mk++) {
       const key = TEST_METRIC_KEYS[mk].jsonKey;
-      let sum = 0, count = 0, min = Infinity, max = -Infinity;
+      let sum = 0,
+        count = 0,
+        min = Infinity,
+        max = -Infinity;
       for (let ai = 0; ai < athleteDetails.length; ai++) {
         const v = athleteDetails[ai].values[key];
         if (v !== null && v !== undefined && !isNaN(v)) {
@@ -231,8 +228,6 @@
     worstRow += extra + "</tr>";
     return avgRow + bestRow + worstRow;
   }
-
-
 
   function getPrevTestValues(athleteId) {
     if (!APP._prevTestCache) APP._prevTestCache = {};
@@ -408,11 +403,26 @@
   }
 
   Object.assign(APP, {
-    getWeekKey, fmtWeekLabel, getWeightLog, saveWeightLog, logWeight,
-    getWeightHistory, getTestHistory, setTestHistory, getAthleteHistory,
-    saveTestEntry, deleteTestEntry, currentTestValues,
-    getTestNotes, setTestNotes, noteKey,
-    computeTestAverages, buildAvgSummaryHTML, buildAvgTableRows,
-    getPrevTestValues, getStaleKeys, getBestValues,
+    getWeekKey,
+    fmtWeekLabel,
+    getWeightLog,
+    saveWeightLog,
+    logWeight,
+    getWeightHistory,
+    getTestHistory,
+    setTestHistory,
+    getAthleteHistory,
+    saveTestEntry,
+    deleteTestEntry,
+    currentTestValues,
+    getTestNotes,
+    setTestNotes,
+    noteKey,
+    computeTestAverages,
+    buildAvgSummaryHTML,
+    buildAvgTableRows,
+    getPrevTestValues,
+    getStaleKeys,
+    getBestValues,
   });
 })();

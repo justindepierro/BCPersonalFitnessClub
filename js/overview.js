@@ -7,7 +7,6 @@
   const APP = window.APP;
   const {
     esc,
-    escJs,
     debounce,
     ordGrade,
     fmtZ,
@@ -233,7 +232,9 @@
     }
     thRow += "</tr>";
     thead.innerHTML = thRow;
+    APP.refreshIcons();
 
+    const showPR = localStorage.getItem("lc_show_prs") === "true";
     tbody.innerHTML = list
       .map((a) => {
         const isTested = coreFields.some((k) => a[k] !== null);
@@ -242,16 +243,23 @@
         const prev = getPrevTestValues(a.id);
         const staleKeys = getStaleKeys(a.id);
         const _stale = { stale: true };
-        const showPR = localStorage.getItem("lc_show_prs") === "true";
         const prVals = showPR ? getBestValues(a.id) : null;
         const _pr = { pr: true };
         // Helper: render current value (stale-styled if from older test) or fall back to previous
         // In PR mode, show best-ever value with PR styling
         function cellG(key, dec, grade) {
-          if (showPR && prVals && prVals[key] !== null && prVals[key] !== undefined) {
+          if (
+            showPR &&
+            prVals &&
+            prVals[key] !== null &&
+            prVals[key] !== undefined
+          ) {
             // Show PR value; highlight if different from current
-            var isPRDiff = a[key] === null || a[key] === undefined || prVals[key] !== a[key];
-            return isPRDiff ? tdNum(prVals[key], dec, _pr) : tdGraded(a[key], dec, grade);
+            var isPRDiff =
+              a[key] === null || a[key] === undefined || prVals[key] !== a[key];
+            return isPRDiff
+              ? tdNum(prVals[key], dec, _pr)
+              : tdGraded(a[key], dec, grade);
           }
           if (a[key] !== null && a[key] !== undefined) {
             return staleKeys.has(key)
@@ -263,8 +271,14 @@
           return '<td class="num na">—</td>';
         }
         function cellN(key, dec) {
-          if (showPR && prVals && prVals[key] !== null && prVals[key] !== undefined) {
-            var isPRDiff = a[key] === null || a[key] === undefined || prVals[key] !== a[key];
+          if (
+            showPR &&
+            prVals &&
+            prVals[key] !== null &&
+            prVals[key] !== undefined
+          ) {
+            var isPRDiff =
+              a[key] === null || a[key] === undefined || prVals[key] !== a[key];
             return isPRDiff ? tdNum(prVals[key], dec, _pr) : tdNum(a[key], dec);
           }
           if (a[key] !== null && a[key] !== undefined) {
@@ -295,14 +309,14 @@
             cellG("relPeakPower", 1, a.grades.relPeakPower)
           : "";
         return `
-      <tr class="${rowCls}" tabindex="0" role="button" onclick="selectAthlete('${escJs(a.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectAthlete('${escJs(a.id)}')}">
+      <tr class="${rowCls}" tabindex="0" role="button" data-click="selectAthlete" data-arg1="${esc(a.id)}" data-keyclick="true">
         <td><strong>${esc(a.name)}</strong>${!isTested ? ' <span class="untested-badge">Untested</span>' : ""}</td>
         <td>${esc(a.position) || "—"}</td>
         <td><span class="group-tag group-${(a.group || "").replace(/\s/g, "")}">${esc(a.group || "—")}</span></td>
         <td class="num">${a.grade ? ordGrade(a.grade) : "—"}</td>
         ${relCols}
         ${cellN("height", 0)}
-        <td class="num wt-cell" data-id="${esc(a.id)}" onclick="event.stopPropagation();inlineEditWeight(this,'${escJs(a.id)}')" onmouseenter="showWeightHistory(this,'${escJs(a.id)}')" onmouseleave="hideWeightHistory(this)" title="Click to update weight">${a.weight !== null && a.weight !== undefined ? '<span class="wt-val">' + a.weight + '</span><span class="wt-edit-icon">✎</span>' : '<span class="wt-val na-wt">—</span><span class="wt-edit-icon">✎</span>'}</td>
+        <td class="num wt-cell" data-athlete-id="${esc(a.id)}" title="Click to update weight">${a.weight !== null && a.weight !== undefined ? '<span class="wt-val">' + a.weight + '</span><span class="wt-edit-icon">✎</span>' : '<span class="wt-val na-wt">—</span><span class="wt-edit-icon">✎</span>'}</td>
         ${cellG("bench", 0, a.grades.bench)}
         ${relBenchCol}
         ${cellG("squat", 0, a.grades.squat)}
@@ -320,6 +334,7 @@
     `;
       })
       .join("");
+    APP.refreshIcons();
   };
 
   window.selectAthlete = function (id) {

@@ -36,12 +36,14 @@
     if (!id) {
       container.innerHTML =
         '<p class="placeholder-text">Select an athlete to view their profile.</p>';
+      APP.refreshIcons();
       return;
     }
     const a = getAthleteById(id);
     if (!a) {
       container.innerHTML =
         '<p class="placeholder-text">Athlete not found.</p>';
+      APP.refreshIcons();
       return;
     }
 
@@ -176,6 +178,7 @@
     </div>`;
 
     container.innerHTML = html;
+    APP.refreshIcons();
     buildProfileRadar(a);
     buildPercentileChart(a);
     buildSprintVelocityChart(a);
@@ -457,7 +460,8 @@
     // Compute team averages
     const teamAvgs = [null, null, null];
     let count = [0, 0, 0];
-    let fly10Sum = 0, fly10Count = 0;
+    let fly10Sum = 0,
+      fly10Count = 0;
     for (const t of D.athletes) {
       if (t.v1 !== null) {
         teamAvgs[0] = (teamAvgs[0] || 0) + t.v1;
@@ -480,7 +484,9 @@
       if (count[i] > 0) teamAvgs[i] = +(teamAvgs[i] / count[i]).toFixed(2);
     }
     if (a.vFly10 !== null && a.vFly10 !== undefined) {
-      teamAvgs.push(fly10Count > 0 ? +(fly10Sum / fly10Count).toFixed(2) : null);
+      teamAvgs.push(
+        fly10Count > 0 ? +(fly10Sum / fly10Count).toFixed(2) : null,
+      );
     }
 
     var T = APP.getChartTheme();
@@ -1009,5 +1015,12 @@
   }
 
   APP.renderers["profiles"] = window.renderProfile;
-  Object.assign(APP, { normMetric, normMetricInv, invalidateNormCache, metricCard, metricCardZ, metricCardPct });
+  Object.assign(APP, {
+    normMetric,
+    normMetricInv,
+    invalidateNormCache,
+    metricCard,
+    metricCardZ,
+    metricCardPct,
+  });
 })();

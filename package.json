@@ -1,0 +1,15 @@
+{
+  "name": "lifting-club",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild js/main.js --bundle --format=iife --platform=browser --target=es2020 --sourcemap --minify --outfile=js/app.bundle.js",
+    "lint": "eslint js/*.js sw.js --no-warn-ignored",
+    "format": "prettier --write index.html css/**/*.css js/**/*.js sw.js manifest.json"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.3",
+    "eslint": "^9.24.0",
+    "prettier": "^3.5.3"
+  }
+}

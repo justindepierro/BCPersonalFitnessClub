@@ -771,11 +771,15 @@
   ];
 
   function overallGradeTier(score) {
-    return (OVERALL_GRADE_MAP.find((g) => score >= g.min) || OVERALL_GRADE_MAP[4]).tier;
+    return (
+      OVERALL_GRADE_MAP.find((g) => score >= g.min) || OVERALL_GRADE_MAP[4]
+    ).tier;
   }
 
   function overallGradeLabel(score) {
-    return (OVERALL_GRADE_MAP.find((g) => score >= g.min) || OVERALL_GRADE_MAP[4]).label;
+    return (
+      OVERALL_GRADE_MAP.find((g) => score >= g.min) || OVERALL_GRADE_MAP[4]
+    ).label;
   }
 
   /* ---------- Process raw JSON ---------- */
@@ -847,7 +851,8 @@
       const v3 = s3040 !== null && s3040 > 0 ? rd(d3 / s3040, 3) : null;
 
       // Flying 10-yard velocity
-      const vFly10 = sFly10 !== null && sFly10 > 0 ? rd(C.TEN_YD_M / sFly10, 3) : null;
+      const vFly10 =
+        sFly10 !== null && sFly10 > 0 ? rd(C.TEN_YD_M / sFly10, 3) : null;
 
       const vMax =
         v1 !== null || v2 !== null || v3 !== null || vFly10 !== null
@@ -1275,30 +1280,95 @@
       });
     // Flag suspicious individual values via data-driven rules
     const FLAG_RULES = [
-      { test: (a) => a.bench !== null && a.squat !== null && a.bench > a.squat,
-        msg: (a) => "Bench (" + a.bench + ") > Squat (" + a.squat + ") — verify data." },
-      { test: (a) => a.squat !== null && a.weight !== null && a.squat / a.weight < 0.4,
-        msg: (a) => "Squat (" + a.squat + " lb) is very low relative to body weight (" + a.weight + " lb) — possible data entry error." },
-      { test: (a) => a.weight !== null && (a.weight < 80 || a.weight > 400),
-        msg: (a) => "Weight (" + a.weight + " lb) is outside plausible HS range (80–400) — verify data." },
-      { test: (a) => a.height !== null && (a.height < 54 || a.height > 84),
-        msg: (a) => "Height (" + a.height + " in) is outside plausible HS range (54–84\u2033) — verify data." },
-      { test: (a) => a.forty !== null && (a.forty < 4.0 || a.forty > 8.0),
-        msg: (a) => "40-yd time (" + a.forty + " s) is outside plausible HS range (4.0–8.0) — verify data." },
-      { test: (a) => a.bench !== null && a.weight !== null && a.bench / a.weight > 2.5,
-        msg: (a) => "Bench (" + a.bench + " lb) is >2.5× body weight — exceptional or data error." },
-      { test: (a) => a.squat !== null && a.weight !== null && a.squat / a.weight > 3.5,
-        msg: (a) => "Squat (" + a.squat + " lb) is >3.5× body weight — exceptional or data error." },
-      { test: (a) => a.vert !== null && a.vert > 48,
-        msg: (a) => "Vertical (" + a.vert + " in) exceeds 48\u2033 — world-class level, verify data." },
-      { test: (a) => a.proAgility !== null && (a.proAgility < 3.5 || a.proAgility > 7.0),
-        msg: (a) => "5-10-5 (" + a.proAgility + " s) is outside plausible HS range (3.5–7.0) — verify data." },
-      { test: (a) => a.lDrill !== null && (a.lDrill < 5.5 || a.lDrill > 10.0),
-        msg: (a) => "L-Drill (" + a.lDrill + " s) is outside plausible HS range (5.5–10.0) — verify data." },
-      { test: (a) => a.backpedal !== null && (a.backpedal < 2.5 || a.backpedal > 6.0),
-        msg: (a) => "Backpedal (" + a.backpedal + " s) is outside plausible HS range (2.5–6.0) — verify data." },
-      { test: (a) => a.wDrill !== null && (a.wDrill < 3.5 || a.wDrill > 8.0),
-        msg: (a) => "W-Drill (" + a.wDrill + " s) is outside plausible HS range (3.5–8.0) — verify data." },
+      {
+        test: (a) => a.bench !== null && a.squat !== null && a.bench > a.squat,
+        msg: (a) =>
+          "Bench (" + a.bench + ") > Squat (" + a.squat + ") — verify data.",
+      },
+      {
+        test: (a) =>
+          a.squat !== null && a.weight !== null && a.squat / a.weight < 0.4,
+        msg: (a) =>
+          "Squat (" +
+          a.squat +
+          " lb) is very low relative to body weight (" +
+          a.weight +
+          " lb) — possible data entry error.",
+      },
+      {
+        test: (a) => a.weight !== null && (a.weight < 80 || a.weight > 400),
+        msg: (a) =>
+          "Weight (" +
+          a.weight +
+          " lb) is outside plausible HS range (80–400) — verify data.",
+      },
+      {
+        test: (a) => a.height !== null && (a.height < 54 || a.height > 84),
+        msg: (a) =>
+          "Height (" +
+          a.height +
+          " in) is outside plausible HS range (54–84\u2033) — verify data.",
+      },
+      {
+        test: (a) => a.forty !== null && (a.forty < 4.0 || a.forty > 8.0),
+        msg: (a) =>
+          "40-yd time (" +
+          a.forty +
+          " s) is outside plausible HS range (4.0–8.0) — verify data.",
+      },
+      {
+        test: (a) =>
+          a.bench !== null && a.weight !== null && a.bench / a.weight > 2.5,
+        msg: (a) =>
+          "Bench (" +
+          a.bench +
+          " lb) is >2.5× body weight — exceptional or data error.",
+      },
+      {
+        test: (a) =>
+          a.squat !== null && a.weight !== null && a.squat / a.weight > 3.5,
+        msg: (a) =>
+          "Squat (" +
+          a.squat +
+          " lb) is >3.5× body weight — exceptional or data error.",
+      },
+      {
+        test: (a) => a.vert !== null && a.vert > 48,
+        msg: (a) =>
+          "Vertical (" +
+          a.vert +
+          " in) exceeds 48\u2033 — world-class level, verify data.",
+      },
+      {
+        test: (a) =>
+          a.proAgility !== null && (a.proAgility < 3.5 || a.proAgility > 7.0),
+        msg: (a) =>
+          "5-10-5 (" +
+          a.proAgility +
+          " s) is outside plausible HS range (3.5–7.0) — verify data.",
+      },
+      {
+        test: (a) => a.lDrill !== null && (a.lDrill < 5.5 || a.lDrill > 10.0),
+        msg: (a) =>
+          "L-Drill (" +
+          a.lDrill +
+          " s) is outside plausible HS range (5.5–10.0) — verify data.",
+      },
+      {
+        test: (a) =>
+          a.backpedal !== null && (a.backpedal < 2.5 || a.backpedal > 6.0),
+        msg: (a) =>
+          "Backpedal (" +
+          a.backpedal +
+          " s) is outside plausible HS range (2.5–6.0) — verify data.",
+      },
+      {
+        test: (a) => a.wDrill !== null && (a.wDrill < 3.5 || a.wDrill > 8.0),
+        msg: (a) =>
+          "W-Drill (" +
+          a.wDrill +
+          " s) is outside plausible HS range (3.5–8.0) — verify data.",
+      },
     ];
     const flags = [];
     for (const a of athletes) {
@@ -1383,7 +1453,10 @@
         if (!existingTH) {
           // No localStorage test history — seed from JSON
           try {
-            localStorage.setItem("lc_test_history", JSON.stringify(jsonTestHistory));
+            localStorage.setItem(
+              "lc_test_history",
+              JSON.stringify(jsonTestHistory),
+            );
           } catch (e) {
             console.warn("Failed to seed test history from JSON:", e);
           }
@@ -1398,7 +1471,7 @@
                 // Add JSON entries that don't already exist in localStorage
                 for (const je of jsonTestHistory[aid]) {
                   const exists = lsTH[aid].some(
-                    (le) => le.date === je.date && le.label === je.label
+                    (le) => le.date === je.date && le.label === je.label,
                   );
                   if (!exists) lsTH[aid].push(je);
                 }

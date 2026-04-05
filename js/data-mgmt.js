@@ -8,7 +8,6 @@
   const APP = window.APP;
   const {
     esc,
-    escJs,
     getAthleteById,
     invalidateAthleteMap,
     showToast,
@@ -300,9 +299,14 @@
   }
 
   window.toggleAgeAdjusted = function (on) {
-    _toggleSetting("lc_age_adjusted", ["ageAdjToggle", "overviewAgeToggle"], on,
-      on ? "Age-adjusted standards enabled — grades scaled by training age"
-         : "Age-adjusted standards disabled — using senior (12th grade) standards");
+    _toggleSetting(
+      "lc_age_adjusted",
+      ["ageAdjToggle", "overviewAgeToggle"],
+      on,
+      on
+        ? "Age-adjusted standards enabled — grades scaled by training age"
+        : "Age-adjusted standards disabled — using senior (12th grade) standards",
+    );
   };
 
   /* ---------- Overview Relatives Toggle ---------- */
@@ -312,15 +316,25 @@
   };
 
   window.toggleBodyAdjusted = function (on) {
-    _toggleSetting("lc_body_adjusted", ["bodyAdjToggle", "overviewBodyToggle"], on,
-      on ? "Body-adjusted standards enabled — thresholds scaled by weight class & height"
-         : "Body-adjusted standards disabled — using baseline thresholds");
+    _toggleSetting(
+      "lc_body_adjusted",
+      ["bodyAdjToggle", "overviewBodyToggle"],
+      on,
+      on
+        ? "Body-adjusted standards enabled — thresholds scaled by weight class & height"
+        : "Body-adjusted standards disabled — using baseline thresholds",
+    );
   };
 
   window.toggleCohortMode = function (on) {
-    _toggleSetting("lc_cohort_mode", ["cohortToggle", "overviewCohortToggle"], on,
-      on ? "Cohort percentiles enabled — ranking against peers with same body profile & position"
-         : "Cohort percentiles disabled");
+    _toggleSetting(
+      "lc_cohort_mode",
+      ["cohortToggle", "overviewCohortToggle"],
+      on,
+      on
+        ? "Cohort percentiles enabled — ranking against peers with same body profile & position"
+        : "Cohort percentiles disabled",
+    );
   };
 
   window.resetToOriginal = function () {
@@ -631,7 +645,8 @@
   /* ========== DELETE ATHLETE ========== */
   window.deleteCurrentAthlete = function () {
     // Determine which athlete to delete
-    let id = APP.editingAthleteId || document.getElementById("athleteSelect").value;
+    let id =
+      APP.editingAthleteId || document.getElementById("athleteSelect").value;
     if (!id) {
       showToast("Select an athlete first.", "warn");
       return;
@@ -689,5 +704,12 @@
     showToast("Deleted " + displayName + " (" + id + ")", "info");
   };
 
-  Object.assign(APP, { refreshSnapshotList, updateDataStatus, rebuildFromStorage, reRenderAll, refreshAthleteDropdowns, refreshPositionFilter });
+  Object.assign(APP, {
+    refreshSnapshotList,
+    updateDataStatus,
+    rebuildFromStorage,
+    reRenderAll,
+    refreshAthleteDropdowns,
+    refreshPositionFilter,
+  });
 })();

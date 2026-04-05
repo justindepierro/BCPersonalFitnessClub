@@ -7,7 +7,6 @@
   const APP = window.APP;
   const {
     esc,
-    escJs,
     ordGrade,
     sortedAthletes,
     getAthleteById,
@@ -36,9 +35,6 @@
   } = APP;
 
   /* ========== EDIT PANEL (slide-in) ========== */
-
-
-
 
   const EDITABLE_FIELDS = [
     {
@@ -350,9 +346,9 @@
       " saved)</small></div>";
     html += '<div class="edit-history-actions">';
     html +=
-      '<button class="btn btn-sm btn-primary" onclick="saveCurrentAsTest()" title="Snapshot current values as a dated test"><i data-lucide="calendar-plus" class="icon"></i> Save Current as Test Date</button> ';
+      '<button class="btn btn-sm btn-primary" data-click="saveCurrentAsTest" title="Snapshot current values as a dated test"><i data-lucide="calendar-plus" class="icon"></i> Save Current as Test Date</button> ';
     html +=
-      '<button class="btn btn-sm" onclick="openAddPreviousTest()" title="Manually enter historical test data">📝 Add Previous Test</button>';
+      '<button class="btn btn-sm" data-click="openAddPreviousTest" title="Manually enter historical test data">📝 Add Previous Test</button>';
     html += "</div>";
     if (history.length > 0) {
       html += '<div class="edit-history-list">';
@@ -373,7 +369,9 @@
           }
         }
         // Compute 40yd from sprints if available
-        const s020 = he.values.sprint_020, s2030 = he.values.sprint_2030, s3040 = he.values.sprint_3040;
+        const s020 = he.values.sprint_020,
+          s2030 = he.values.sprint_2030,
+          s3040 = he.values.sprint_3040;
         if (
           s020 !== null &&
           s020 !== undefined &&
@@ -403,25 +401,25 @@
           "</div>" +
           "</div>";
         html += '<div class="edit-history-btns">';
-        const _heId = escJs(a.id);
-        const _heDate = escJs(he.date);
-        const _heLabel = escJs(he.label);
+        const _heId = esc(a.id);
+        const _heDate = esc(he.date);
+        const _heLabel = esc(he.label);
         html +=
-          '<button class="btn btn-xs btn-muted" onclick="editHistoryEntry(\'' +
+          '<button class="btn btn-xs btn-muted" data-click="editHistoryEntry" data-arg1="' +
           _heId +
-          "','" +
+          '" data-arg2="' +
           _heDate +
-          "','" +
+          '" data-arg3="' +
           _heLabel +
-          '\')" title="Edit this test entry"><i data-lucide="pencil" class="icon"></i></button> ';
+          '" title="Edit this test entry"><i data-lucide="pencil" class="icon"></i></button> ';
         html +=
-          '<button class="btn btn-xs btn-muted" onclick="deleteHistoryEntry(\'' +
+          '<button class="btn btn-xs btn-muted" data-click="deleteHistoryEntry" data-arg1="' +
           _heId +
-          "','" +
+          '" data-arg2="' +
           _heDate +
-          "','" +
+          '" data-arg3="' +
           _heLabel +
-          '\')" title="Delete this test entry">🗑</button>';
+          '" title="Delete this test entry">🗑</button>';
         html += "</div>";
         html += "</div>";
       }
@@ -464,12 +462,13 @@
     html += "</div>";
     html += '<div class="edit-history-actions">';
     html +=
-      '<button class="btn btn-sm btn-primary" onclick="submitPreviousTest()" id="prevTestSubmitBtn">💾 Save Previous Test</button> ';
+      '<button class="btn btn-sm btn-primary" data-click="submitPreviousTest" id="prevTestSubmitBtn">💾 Save Previous Test</button> ';
     html +=
-      '<button class="btn btn-sm" onclick="closePrevTestForm()">Cancel</button>';
+      '<button class="btn btn-sm" data-click="closePrevTestForm">Cancel</button>';
     html += "</div></div>";
 
     body.innerHTML = html;
+    APP.refreshIcons();
 
     // Attach auto-save listeners to all fields
     body.querySelectorAll("input, select").forEach(function (el) {
@@ -1214,7 +1213,6 @@
     reader.readAsText(file);
   };
 
-
   /* ---------- Boot ---------- */
   document.addEventListener("club-data-ready", function () {
     // Hide loading indicator
@@ -1322,28 +1320,6 @@
         if (!th) return;
         handleSort(table, th.dataset.sort, th);
       });
-    });
-
-    // Keyboard arrow navigation for tabs
-    document.querySelector(".tabs").addEventListener("keydown", function (ev) {
-      const tabs = Array.from(this.querySelectorAll(".tab"));
-      const idx = tabs.indexOf(document.activeElement);
-      if (idx < 0) return;
-      let next = -1;
-      if (ev.key === "ArrowRight" || ev.key === "ArrowDown") {
-        next = (idx + 1) % tabs.length;
-      } else if (ev.key === "ArrowLeft" || ev.key === "ArrowUp") {
-        next = (idx - 1 + tabs.length) % tabs.length;
-      } else if (ev.key === "Home") {
-        next = 0;
-      } else if (ev.key === "End") {
-        next = tabs.length - 1;
-      }
-      if (next >= 0) {
-        ev.preventDefault();
-        tabs[next].focus();
-        tabs[next].click();
-      }
     });
 
     // Scroll-to-top button

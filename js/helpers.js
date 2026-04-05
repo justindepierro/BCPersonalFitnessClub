@@ -5,9 +5,7 @@
 (function () {
   "use strict";
   const APP = window.APP;
-  const {
-    ESC_MAP,
-  } = APP;
+  const { ESC_MAP } = APP;
 
   function esc(s) {
     if (s === null || s === undefined) return "";
@@ -16,7 +14,7 @@
     });
   }
 
-  /** Escape a value for embedding inside onclick="fn('VALUE')" */
+  /** Escape a value for safe embedding in quoted HTML attributes */
   function escJs(s) {
     return esc(String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'"));
   }
@@ -125,7 +123,11 @@
     const pr = opts && opts.pr;
     const v = fmt(val, decimals);
     const cls = pr ? "num pr-val" : stale ? "num stale-val" : "num";
-    const title = pr ? ' title="Personal record"' : stale ? ' title="Previous test data"' : "";
+    const title = pr
+      ? ' title="Personal record"'
+      : stale
+        ? ' title="Previous test data"'
+        : "";
     return `<td class="${cls}"${title}>${v}</td>`;
   }
 
@@ -154,7 +156,9 @@
       return `<td class="${cls}"${title}>${v}</td>`;
     }
     const staleCls = stale ? " stale-val" : "";
-    const titleText = stale ? `${grade.label} (previous test data)` : grade.label;
+    const titleText = stale
+      ? `${grade.label} (previous test data)`
+      : grade.label;
     return `<td class="num${staleCls} grade-text-${grade.tier}" title="${titleText}"${heatBg(grade)}>${v}</td>`;
   }
 
@@ -181,9 +185,24 @@
     </td>`;
   }
   Object.assign(APP, {
-    esc, escJs, debounce, sortedAthletes, fmtHeight, ordGrade,
-    tierLabelFromAvg, fmt, fmtZ, formatLogDate, buildAgeFactorRows,
-    tierBadge, pctBarHTML, tdNum, heatBg, tdGraded, tdNumColored,
-    gradeBadge, overallGradeCell,
+    esc,
+    escJs,
+    debounce,
+    sortedAthletes,
+    fmtHeight,
+    ordGrade,
+    tierLabelFromAvg,
+    fmt,
+    fmtZ,
+    formatLogDate,
+    buildAgeFactorRows,
+    tierBadge,
+    pctBarHTML,
+    tdNum,
+    heatBg,
+    tdGraded,
+    tdNumColored,
+    gradeBadge,
+    overallGradeCell,
   });
 })();

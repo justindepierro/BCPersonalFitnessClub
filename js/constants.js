@@ -465,7 +465,12 @@
   };
 
   Object.assign(APP, {
-    ESC_MAP, GRADE_TIER_LABELS, GRADE_TIER_COLORS, GRADE_TIER_ORDER,
-    TEST_METRIC_KEYS, METRIC_INFO, pctToGradeTier,
+    ESC_MAP,
+    GRADE_TIER_LABELS,
+    GRADE_TIER_COLORS,
+    GRADE_TIER_ORDER,
+    TEST_METRIC_KEYS,
+    METRIC_INFO,
+    pctToGradeTier,
   });
 })();

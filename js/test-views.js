@@ -7,7 +7,6 @@
   const APP = window.APP;
   const {
     esc,
-    escJs,
     fmt,
     formatLogDate,
     getAthleteById,
@@ -92,7 +91,8 @@
           "</td>";
       }
       // Delta column
-      let newV = null, oldV = null;
+      let newV = null,
+        oldV = null;
       if (shown.length >= 2) {
         newV = shown[0].values[mk.jsonKey];
         oldV = shown[1].values[mk.jsonKey];
@@ -248,28 +248,26 @@
     html += '<div class="history-actions">';
     html += '<span class="history-actions-label">Manage tests:</span>';
     for (let di = 0; di < shown.length; di++) {
-      const _eId = escJs(a.id);
-      const _eDate = escJs(shown[di].date);
-      const _eLabel = escJs(shown[di].label);
+      const _eId = esc(a.id);
+      const _eDate = esc(shown[di].date);
+      const _eLabel = esc(shown[di].label);
       html += '<span class="history-action-group">';
       html +=
-        '<button class="btn btn-xs btn-muted" onclick="openEditPanel(\'' +
+        '<button class="btn btn-xs btn-muted" data-click="openHistoryEntryEditor" data-arg1="' +
         _eId +
-        "'); setTimeout(function(){ editHistoryEntry('" +
-        _eId +
-        "','" +
+        '" data-arg2="' +
         _eDate +
-        "','" +
+        '" data-arg3="' +
         _eLabel +
-        '\')},300)" title="Edit this test"><i data-lucide="pencil" class="icon"></i></button>';
+        '" title="Edit this test"><i data-lucide="pencil" class="icon"></i></button>';
       html +=
-        '<button class="btn btn-xs btn-muted" onclick="deleteHistoryEntry(\'' +
+        '<button class="btn btn-xs btn-muted" data-click="deleteHistoryEntry" data-arg1="' +
         _eId +
-        "','" +
+        '" data-arg2="' +
         _eDate +
-        "','" +
+        '" data-arg3="' +
         _eLabel +
-        '\')" title="Delete this test">🗑</button>';
+        '" title="Delete this test">🗑</button>';
       html +=
         '<small class="history-action-name">' +
         esc(shown[di].label || shown[di].date) +
@@ -292,6 +290,13 @@
       if (a) APP.buildEditFields(a);
     }
     showToast("Deleted test entry: " + label, "info");
+  };
+
+  window.openHistoryEntryEditor = function (athleteId, date, label) {
+    openEditPanel(athleteId);
+    setTimeout(function () {
+      editHistoryEntry(athleteId, date, label);
+    }, 300);
   };
 
   /* --- Save ALL athletes' current data as a test date --- */
@@ -409,8 +414,8 @@
       const test = tests[ci];
       const safeDate = esc(test.date);
       const rawLabelLower = test.label.toLowerCase();
-      const escapedDate = escJs(test.date);
-      const escapedLabel = escJs(test.label);
+      const escapedDate = esc(test.date);
+      const escapedLabel = esc(test.label);
 
       // Data completeness
       const totalMetricSlots =
@@ -480,74 +485,74 @@
       // Primary action buttons
       cards += '<div class="th-card-actions">';
       cards +=
-        '<button class="btn btn-xs" onclick="toggleTestDetail(' +
+        '<button class="btn btn-xs" data-click="toggleTestDetail" data-arg1="' +
         ci +
-        ')" title="View athlete details">👤 Details</button>';
+        '" title="View athlete details">👤 Details</button>';
       cards +=
-        '<button class="btn btn-xs btn-primary" onclick="openNewTestEntry(\'' +
+        '<button class="btn btn-xs btn-primary" data-click="openNewTestEntry" data-arg1="' +
         escapedDate +
-        "','" +
+        '" data-arg2="' +
         escapedLabel +
-        '\')" title="Open full worksheet for editing">📝 Worksheet</button>';
+        '" title="Open full worksheet for editing">📝 Worksheet</button>';
       cards +=
-        '<button class="btn btn-xs" onclick="applyTestAsCurrent(\'' +
+        '<button class="btn btn-xs" data-click="applyTestAsCurrent" data-arg1="' +
         escapedDate +
-        "','" +
+        '" data-arg2="' +
         escapedLabel +
-        '\')" title="Apply this test data as current athlete values">🔄 Apply as Current</button>';
+        '" title="Apply this test data as current athlete values">🔄 Apply as Current</button>';
       // More actions dropdown
       cards += '<div class="th-more-wrap">';
       cards +=
-        '<button class="btn btn-xs" onclick="toggleThMore(this)" title="More actions">⋯ More</button>';
+        '<button class="btn btn-xs" data-click="toggleThMore" data-pass-element="true" title="More actions">⋯ More</button>';
       cards += '<div class="th-more-menu">';
       cards +=
-        "<button onclick=\"renameTestDate('" +
+        '<button data-click="renameTestDate" data-arg1="' +
         escapedDate +
-        "','" +
+        '" data-arg2="' +
         escapedLabel +
-        "')\"><i data-lucide=\"pencil\" class=\"icon\"></i> Rename</button>";
+        '"><i data-lucide="pencil" class="icon"></i> Rename</button>';
       cards +=
-        "<button onclick=\"changeTestDate('" +
+        '<button data-click="changeTestDate" data-arg1="' +
         escapedDate +
-        "','" +
+        '" data-arg2="' +
         escapedLabel +
-        "')\"><i data-lucide=\"calendar\" class=\"icon\"></i> Change Date</button>";
+        '"><i data-lucide="calendar" class="icon"></i> Change Date</button>';
       cards +=
-        "<button onclick=\"duplicateTest('" +
+        '<button data-click="duplicateTest" data-arg1="' +
         escapedDate +
-        "','" +
+        '" data-arg2="' +
         escapedLabel +
-        "')\"><i data-lucide=\"copy\" class=\"icon\"></i> Duplicate</button>";
+        '"><i data-lucide="copy" class="icon"></i> Duplicate</button>';
       cards +=
-        "<button onclick=\"editTestNote('" +
+        '<button data-click="editTestNote" data-arg1="' +
         escapedDate +
-        "','" +
+        '" data-arg2="' +
         escapedLabel +
-        "')\"><i data-lucide=\"notebook-pen\" class=\"icon\"></i> Notes</button>";
+        '"><i data-lucide="notebook-pen" class="icon"></i> Notes</button>';
       cards +=
-        "<button onclick=\"addAthletesToTest('" +
+        '<button data-click="addAthletesToTest" data-arg1="' +
         escapedDate +
-        "','" +
+        '" data-arg2="' +
         escapedLabel +
-        "')\"><i data-lucide=\"plus\" class=\"icon\"></i> Add Athletes</button>";
+        '"><i data-lucide="plus" class="icon"></i> Add Athletes</button>';
       cards +=
-        "<button onclick=\"removeAthleteFromTest('" +
+        '<button data-click="removeAthleteFromTest" data-arg1="' +
         escapedDate +
-        "','" +
+        '" data-arg2="' +
         escapedLabel +
-        "')\"><i data-lucide=\"minus\" class=\"icon\"></i> Remove Athlete</button>";
+        '"><i data-lucide="minus" class="icon"></i> Remove Athlete</button>';
       cards +=
-        "<button onclick=\"exportSingleTest('" +
+        '<button data-click="exportSingleTest" data-arg1="' +
         escapedDate +
-        "','" +
+        '" data-arg2="' +
         escapedLabel +
-        "')\"><i data-lucide=\"share\" class=\"icon\"></i> Export</button>";
+        '"><i data-lucide="share" class="icon"></i> Export</button>';
       cards +=
-        '<button class="th-more-danger" onclick="deleteBulkTestEntry(\'' +
+        '<button class="th-more-danger" data-click="deleteBulkTestEntry" data-arg1="' +
         escapedDate +
-        "','" +
+        '" data-arg2="' +
         escapedLabel +
-        "')\"><i data-lucide=\"trash-2\" class=\"icon\"></i> Delete</button>";
+        '"><i data-lucide="trash-2" class="icon"></i> Delete</button>';
       cards += "</div></div>";
       cards += "</div>";
       // Expandable detail
@@ -574,7 +579,7 @@
             esc(test.label) +
             '" data-key="' +
             jsonKey +
-            '" onclick="inlineEditCell(this)" title="Click to edit">' +
+            '" data-click="inlineEditCell" data-pass-element="true" title="Click to edit">' +
             displayVal +
             "</td>";
         }
@@ -592,13 +597,13 @@
 
     const emptyState =
       athleteIds.length === 0
-        ? '<div class="th-empty"><div class="th-empty-icon"><i data-lucide="bar-chart-3" class="icon" style="width:2.5rem;height:2.5rem"></i></div><h3>No Test History Yet</h3><p>Save your first test baseline to start tracking athlete progress over time.</p><button class="btn btn-primary" onclick="document.querySelector(\'.test-history-modal\').remove(); saveAllAsTestDate()"><i data-lucide="calendar-plus" class="icon"></i> Save Current Team Data</button></div>'
+        ? '<div class="th-empty"><div class="th-empty-icon"><i data-lucide="bar-chart-3" class="icon" style="width:2.5rem;height:2.5rem"></i></div><h3>No Test History Yet</h3><p>Save your first test baseline to start tracking athlete progress over time.</p><button class="btn btn-primary" data-click="saveAllAsTestDate" data-close-overlay="true"><i data-lucide="calendar-plus" class="icon"></i> Save Current Team Data</button></div>'
         : "";
 
     const bodyHTML =
       '<div class="th-modal-body">' +
       '<div class="th-modal-header">' +
-      "<h2><i data-lucide=\"clipboard-list\" class=\"icon\"></i> Test History Manager</h2>" +
+      '<h2><i data-lucide="clipboard-list" class="icon"></i> Test History Manager</h2>' +
       '<p class="th-summary">' +
       (tests.length > 0
         ? tests.length +
@@ -616,15 +621,15 @@
       "</div>" +
       (tests.length > 0
         ? '<div class="th-toolbar">' +
-          '<button class="btn btn-sm btn-primary" onclick="document.querySelector(\'.test-history-modal\').remove(); saveAllAsTestDate()"><i data-lucide="calendar-plus" class="icon"></i> Save New Test Date</button>' +
-          '<button class="btn btn-sm" onclick="exportTestHistoryOnly()"><i data-lucide="share" class="icon"></i> Export All</button>' +
-          '<label class="btn btn-sm" style="cursor:pointer"><i data-lucide="upload" class="icon"></i> Import<input type="file" accept=".json" onchange="importTestHistoryOnly(this)" style="display:none" /></label>' +
+          '<button class="btn btn-sm btn-primary" data-click="saveAllAsTestDate" data-close-overlay="true"><i data-lucide="calendar-plus" class="icon"></i> Save New Test Date</button>' +
+          '<button class="btn btn-sm" data-click="exportTestHistoryOnly"><i data-lucide="share" class="icon"></i> Export All</button>' +
+          '<label class="btn btn-sm" style="cursor:pointer"><i data-lucide="upload" class="icon"></i> Import<input type="file" accept=".json" data-change="importTestHistoryOnly" data-pass-element="true" style="display:none" /></label>' +
           (tests.length >= 2
-            ? '<button class="btn btn-sm" onclick="compareTests()"><i data-lucide="git-compare" class="icon"></i> Compare Tests</button>'
+            ? '<button class="btn btn-sm" data-click="compareTests"><i data-lucide="git-compare" class="icon"></i> Compare Tests</button>'
             : "") +
           '<div style="flex:1"></div>' +
-          '<div class="th-search-wrap"><input type="text" class="th-search" id="thSearchInput" placeholder="Search tests…" oninput="filterTestCards(this.value)" /></div>' +
-          '<select class="th-sort-select" id="thSortSelect" onchange="sortTestCards(this.value)">' +
+          '<div class="th-search-wrap"><input type="text" class="th-search" id="thSearchInput" placeholder="Search tests…" data-input="filterTestCards" data-pass-value="true" /></div>' +
+          '<select class="th-sort-select" id="thSortSelect" data-change="sortTestCards" data-pass-value="true">' +
           '<option value="date-desc">Newest First</option>' +
           '<option value="date-asc">Oldest First</option>' +
           '<option value="name-asc">Name A–Z</option>' +
@@ -632,15 +637,15 @@
           '<option value="athletes-desc">Most Athletes</option>' +
           "</select>" +
           '<div class="th-view-toggle">' +
-          '<button class="btn btn-sm th-view-btn active" data-view="list" onclick="switchThView(\'list\')">☰ List</button>' +
-          '<button class="btn btn-sm th-view-btn" data-view="calendar" onclick="switchThView(\'calendar\')">☰ Calendar</button>' +
+          '<button class="btn btn-sm th-view-btn active" data-view="list" data-click="switchThView" data-arg1="list">☰ List</button>' +
+          '<button class="btn btn-sm th-view-btn" data-view="calendar" data-click="switchThView" data-arg1="calendar">☰ Calendar</button>' +
           "</div>" +
           "</div>"
         : "") +
       (emptyState ||
         '<div id="thListView" class="th-card-list">' + cards + "</div>") +
       '<div id="thCalendarView" class="th-calendar-wrap" style="display:none"></div>' +
-      '<div class="th-new-test-bar"><button class="btn btn-primary" onclick="openNewTestEntry()"><i data-lucide="plus" class="icon"></i> Start New Test Session</button></div>' +
+      '<div class="th-new-test-bar"><button class="btn btn-primary" data-click="openNewTestEntry"><i data-lucide="plus" class="icon"></i> Start New Test Session</button></div>' +
       '<p class="th-footer-note">Test history is included in full JSON exports and restored on import.</p>' +
       "</div>";
 
@@ -652,13 +657,14 @@
     overlay.className = "modal-overlay test-history-modal";
     overlay.innerHTML =
       '<div class="modal-content th-modal-content">' +
-      '<button class="modal-close" aria-label="Close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' +
+      '<button class="modal-close" aria-label="Close" data-click="closeClosestOverlay" data-pass-element="true">&times;</button>' +
       bodyHTML +
       "</div>";
     overlay.addEventListener("click", function (ev) {
       if (ev.target === overlay) overlay.remove();
     });
     document.body.appendChild(overlay);
+    APP.refreshIcons();
 
     // Build calendar content
     if (tests.length > 0) buildTestCalendar(tests);
@@ -760,7 +766,10 @@
         const hasTests = dayTests.length > 0;
         const dayClass = "cal-day" + (hasTests ? " cal-has-test" : "");
         if (hasTests) {
-          html += '<div class="' + dayClass + '" onclick="calDayClick(this)">';
+          html +=
+            '<div class="' +
+            dayClass +
+            '" data-click="calDayClick" data-pass-element="true">';
           html += '<span class="cal-day-num">' + day + "</span>";
           html += '<div class="cal-dots">';
           for (let dt = 0; dt < dayTests.length; dt++) {
@@ -776,8 +785,8 @@
           html += '<div class="cal-day-detail" style="display:none">';
           for (let dt2 = 0; dt2 < dayTests.length; dt2++) {
             const t = dayTests[dt2];
-            const eDate = escJs(t.date);
-            const eLabel = escJs(t.label);
+            const eDate = esc(t.date);
+            const eLabel = esc(t.label);
             html += '<div class="cal-test-item">';
             html += '<span class="cal-test-label">' + esc(t.label) + "</span>";
             html +=
@@ -788,23 +797,23 @@
               "</span>";
             html += '<div class="cal-test-actions">';
             html +=
-              '<button class="btn btn-xs btn-primary" onclick="event.stopPropagation(); openNewTestEntry(\'' +
+              '<button class="btn btn-xs btn-primary" data-click="openNewTestEntry" data-arg1="' +
               eDate +
-              "','" +
+              '" data-arg2="' +
               eLabel +
-              '\')" title="Open worksheet">📝</button>';
+              '" data-stop-prop="true" title="Open worksheet">📝</button>';
             html +=
-              '<button class="btn btn-xs" onclick="event.stopPropagation(); applyTestAsCurrent(\'' +
+              '<button class="btn btn-xs" data-click="applyTestAsCurrent" data-arg1="' +
               eDate +
-              "','" +
+              '" data-arg2="' +
               eLabel +
-              '\')" title="Apply as current">🔄</button>';
+              '" data-stop-prop="true" title="Apply as current">🔄</button>';
             html +=
-              '<button class="btn btn-xs btn-muted" onclick="event.stopPropagation(); deleteBulkTestEntry(\'' +
+              '<button class="btn btn-xs btn-muted" data-click="deleteBulkTestEntry" data-arg1="' +
               eDate +
-              "','" +
+              '" data-arg2="' +
               eLabel +
-              '\')" title="Delete">🗑</button>';
+              '" data-stop-prop="true" title="Delete">🗑</button>';
             html += "</div></div>";
           }
           html += "</div>";
@@ -823,15 +832,16 @@
 
     // Timeline below the calendar
     html += '<div class="cal-timeline">';
-    html += '<div class="cal-timeline-title"><i data-lucide="calendar" class="icon"></i> Chronological Timeline</div>';
+    html +=
+      '<div class="cal-timeline-title"><i data-lucide="calendar" class="icon"></i> Chronological Timeline</div>';
     // Sort tests oldest to newest for timeline
     const sorted = tests.slice().sort(function (a, b) {
       return a.date > b.date ? 1 : a.date < b.date ? -1 : 0;
     });
     for (let ti = 0; ti < sorted.length; ti++) {
       const st = sorted[ti];
-      const eDate2 = escJs(st.date);
-      const eLabel2 = escJs(st.label);
+      const eDate2 = esc(st.date);
+      const eLabel2 = esc(st.label);
       html += '<div class="cal-tl-item">';
       html += '<div class="cal-tl-dot"></div>';
       html += '<div class="cal-tl-content">';
@@ -845,30 +855,33 @@
         "</div>";
       html += '<div class="cal-tl-actions">';
       html +=
-        '<button class="btn btn-xs btn-primary" onclick="openNewTestEntry(\'' +
+        '<button class="btn btn-xs btn-primary" data-click="openNewTestEntry" data-arg1="' +
         eDate2 +
-        "','" +
+        '" data-arg2="' +
         eLabel2 +
-        "')\">📝 Worksheet</button>";
+        '">📝 Worksheet</button>';
       html +=
-        '<button class="btn btn-xs" onclick="applyTestAsCurrent(\'' +
+        '<button class="btn btn-xs" data-click="applyTestAsCurrent" data-arg1="' +
         eDate2 +
-        "','" +
+        '" data-arg2="' +
         eLabel2 +
-        "')\">🔄 Apply</button>";
+        '">🔄 Apply</button>';
       html += "</div>";
       html += "</div></div>";
     }
     html += "</div>";
 
     wrap.innerHTML = html;
+    APP.refreshIcons();
   }
 
   window.calDayClick = function (el) {
     const detail = el.querySelector(".cal-day-detail");
     if (!detail) return;
     // Close any other open details
-    const allOpen = document.querySelectorAll('.cal-day-detail[style*="block"]');
+    const allOpen = document.querySelectorAll(
+      '.cal-day-detail[style*="block"]',
+    );
     for (let i = 0; i < allOpen.length; i++) {
       if (allOpen[i] !== detail) allOpen[i].style.display = "none";
     }
@@ -1275,7 +1288,7 @@
           safeLabel +
           '" data-key="' +
           key +
-          '" onclick="inlineEditCell(this)" title="Click to enter ' +
+          '" data-click="inlineEditCell" data-pass-element="true" title="Click to enter ' +
           TEST_METRIC_KEYS[mk].label +
           '">' +
           (display !== "" ? display : '<span class="te-empty-cell">—</span>') +
@@ -1345,28 +1358,29 @@
       " athletes have data</span>";
     bodyHTML += '<div class="te-footer-actions">';
     bodyHTML +=
-      '<button class="btn btn-sm" onclick="document.querySelector(\'.te-modal\').remove(); viewSavedTests()">← Back to Test History</button>';
+      '<button class="btn btn-sm" data-click="viewSavedTests" data-close-overlay="true">← Back to Test History</button>';
     bodyHTML +=
-      '<button class="btn btn-sm" onclick="applyTestAsCurrent(\'' +
-      escJs(dateStr) +
-      "','" +
-      escJs(label) +
-      '\')" title="Update all athlete current values from this test">🔄 Apply as Current Data</button>';
+      '<button class="btn btn-sm" data-click="applyTestAsCurrent" data-arg1="' +
+      esc(dateStr) +
+      '" data-arg2="' +
+      esc(label) +
+      '" title="Update all athlete current values from this test">🔄 Apply as Current Data</button>';
     bodyHTML +=
-      '<button class="btn btn-sm btn-primary" onclick="document.querySelector(\'.te-modal\').remove(); viewSavedTests()">✅ Done</button>';
+      '<button class="btn btn-sm btn-primary" data-click="viewSavedTests" data-close-overlay="true">✅ Done</button>';
     bodyHTML += "</div></div></div>";
 
     const overlay = document.createElement("div");
     overlay.className = "modal-overlay te-modal";
     overlay.innerHTML =
       '<div class="modal-content th-modal-content te-content">' +
-      '<button class="modal-close" aria-label="Close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' +
+      '<button class="modal-close" aria-label="Close" data-click="closeClosestOverlay" data-pass-element="true">&times;</button>' +
       bodyHTML +
       "</div>";
     overlay.addEventListener("click", function (ev) {
       if (ev.target === overlay) overlay.remove();
     });
     document.body.appendChild(overlay);
+    APP.refreshIcons();
   };
 
   /* --- Apply a test session's data as current athlete values --- */
@@ -1557,7 +1571,10 @@
     const notes = getTestNotes();
     const nk = noteKey(date, label);
     const current = notes[nk] || "";
-    const newNote = prompt('Notes for "' + label + '" (' + date + "):", current);
+    const newNote = prompt(
+      'Notes for "' + label + '" (' + date + "):",
+      current,
+    );
     if (newNote === null) return;
     if (newNote.trim()) {
       notes[nk] = newNote.trim();
@@ -1920,7 +1937,7 @@
     html += "</tbody></table></div>";
     html += '<div class="te-footer"><div class="te-footer-actions">';
     html +=
-      '<button class="btn btn-sm btn-primary" onclick="this.closest(\'.cmp-modal\').remove(); viewSavedTests()">← Back</button>';
+      '<button class="btn btn-sm btn-primary" data-click="viewSavedTests" data-close-overlay="true">← Back</button>';
     html += "</div></div></div>";
 
     // Close test history modal
@@ -1931,13 +1948,14 @@
     overlay.className = "modal-overlay cmp-modal";
     overlay.innerHTML =
       '<div class="modal-content th-modal-content">' +
-      '<button class="modal-close" aria-label="Close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' +
+      '<button class="modal-close" aria-label="Close" data-click="closeClosestOverlay" data-pass-element="true">&times;</button>' +
       html +
       "</div>";
     overlay.addEventListener("click", function (ev) {
       if (ev.target === overlay) overlay.remove();
     });
     document.body.appendChild(overlay);
+    APP.refreshIcons();
   };
 
   Object.assign(APP, { buildProgressSection });

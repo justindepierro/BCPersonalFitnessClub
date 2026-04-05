@@ -8,7 +8,6 @@
   const APP = window.APP;
   const {
     esc,
-    escJs,
     fmt,
     fmtZ,
     getAthleteById,
@@ -26,8 +25,6 @@
   } = APP;
 
   /* ========== COMPARE & IMPROVEMENT TRACKER ========== */
-
-
 
   function _destroyAllCmpCharts() {
     APP.charts.cmp = destroyChart(APP.charts.cmp);
@@ -176,7 +173,10 @@
     const curVal = sel.value;
     sel.innerHTML = '<option value="all">All Groups</option>';
     for (const g of groups) {
-      sel.innerHTML += '<option value="' + esc(g) + '">' + esc(g) + "</option>";
+      const opt = document.createElement("option");
+      opt.value = g;
+      opt.textContent = g;
+      sel.appendChild(opt);
     }
     if (curVal) sel.value = curVal;
   }
@@ -336,6 +336,7 @@
     if (!baselineSel) {
       container.innerHTML =
         '<p class="placeholder-text">Select a baseline test session to compare against current data.</p>';
+      APP.refreshIcons();
       return;
     }
     const _sepIdx1 = baselineSel.indexOf("|");
@@ -388,6 +389,7 @@
         '<p class="placeholder-text">No comparable data found between current and "' +
         esc(sessionLabel) +
         '".</p>';
+      APP.refreshIcons();
       return;
     }
 
@@ -473,6 +475,7 @@
     html += _buildDeltaTable(athletes, deltas, filteredMetrics);
 
     container.innerHTML = html;
+    APP.refreshIcons();
     _buildBarChart("cmpBarChart", summaryData);
   }
 
@@ -486,6 +489,7 @@
     if (!baselineSel) {
       container.innerHTML =
         '<p class="placeholder-text">Select a baseline test session to compare against current data.</p>';
+      APP.refreshIcons();
       return;
     }
     const _sepIdx2 = baselineSel.indexOf("|");
@@ -613,9 +617,11 @@
     if (!html) {
       container.innerHTML =
         '<p class="placeholder-text">No comparable data found for the selected group.</p>';
+      APP.refreshIcons();
       return;
     }
     container.innerHTML = html;
+    APP.refreshIcons();
 
     // Build charts for each group (reuse cached data)
     for (const group in _groupCache) {
@@ -641,23 +647,21 @@
     if (ids.length < 2) {
       container.innerHTML =
         '<p class="placeholder-text">Select two or three athletes to compare.</p>';
+      APP.refreshIcons();
       return;
     }
     const athletes = ids.map((id) => getAthleteById(id)).filter(Boolean);
     if (athletes.length < 2) {
       container.innerHTML =
         '<p class="placeholder-text">Athletes not found.</p>';
+      APP.refreshIcons();
       return;
     }
 
     const cols = athletes.length;
     var T = APP.getChartTheme();
     const palette = [T.purple, T.green, T.blue];
-    const paletteBg = [
-      T.purple + "33",
-      T.green + "33",
-      T.blue + "33",
-    ];
+    const paletteBg = [T.purple + "33", T.green + "33", T.blue + "33"];
 
     // Profile cards
     let html = '<div class="cmp-profile-row cols-' + cols + '">';
@@ -780,6 +784,7 @@
     // Radar overlay
     html += '<div class="cmp-radar-wrap"><canvas id="cmpRadar"></canvas></div>';
     container.innerHTML = html;
+    APP.refreshIcons();
 
     // Build overlaid radar chart
     if (typeof Chart === "undefined") {
@@ -920,11 +925,7 @@
       values.push(+pct.toFixed(1));
       const improved = s.invert ? pct < 0 : pct > 0;
       colors.push(
-        improved
-          ? T.green + "b3"
-          : pct === 0
-            ? T.muted + "80"
-            : T.red + "b3",
+        improved ? T.green + "b3" : pct === 0 ? T.muted + "80" : T.red + "b3",
       );
     }
     const chart = new Chart(canvas, {
@@ -1116,6 +1117,7 @@
     }
     html += "</div>";
     container.innerHTML = html;
+    APP.refreshIcons();
   };
 
   APP.renderers["compare"] = window.renderComparison;

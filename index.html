@@ -31,10 +31,7 @@
       crossorigin="anonymous"
       defer
     ></script>
-    <script
-      src="https://unpkg.com/lucide@latest"
-      defer
-    ></script>
+    <script src="https://unpkg.com/lucide@latest" defer></script>
   </head>
   <body>
     <!-- Skip to main content (keyboard accessibility) -->
@@ -59,12 +56,15 @@
     <!-- ===== HEADER ===== -->
     <header class="site-header">
       <div class="header-inner">
-        <h1 class="logo"><i data-lucide="dumbbell" class="icon icon-logo"></i> BC Personal Fitness Club</h1>
+        <h1 class="logo">
+          <i data-lucide="dumbbell" class="icon icon-logo"></i> BC Personal
+          Fitness Club
+        </h1>
         <span class="header-subtitle">Athletic Performance Dashboard</span>
         <button
           id="themeToggle"
           class="btn btn-sm theme-toggle"
-          onclick="toggleTheme()"
+          data-click="toggleTheme"
           title="Toggle light/dark mode"
           aria-label="Toggle light/dark mode"
         >
@@ -83,7 +83,8 @@
         aria-selected="true"
         aria-controls="tab-overview"
         data-tab="overview"
-        onclick="showTab('overview')"
+        data-click="showTab"
+        data-arg1="overview"
       >
         Team Overview
       </button>
@@ -95,7 +96,8 @@
         aria-controls="tab-profiles"
         tabindex="-1"
         data-tab="profiles"
-        onclick="showTab('profiles')"
+        data-click="showTab"
+        data-arg1="profiles"
       >
         Athlete Profiles
       </button>
@@ -107,7 +109,8 @@
         aria-controls="tab-leaderboards"
         tabindex="-1"
         data-tab="leaderboards"
-        onclick="showTab('leaderboards')"
+        data-click="showTab"
+        data-arg1="leaderboards"
       >
         Leaderboards
       </button>
@@ -119,7 +122,8 @@
         aria-controls="tab-sprint"
         tabindex="-1"
         data-tab="sprint"
-        onclick="showTab('sprint')"
+        data-click="showTab"
+        data-arg1="sprint"
       >
         Sprint Analysis
       </button>
@@ -131,7 +135,8 @@
         aria-controls="tab-strength"
         tabindex="-1"
         data-tab="strength"
-        onclick="showTab('strength')"
+        data-click="showTab"
+        data-arg1="strength"
       >
         Strength &amp; Power
       </button>
@@ -143,7 +148,8 @@
         aria-controls="tab-scorecard"
         tabindex="-1"
         data-tab="scorecard"
-        onclick="showTab('scorecard')"
+        data-click="showTab"
+        data-arg1="scorecard"
       >
         Scorecard
       </button>
@@ -155,7 +161,8 @@
         aria-controls="tab-compare"
         tabindex="-1"
         data-tab="compare"
-        onclick="showTab('compare')"
+        data-click="showTab"
+        data-arg1="compare"
       >
         Compare
       </button>
@@ -167,7 +174,8 @@
         aria-controls="tab-groups"
         tabindex="-1"
         data-tab="groups"
-        onclick="showTab('groups')"
+        data-click="showTab"
+        data-arg1="groups"
       >
         Groups
       </button>
@@ -179,7 +187,8 @@
         aria-controls="tab-log"
         tabindex="-1"
         data-tab="log"
-        onclick="showTab('log')"
+        data-click="showTab"
+        data-arg1="log"
       >
         Testing Log
       </button>
@@ -191,7 +200,8 @@
         aria-controls="tab-plan"
         tabindex="-1"
         data-tab="plan"
-        onclick="showTab('plan')"
+        data-click="showTab"
+        data-arg1="plan"
       >
         Testing Week
       </button>
@@ -205,19 +215,53 @@
           <div class="skeleton-line skeleton-title"></div>
         </div>
         <div class="skeleton-cards">
-          <div class="skeleton-card"><div class="skeleton-line" style="width:60%"></div><div class="skeleton-line skeleton-big"></div><div class="skeleton-line" style="width:40%"></div></div>
-          <div class="skeleton-card"><div class="skeleton-line" style="width:50%"></div><div class="skeleton-line skeleton-big"></div><div class="skeleton-line" style="width:45%"></div></div>
-          <div class="skeleton-card"><div class="skeleton-line" style="width:70%"></div><div class="skeleton-line skeleton-big"></div><div class="skeleton-line" style="width:35%"></div></div>
-          <div class="skeleton-card"><div class="skeleton-line" style="width:55%"></div><div class="skeleton-line skeleton-big"></div><div class="skeleton-line" style="width:50%"></div></div>
-          <div class="skeleton-card"><div class="skeleton-line" style="width:65%"></div><div class="skeleton-line skeleton-big"></div><div class="skeleton-line" style="width:40%"></div></div>
-          <div class="skeleton-card"><div class="skeleton-line" style="width:45%"></div><div class="skeleton-line skeleton-big"></div><div class="skeleton-line" style="width:55%"></div></div>
+          <div class="skeleton-card">
+            <div class="skeleton-line" style="width: 60%"></div>
+            <div class="skeleton-line skeleton-big"></div>
+            <div class="skeleton-line" style="width: 40%"></div>
+          </div>
+          <div class="skeleton-card">
+            <div class="skeleton-line" style="width: 50%"></div>
+            <div class="skeleton-line skeleton-big"></div>
+            <div class="skeleton-line" style="width: 45%"></div>
+          </div>
+          <div class="skeleton-card">
+            <div class="skeleton-line" style="width: 70%"></div>
+            <div class="skeleton-line skeleton-big"></div>
+            <div class="skeleton-line" style="width: 35%"></div>
+          </div>
+          <div class="skeleton-card">
+            <div class="skeleton-line" style="width: 55%"></div>
+            <div class="skeleton-line skeleton-big"></div>
+            <div class="skeleton-line" style="width: 50%"></div>
+          </div>
+          <div class="skeleton-card">
+            <div class="skeleton-line" style="width: 65%"></div>
+            <div class="skeleton-line skeleton-big"></div>
+            <div class="skeleton-line" style="width: 40%"></div>
+          </div>
+          <div class="skeleton-card">
+            <div class="skeleton-line" style="width: 45%"></div>
+            <div class="skeleton-line skeleton-big"></div>
+            <div class="skeleton-line" style="width: 55%"></div>
+          </div>
         </div>
         <div class="skeleton-table">
-          <div class="skeleton-row"><div class="skeleton-line" style="width:100%"></div></div>
-          <div class="skeleton-row"><div class="skeleton-line" style="width:95%"></div></div>
-          <div class="skeleton-row"><div class="skeleton-line" style="width:90%"></div></div>
-          <div class="skeleton-row"><div class="skeleton-line" style="width:92%"></div></div>
-          <div class="skeleton-row"><div class="skeleton-line" style="width:88%"></div></div>
+          <div class="skeleton-row">
+            <div class="skeleton-line" style="width: 100%"></div>
+          </div>
+          <div class="skeleton-row">
+            <div class="skeleton-line" style="width: 95%"></div>
+          </div>
+          <div class="skeleton-row">
+            <div class="skeleton-line" style="width: 90%"></div>
+          </div>
+          <div class="skeleton-row">
+            <div class="skeleton-line" style="width: 92%"></div>
+          </div>
+          <div class="skeleton-row">
+            <div class="skeleton-line" style="width: 88%"></div>
+          </div>
         </div>
       </div>
 
@@ -240,26 +284,26 @@
             class="input"
             placeholder="Search athletes…"
             aria-label="Search athletes"
-            oninput="debouncedOverview()"
+            data-input="debouncedOverview"
           />
           <select
             id="overviewPosFilter"
             aria-label="Filter by position"
-            onchange="renderOverview()"
+            data-change="renderOverview"
           >
             <option value="all">All Positions</option>
           </select>
           <select
             id="overviewGroupFilter"
             aria-label="Filter by group"
-            onchange="renderOverview()"
+            data-change="renderOverview"
           >
             <option value="all">All Groups</option>
           </select>
           <select
             id="overviewGradeFilter"
             aria-label="Filter by grade tier"
-            onchange="renderOverview()"
+            data-change="renderOverview"
           >
             <option value="all">All Grades</option>
             <option value="elite">Elite Only</option>
@@ -270,21 +314,21 @@
           </select>
           <button
             class="btn btn-sm"
-            onclick="exportCSV()"
+            data-click="exportCSV"
             title="Download team data as CSV"
           >
             <i data-lucide="download" class="icon"></i> CSV
           </button>
           <button
             class="btn btn-sm"
-            onclick="printTeamSummary()"
+            data-click="printTeamSummary"
             title="Print one-page team summary"
           >
             <i data-lucide="printer" class="icon"></i> Report
           </button>
           <button
             class="btn btn-sm"
-            onclick="exportTeamPDF()"
+            data-click="exportTeamPDF"
             title="Export full team report as PDF"
           >
             <i data-lucide="file-text" class="icon"></i> PDF
@@ -297,7 +341,8 @@
             <input
               type="checkbox"
               id="overviewRelToggle"
-              onchange="toggleOverviewRelatives(this.checked)"
+              data-change="toggleOverviewRelatives"
+              data-pass-checked="true"
             />
             <span>Relatives</span>
           </label>
@@ -308,7 +353,8 @@
             <input
               type="checkbox"
               id="overviewAgeToggle"
-              onchange="toggleAgeAdjusted(this.checked)"
+              data-change="toggleAgeAdjusted"
+              data-pass-checked="true"
             />
             <span>Age-Adj</span>
           </label>
@@ -319,7 +365,8 @@
             <input
               type="checkbox"
               id="overviewBodyToggle"
-              onchange="toggleBodyAdjusted(this.checked)"
+              data-change="toggleBodyAdjusted"
+              data-pass-checked="true"
             />
             <span>Body-Adj</span>
           </label>
@@ -330,7 +377,8 @@
             <input
               type="checkbox"
               id="overviewCohortToggle"
-              onchange="toggleCohortMode(this.checked)"
+              data-change="toggleCohortMode"
+              data-pass-checked="true"
             />
             <span>Cohort</span>
           </label>
@@ -341,7 +389,8 @@
             <input
               type="checkbox"
               id="overviewPRToggle"
-              onchange="toggleShowPRs(this.checked)"
+              data-change="toggleShowPRs"
+              data-pass-checked="true"
             />
             <span>PRs</span>
           </label>
@@ -370,34 +419,34 @@
             <select
               id="athleteSelect"
               aria-label="Select athlete"
-              onchange="renderProfile()"
+              data-change="renderProfile"
             >
               <option value="">— Select Athlete —</option>
             </select>
             <button
               class="btn btn-sm"
-              onclick="printProfile()"
+              data-click="printProfile"
               title="Print current profile"
             >
               <i data-lucide="printer" class="icon"></i> Print
             </button>
             <button
               class="btn btn-sm"
-              onclick="openEditPanel()"
+              data-click="openEditPanel"
               title="Edit athlete data"
             >
               <i data-lucide="pencil" class="icon"></i> Edit
             </button>
             <button
               class="btn btn-sm btn-add"
-              onclick="addAthlete()"
+              data-click="addAthlete"
               title="Add a new athlete"
             >
               <i data-lucide="plus" class="icon"></i> Add Athlete
             </button>
             <button
               class="btn btn-sm btn-danger"
-              onclick="deleteCurrentAthlete()"
+              data-click="deleteCurrentAthlete"
               title="Delete selected athlete"
             >
               <i data-lucide="trash-2" class="icon"></i> Delete
@@ -424,7 +473,7 @@
             <select
               id="lbMetric"
               aria-label="Leaderboard metric"
-              onchange="renderLeaderboards()"
+              data-change="renderLeaderboards"
             >
               <option value="bench">Bench 1RM (lb)</option>
               <option value="squat">Squat 1RM (lb)</option>
@@ -446,14 +495,14 @@
             <select
               id="lbPosFilter"
               aria-label="Filter by position"
-              onchange="renderLeaderboards()"
+              data-change="renderLeaderboards"
             >
               <option value="all">All Positions</option>
             </select>
             <select
               id="lbGroupFilter"
               aria-label="Filter by group"
-              onchange="renderLeaderboards()"
+              data-change="renderLeaderboards"
             >
               <option value="all">All Groups</option>
             </select>
@@ -491,7 +540,7 @@
           <h2>Derived Sprint Analysis</h2>
           <button
             class="btn btn-sm"
-            onclick="printSprintTable()"
+            data-click="printSprintTable"
             title="Print sprint analysis table"
           >
             <i data-lucide="printer" class="icon"></i> Print
@@ -503,17 +552,25 @@
           average horizontal force using simplified kinematic equations.
         </p>
         <div class="info-banner">
-          <strong><i data-lucide="clipboard-list" class="icon"></i> Workbook Note:</strong> If the late split slows (30–40
-          slower than 20–30), a3/F3 may be low or negative — useful flag for
-          speed endurance / mechanics.
+          <strong
+            ><i data-lucide="clipboard-list" class="icon"></i> Workbook
+            Note:</strong
+          >
+          If the late split slows (30–40 slower than 20–30), a3/F3 may be low or
+          negative — useful flag for speed endurance / mechanics.
         </div>
 
         <!-- Collapsible Column Reference Guide -->
         <details class="sprint-reference">
-          <summary><i data-lucide="book-open" class="icon"></i> Column Reference Guide — What Every Column Means</summary>
+          <summary>
+            <i data-lucide="book-open" class="icon"></i> Column Reference Guide
+            — What Every Column Means
+          </summary>
           <div class="sprint-ref-body">
             <div class="ref-category">
-              <h4><i data-lucide="timer" class="icon"></i> Raw Splits & Timing</h4>
+              <h4>
+                <i data-lucide="timer" class="icon"></i> Raw Splits & Timing
+              </h4>
               <div class="ref-grid">
                 <div class="ref-item">
                   <span class="ref-col">Mass (kg)</span>
@@ -780,7 +837,10 @@
             </div>
 
             <div class="ref-category">
-              <h4><i data-lucide="ruler" class="icon"></i> Math Notes & Methodology</h4>
+              <h4>
+                <i data-lucide="ruler" class="icon"></i> Math Notes &
+                Methodology
+              </h4>
               <div class="ref-grid ref-grid-single">
                 <div class="ref-item">
                   <p>
@@ -994,7 +1054,7 @@
           <h2>Derived Strength &amp; Power</h2>
           <button
             class="btn btn-sm"
-            onclick="printStrengthTable()"
+            data-click="printStrengthTable"
             title="Print strength & power table"
           >
             <i data-lucide="printer" class="icon"></i> Print
@@ -1006,20 +1066,29 @@
           metrics combine them with body mass and vertical jump.
         </p>
         <div class="info-banner">
-          <strong><i data-lucide="ruler" class="icon"></i> Sayers Peak Power:</strong> P<sub>peak</sub> = 60.7 ×
-          VJ<sub>cm</sub> + 45.3 × mass<sub>kg</sub> − 2055 &nbsp;|&nbsp;
-          <strong>Strength Utilisation:</strong> F<sub>1</sub> / (Squat<sub
-            >kg</sub
+          <strong
+            ><i data-lucide="ruler" class="icon"></i> Sayers Peak Power:</strong
           >
+          P<sub>peak</sub> = 60.7 × VJ<sub>cm</sub> + 45.3 × mass<sub>kg</sub> −
+          2055 &nbsp;|&nbsp; <strong>Strength Utilisation:</strong> F<sub
+            >1</sub
+          >
+          / (Squat<sub>kg</sub>
           × g) — how much max strength is expressed during sprint acceleration.
         </div>
 
         <!-- Collapsible Column Reference Guide -->
         <details class="sprint-reference">
-          <summary><i data-lucide="book-open" class="icon"></i> Column Reference Guide — What Every Column Means</summary>
+          <summary>
+            <i data-lucide="book-open" class="icon"></i> Column Reference Guide
+            — What Every Column Means
+          </summary>
           <div class="sprint-ref-body">
             <div class="ref-category">
-              <h4><i data-lucide="dumbbell" class="icon"></i> Raw Strength Measures</h4>
+              <h4>
+                <i data-lucide="dumbbell" class="icon"></i> Raw Strength
+                Measures
+              </h4>
               <div class="ref-grid">
                 <div class="ref-item">
                   <span class="ref-col">Wt (lb)</span>
@@ -1203,7 +1272,9 @@
             </div>
 
             <div class="ref-category">
-              <h4><i data-lucide="ruler" class="icon"></i> Formulas & Methodology</h4>
+              <h4>
+                <i data-lucide="ruler" class="icon"></i> Formulas & Methodology
+              </h4>
               <div class="ref-grid ref-grid-single">
                 <div class="ref-item">
                   <p>
@@ -1345,13 +1416,13 @@
             <select
               id="scorecardFilter"
               aria-label="Filter scorecard athletes"
-              onchange="renderScorecard()"
+              data-change="renderScorecard"
             >
               <option value="all">All Athletes</option>
             </select>
             <button
               class="btn btn-sm"
-              onclick="printScorecard()"
+              data-click="printScorecard"
               title="Print scorecard report for coaches"
             >
               <i data-lucide="printer" class="icon"></i> Print Report
@@ -1395,7 +1466,7 @@
             <select
               id="cmpMode"
               aria-label="Comparison mode"
-              onchange="switchCompareMode()"
+              data-change="switchCompareMode"
             >
               <option value="club">Whole Club</option>
               <option value="group">By Group</option>
@@ -1409,7 +1480,7 @@
           <select
             id="cmpGroupSel"
             aria-label="Compare by group"
-            onchange="renderComparison()"
+            data-change="renderComparison"
           >
             <option value="all">All Groups</option>
           </select>
@@ -1420,7 +1491,7 @@
           <select
             id="cmpA"
             aria-label="Select athlete A"
-            onchange="renderComparison()"
+            data-change="renderComparison"
           >
             <option value="">— Athlete A —</option>
           </select>
@@ -1428,14 +1499,14 @@
           <select
             id="cmpB"
             aria-label="Select athlete B"
-            onchange="renderComparison()"
+            data-change="renderComparison"
           >
             <option value="">— Athlete B —</option>
           </select>
           <select
             id="cmpC"
             aria-label="Select athlete C (optional)"
-            onchange="renderComparison()"
+            data-change="renderComparison"
           >
             <option value="">— Athlete C (opt) —</option>
           </select>
@@ -1443,20 +1514,13 @@
 
         <!-- Sub-filter: Test session selector (all modes) -->
         <div class="cmp-sub-filters">
-          <label
-            for="cmpBaselineSession"
-            class="cmp-baseline-label"
+          <label for="cmpBaselineSession" class="cmp-baseline-label"
             >Compare against:</label
           >
-          <select
-            id="cmpBaselineSession"
-            onchange="renderComparison()"
-          >
+          <select id="cmpBaselineSession" data-change="renderComparison">
             <option value="">— pick baseline test —</option>
           </select>
-          <span
-            id="cmpBaselineInfo"
-          ></span>
+          <span id="cmpBaselineInfo"></span>
         </div>
 
         <div id="compareContent">
@@ -1477,7 +1541,7 @@
             <select
               id="grpDash"
               aria-label="Select position group"
-              onchange="renderGroupDashboard()"
+              data-change="renderGroupDashboard"
             >
               <option value="all">All Groups</option>
             </select>
@@ -1499,7 +1563,7 @@
             <select
               id="logFilter"
               aria-label="Filter test type"
-              onchange="renderTestingLog()"
+              data-change="renderTestingLog"
             >
               <option value="all">All Tests</option>
               <option value="Sprint">Sprint</option>
@@ -1555,7 +1619,7 @@
           <span class="data-mgmt-label">💾 Data</span>
           <button
             class="btn btn-sm"
-            onclick="saveSnapshot()"
+            data-click="saveSnapshot"
             title="Save current data as named snapshot"
           >
             Save Snapshot
@@ -1569,21 +1633,21 @@
           </select>
           <button
             class="btn btn-sm"
-            onclick="loadSnapshot()"
+            data-click="loadSnapshot"
             title="Load selected snapshot"
           >
             Load
           </button>
           <button
             class="btn btn-sm"
-            onclick="deleteSnapshot()"
+            data-click="deleteSnapshot"
             title="Delete selected snapshot"
           >
             🗑
           </button>
           <button
             class="btn btn-sm"
-            onclick="resetToOriginal()"
+            data-click="resetToOriginal"
             title="Discard all edits and reload original data"
           >
             Reset to Original
@@ -1591,14 +1655,15 @@
           <span class="data-mgmt-sep">|</span>
           <button
             class="btn btn-sm btn-primary"
-            onclick="saveAllAsTestDate()"
+            data-click="saveAllAsTestDate"
             title="Save all athletes' current data as a dated test (for progress tracking)"
           >
-            <i data-lucide="calendar-plus" class="icon"></i> Save All as Test Date
+            <i data-lucide="calendar-plus" class="icon"></i> Save All as Test
+            Date
           </button>
           <button
             class="btn btn-sm"
-            onclick="viewSavedTests()"
+            data-click="viewSavedTests"
             title="View all saved test dates"
           >
             <i data-lucide="clipboard-list" class="icon"></i> View Saved Tests
@@ -1606,14 +1671,14 @@
           <span class="data-mgmt-sep">|</span>
           <button
             class="btn btn-sm"
-            onclick="exportCSV()"
+            data-click="exportCSV"
             title="Export all data as CSV"
           >
             📄 CSV
           </button>
           <button
             class="btn btn-sm"
-            onclick="exportJSON()"
+            data-click="exportJSON"
             title="Export all data as JSON"
           >
             📦 JSON
@@ -1625,11 +1690,13 @@
             accept=".json"
             style="display: none"
             aria-label="Import JSON data file"
-            onchange="importJSON(this)"
+            data-change="importJSON"
+            data-pass-element="true"
           />
           <button
             class="btn btn-sm"
-            onclick="document.getElementById('importJsonInput').click()"
+            data-click="triggerElementClick"
+            data-arg1="importJsonInput"
             title="Import a previously exported JSON file to restore data"
           >
             <i data-lucide="upload" class="icon"></i> Import JSON
@@ -1642,7 +1709,8 @@
             <input
               type="checkbox"
               id="ageAdjToggle"
-              onchange="toggleAgeAdjusted(this.checked)"
+              data-change="toggleAgeAdjusted"
+              data-pass-checked="true"
             />
             <span>Age-Adjusted Standards</span>
           </label>
@@ -1653,7 +1721,8 @@
             <input
               type="checkbox"
               id="bodyAdjToggle"
-              onchange="toggleBodyAdjusted(this.checked)"
+              data-change="toggleBodyAdjusted"
+              data-pass-checked="true"
             />
             <span>Body-Adjusted Standards</span>
           </label>
@@ -1664,7 +1733,8 @@
             <input
               type="checkbox"
               id="cohortToggle"
-              onchange="toggleCohortMode(this.checked)"
+              data-change="toggleCohortMode"
+              data-pass-checked="true"
             />
             <span>Cohort Percentiles</span>
           </label>
@@ -1688,7 +1758,7 @@
         <div class="edit-panel-actions">
           <span id="autoSaveStatus" class="autosave-status"></span>
           <kbd class="kbd-hint">Esc</kbd>
-          <button class="modal-close" onclick="closeEditPanel()" title="Close">
+          <button class="modal-close" data-click="closeEditPanel" title="Close">
             <i data-lucide="x" class="icon"></i>
           </button>
         </div>
@@ -1696,7 +1766,7 @@
       <div class="edit-panel-nav">
         <button
           class="btn btn-sm"
-          onclick="editPanelPrev()"
+          data-click="editPanelPrev"
           title="Previous athlete"
         >
           <i data-lucide="chevron-left" class="icon"></i> Prev
@@ -1705,11 +1775,12 @@
           id="editAthleteSelect"
           class="input"
           aria-label="Select athlete to edit"
-          onchange="editPanelSelectAthlete(this.value)"
+          data-change="editPanelSelectAthlete"
+          data-pass-value="true"
         ></select>
         <button
           class="btn btn-sm"
-          onclick="editPanelNext()"
+          data-click="editPanelNext"
           title="Next athlete"
         >
           Next <i data-lucide="chevron-right" class="icon"></i>
@@ -1719,27 +1790,25 @@
       <div class="edit-panel-footer">
         <button
           class="btn btn-sm"
-          onclick="undoAthleteEdits()"
+          data-click="undoAthleteEdits"
           title="Undo all changes for this athlete"
         >
           <i data-lucide="undo-2" class="icon"></i> Undo
         </button>
         <button
           class="btn btn-sm btn-danger"
-          onclick="deleteCurrentAthlete()"
+          data-click="deleteCurrentAthlete"
           title="Delete this athlete"
         >
-          <i data-lucide="trash-2" class="icon"></i> Delete
-          title="Export this athlete as JSON"
-        >
-          <i data-lucide="clipboard" class="icon"></i> JSON
+          <i data-lucide="trash-2" class="icon"></i> Delete title="Export this
+          athlete as JSON" > <i data-lucide="clipboard" class="icon"></i> JSON
         </button>
       </div>
     </div>
     <div
       id="editPanelBackdrop"
       class="edit-panel-backdrop"
-      onclick="closeEditPanel()"
+      data-click="closeEditPanel"
       role="presentation"
     ></div>
 
@@ -1764,7 +1833,10 @@
     <!-- ===== CONSTANTS REFERENCE (collapsible) ===== -->
     <section class="constants-footer">
       <details>
-        <summary><i data-lucide="ruler" class="icon"></i> Workbook Constants &amp; Formulas Reference</summary>
+        <summary>
+          <i data-lucide="ruler" class="icon"></i> Workbook Constants &amp;
+          Formulas Reference
+        </summary>
         <div class="constants-grid" id="constantsGrid"></div>
         <div class="formula-notes" id="formulaNotes"></div>
       </details>
@@ -1779,23 +1851,13 @@
       </p>
     </footer>
 
-    <script src="js/data.js"></script>
-    <script src="js/state.js"></script>
-    <script src="js/constants.js"></script>
-    <script src="js/helpers.js"></script>
-    <script src="js/test-history.js"></script>
-    <script src="js/overview.js"></script>
-    <script src="js/profile.js"></script>
-    <script src="js/test-views.js"></script>
-    <script src="js/tabs.js"></script>
-    <script src="js/print.js"></script>
-    <script src="js/compare.js"></script>
-    <script src="js/data-mgmt.js"></script>
-    <script src="js/edit-panel.js"></script>
+    <script src="js/app.bundle.js" defer></script>
     <script>
       // Register Service Worker for offline support
       if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("sw.js").catch(function () {});
+        navigator.serviceWorker.register("sw.js").catch(function (err) {
+          console.warn("Service worker registration failed:", err);
+        });
       }
     </script>
   </body>

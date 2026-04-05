@@ -244,16 +244,26 @@ body {
   background: var(--surface2);
   border: 1px solid var(--border);
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 }
 .theme-toggle:hover {
   border-color: var(--accent);
   background: var(--accent-glow);
 }
-.theme-icon-light { display: none; }
-.theme-icon-dark { display: inline; }
-[data-theme="light"] .theme-icon-light { display: inline; }
-[data-theme="light"] .theme-icon-dark { display: none; }
+.theme-icon-light {
+  display: none;
+}
+.theme-icon-dark {
+  display: inline;
+}
+[data-theme="light"] .theme-icon-light {
+  display: inline;
+}
+[data-theme="light"] .theme-icon-dark {
+  display: none;
+}
 
 /* ---------- Tabs ---------- */
 .tabs {
@@ -2732,8 +2742,12 @@ td .placeholder-text::before {
   height: 16px;
 }
 @keyframes shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* ---------- Untested athlete badge ---------- */
@@ -3837,12 +3851,20 @@ td .placeholder-text::before {
   animation: fade-in 0.2s ease-in;
 }
 @keyframes fade-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* ---------- Micro-interaction polish (Item 9) ---------- */

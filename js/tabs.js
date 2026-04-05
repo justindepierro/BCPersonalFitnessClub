@@ -9,7 +9,6 @@
   const APP = window.APP;
   const {
     esc,
-    escJs,
     fmt,
     fmtZ,
     fmtHeight,
@@ -59,7 +58,7 @@
     tbody.innerHTML = top
       .map(
         (e, i) => `
-      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${escJs(e.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectAthlete('${escJs(e.id)}')}">
+      <tr class="clickable" tabindex="0" role="button" data-click="selectAthlete" data-arg1="${esc(e.id)}" data-keyclick="true">
         <td class="num">${i + 1}</td>
         <td><strong>${esc(e.name)}</strong></td>
         <td>${esc(e.position)}</td>
@@ -172,7 +171,6 @@
     "peakPower",
     "relPeakPower",
   ];
-
 
   function renderGradingSection(containerId, category) {
     const D = window.CLUB;
@@ -328,17 +326,27 @@
         diag +
         ageDoc +
         scoring;
+      APP.refreshIcons();
 
       /* Wire sport selector */
       const sel = document.getElementById(`${containerId}Sport`);
       if (sel) {
-        sel.onchange = function () {
-          selectedSport = this.value;
-          localStorage.setItem(storageKey, selectedSport);
-          build();
-        };
+        sel.dataset.change = "changeGradingSport";
+        sel.dataset.arg1 = category;
+        sel.dataset.passValue = "true";
       }
     }
+
+    window.changeGradingSport = function (categoryKey, value) {
+      const storageKey = `lc_gradingSport_${categoryKey}`;
+      APP._gradingSportCache[categoryKey] = value;
+      localStorage.setItem(storageKey, value);
+      if (categoryKey === "sprint") {
+        renderGradingSection("sprintGradingBody", "sprint");
+      } else {
+        renderGradingSection("strengthGradingBody", "strength");
+      }
+    };
 
     build();
   }
@@ -364,7 +372,7 @@
             ? tdNumColored(a[key], dec, _s)
             : tdNumColored(a[key], dec);
         return `
-      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${escJs(a.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectAthlete('${escJs(a.id)}')}">
+      <tr class="clickable" tabindex="0" role="button" data-click="selectAthlete" data-arg1="${esc(a.id)}" data-keyclick="true">
         <td><strong>${esc(a.name)}</strong></td>
         <td>${esc(a.position) || "—"}</td>
         <td class="num">${a.massKg ? a.massKg.toFixed(1) : "—"}</td>
@@ -426,7 +434,7 @@
             ? tdGraded(a[key], dec, grade, _s)
             : tdGraded(a[key], dec, grade);
         return `
-      <tr class="clickable" tabindex="0" role="button" onclick="selectAthlete('${escJs(a.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectAthlete('${escJs(a.id)}')}">
+      <tr class="clickable" tabindex="0" role="button" data-click="selectAthlete" data-arg1="${esc(a.id)}" data-keyclick="true">
         <td><strong>${esc(a.name)}</strong></td>
         <td>${esc(a.position) || "—"}</td>
         ${sN("weight", 0)}
@@ -564,6 +572,7 @@
     if (!D.testingWeekPlan || D.testingWeekPlan.length === 0) {
       container.innerHTML =
         '<p class="placeholder-text">No testing week plan available.</p>';
+      APP.refreshIcons();
       return;
     }
 
@@ -595,6 +604,7 @@
     `,
       )
       .join("");
+    APP.refreshIcons();
   }
 
   /* ========== CONSTANTS REFERENCE ========== */
@@ -627,6 +637,7 @@
     `,
       )
       .join("");
+    APP.refreshIcons();
 
     /* --- Build sport / position group reference --- */
     const SP = D.sportPositions;
@@ -704,6 +715,7 @@
       </table>
       <p style="margin-top:.75rem"><em>${D.notes.join(" ")}</em></p>
     `;
+    APP.refreshIcons();
   }
 
   /* ========== SORTABLE TABLES ========== */
@@ -752,7 +764,12 @@
   APP.renderers["plan"] = renderTestingWeekPlan;
   APP.renderers["constants"] = renderConstants;
   Object.assign(APP, {
-    renderSprintAnalysis, renderStrengthPower, renderTestingWeekPlan,
-    renderConstants, handleSort, SPRINT_GRADE_KEYS, STRENGTH_GRADE_KEYS,
+    renderSprintAnalysis,
+    renderStrengthPower,
+    renderTestingWeekPlan,
+    renderConstants,
+    handleSort,
+    SPRINT_GRADE_KEYS,
+    STRENGTH_GRADE_KEYS,
   });
 })();
