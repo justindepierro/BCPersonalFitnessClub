@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Athletic testing dashboard for BC Personal Fitness Club — track, compare, and analyze athlete performance data."
+      content="Athletic testing dashboard for Lifting Club — track, compare, and analyze athlete performance data."
     />
     <title>
-      Burke Catholic Personal Fitness Club — Athletic Testing Dashboard
+      Lifting Club — Athletic Testing Dashboard
     </title>
     <link
       rel="icon"
@@ -57,8 +57,8 @@
     <header class="site-header">
       <div class="header-inner">
         <h1 class="logo">
-          <i data-lucide="dumbbell" class="icon icon-logo"></i> BC Personal
-          Fitness Club
+          <i data-lucide="dumbbell" class="icon icon-logo"></i> Lifting
+          Club
         </h1>
         <span class="header-subtitle">Athletic Performance Dashboard</span>
         <button
@@ -1683,6 +1683,21 @@
           >
             📦 JSON
           </button>
+          <button
+            class="btn btn-sm btn-primary"
+            data-click="publishCloudData"
+            data-auth-admin-only="true"
+            title="Publish current data to Cloudflare for all logins"
+          >
+            <i data-lucide="cloud-upload" class="icon"></i> Publish Cloud Data
+          </button>
+          <button
+            class="btn btn-sm"
+            data-click="reloadCloudData"
+            title="Reload the latest Cloudflare data"
+          >
+            <i data-lucide="cloud-download" class="icon"></i> Reload Cloud Data
+          </button>
           <span class="data-mgmt-sep">|</span>
           <input
             type="file"
@@ -1800,8 +1815,14 @@
           data-click="deleteCurrentAthlete"
           title="Delete this athlete"
         >
-          <i data-lucide="trash-2" class="icon"></i> Delete title="Export this
-          athlete as JSON" > <i data-lucide="clipboard" class="icon"></i> JSON
+          <i data-lucide="trash-2" class="icon"></i> Delete
+        </button>
+        <button
+          class="btn btn-sm"
+          data-click="exportAthleteJSON"
+          title="Export this athlete as JSON"
+        >
+          <i data-lucide="clipboard" class="icon"></i> JSON
         </button>
       </div>
     </div>
@@ -1845,12 +1866,13 @@
     <!-- ===== FOOTER ===== -->
     <footer class="site-footer">
       <p>
-        BC Personal Fitness Club &middot; Data exported
+        Lifting Club &middot; Data exported
         <span id="exportDate"></span> &middot; Source:
-        ATHLETE_WORKBOOK_ANALYTICS_SYNERGY_PLUS.xlsx
+        Cloudflare synced athlete data
       </p>
     </footer>
 
+    <script src="js/auth.js" defer></script>
     <script src="js/app.bundle.js" defer></script>
     <script>
       // Register Service Worker for offline support

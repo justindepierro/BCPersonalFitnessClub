@@ -140,7 +140,7 @@
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "bc_fitness_club_data.csv";
+    link.download = "lifting_club_data.csv";
     link.click();
     setTimeout(function () {
       URL.revokeObjectURL(link.href);

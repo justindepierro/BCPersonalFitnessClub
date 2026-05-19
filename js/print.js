@@ -118,7 +118,7 @@
     const printHTML = `
     <div class="print-page print-profile-page">
       <div class="print-header-bar">
-        <div class="print-logo">Burke Catholic Personal Fitness Club</div>
+        <div class="print-logo">Lifting Club</div>
         <div class="print-date">Generated: ${new Date().toLocaleDateString()}</div>
       </div>
       <div class="print-athlete-header">
@@ -175,7 +175,7 @@
         </div>
       </div>
       ${buildPrintProgressSection(a)}
-      <div class="print-footer">Burke Catholic Personal Fitness Club &mdash; Confidential</div>
+      <div class="print-footer">Lifting Club &mdash; Confidential</div>
     </div>`;
 
     openPrintWindow(printHTML, a.name + " — Athlete Profile");
@@ -443,7 +443,7 @@
     const printHTML = `
     <div class="print-page print-scorecard-page">
       <div class="print-header-bar">
-        <div class="print-logo">Burke Catholic Personal Fitness Club</div>
+        <div class="print-logo">Lifting Club</div>
         <div class="print-date">Scorecard Report &mdash; ${new Date().toLocaleDateString()}</div>
       </div>
       <div class="print-tier-legend">
@@ -460,7 +460,7 @@
         </table>
       </div>
       ${analysisHTML}
-      <div class="print-footer">Burke Catholic Personal Fitness Club &mdash; Confidential Coach Report</div>
+      <div class="print-footer">Lifting Club &mdash; Confidential Coach Report</div>
     </div>`;
 
     openPrintWindow(printHTML, "Scorecard Report");
@@ -478,7 +478,7 @@
     }
     let html = '<div class="print-page">';
     html +=
-      '<div class="print-header-bar"><span class="print-logo">BC Personal Fitness Club</span><span class="print-date">Sprint Analysis — ' +
+      '<div class="print-header-bar"><span class="print-logo">Lifting Club</span><span class="print-date">Sprint Analysis — ' +
       new Date().toLocaleDateString() +
       "</span></div>";
     html +=
@@ -525,7 +525,7 @@
     }
     html += "</tbody></table>";
     html +=
-      '<div class="print-footer">BC Personal Fitness Club — Sprint Analysis Report</div></div>';
+      '<div class="print-footer">Lifting Club — Sprint Analysis Report</div></div>';
     openPrintWindow(html, "Sprint Analysis");
   };
 
@@ -546,7 +546,7 @@
     }
     let html = '<div class="print-page">';
     html +=
-      '<div class="print-header-bar"><span class="print-logo">BC Personal Fitness Club</span><span class="print-date">Strength &amp; Power — ' +
+      '<div class="print-header-bar"><span class="print-logo">Lifting Club</span><span class="print-date">Strength &amp; Power — ' +
       new Date().toLocaleDateString() +
       "</span></div>";
     html +=
@@ -591,7 +591,7 @@
     }
     html += "</tbody></table>";
     html +=
-      '<div class="print-footer">BC Personal Fitness Club — Strength &amp; Power Report</div></div>';
+      '<div class="print-footer">Lifting Club — Strength &amp; Power Report</div></div>';
     openPrintWindow(html, "Strength & Power");
   };
 
@@ -716,7 +716,7 @@
     // Build HTML
     let html = '<div class="print-page">';
     html +=
-      '<div class="print-header-bar"><span class="print-logo">BC Personal Fitness Club</span><span class="print-date">Team Summary — ' +
+      '<div class="print-header-bar"><span class="print-logo">Lifting Club</span><span class="print-date">Team Summary — ' +
       new Date().toLocaleDateString() +
       "</span></div>";
 
@@ -843,7 +843,7 @@
     }
 
     html +=
-      '<div class="print-footer">BC Personal Fitness Club — Team Summary Report</div></div>';
+      '<div class="print-footer">Lifting Club — Team Summary Report</div></div>';
     openPrintWindow(html, "Team Summary");
   };
 
@@ -1204,7 +1204,7 @@
     var bodyHTML =
       '<div class="pdf-report">' +
       '<div class="pdf-header">' +
-      "<h1>BC Personal Fitness Club</h1>" +
+      "<h1>Lifting Club</h1>" +
       "<h2>Team Performance Report</h2>" +
       '<p class="pdf-date">' +
       today +

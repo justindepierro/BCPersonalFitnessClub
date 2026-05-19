@@ -969,7 +969,7 @@
     const now = new Date().toISOString();
     const exportData = {
       exportDate: now,
-      source: "BC Personal Fitness Club Dashboard",
+      source: "Lifting Club Dashboard",
       dataVersion: now,
       athleteCount: D.athletes.length,
       athletes: D.athletes.map(function (a) {
@@ -1050,7 +1050,7 @@
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download =
-      "bc_fitness_club_data_" + new Date().toISOString().slice(0, 10) + ".json";
+      "lifting_club_data_" + new Date().toISOString().slice(0, 10) + ".json";
     link.click();
     setTimeout(function () {
       URL.revokeObjectURL(link.href);
@@ -1105,7 +1105,7 @@
 
         /* --- Check if this is an exported JSON (has source field) or raw format --- */
         const isExport =
-          data.source === "BC Personal Fitness Club Dashboard" ||
+          data.source === "Lifting Club Dashboard" ||
           data.source === "Lifting Club Dashboard";
 
         /* --- Map athletes back to raw format --- */

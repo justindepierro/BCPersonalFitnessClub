@@ -1058,7 +1058,7 @@
   window.exportSingleTest = function (date, label) {
     const h = getTestHistory();
     const exportObj = {
-      source: "BC Personal Fitness Club — Test Export",
+      source: "Lifting Club — Test Export",
       exportDate: new Date().toISOString(),
       testDate: date,
       testLabel: label,
@@ -1103,7 +1103,7 @@
     }
     // Enrich with athlete names for readability
     const exportObj = {
-      source: "BC Personal Fitness Club — Full Test History",
+      source: "Lifting Club — Full Test History",
       exportDate: new Date().toISOString(),
       test_history: h,
       athlete_names: {},

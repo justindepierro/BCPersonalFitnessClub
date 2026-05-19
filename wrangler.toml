@@ -1,0 +1,7 @@
+name = "lifting-club"
+pages_build_output_dir = "."
+compatibility_date = "2026-05-19"
+
+[[kv_namespaces]]
+binding = "LIFTING_CLUB_KV"
+id = "a37bbced560c447998fc114228203145"

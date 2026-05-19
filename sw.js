@@ -1,13 +1,14 @@
 /* ===================================================
-   Service Worker — BC Personal Fitness Club
+   Service Worker — Lifting Club
    Cache-first strategy for offline support
    =================================================== */
 
-const CACHE_NAME = "bc-fitness-v2";
+const CACHE_NAME = "lifting-club-v1";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./css/styles.css",
+  "./js/auth.js",
   "./js/app.bundle.js",
   "./data/athletes.json",
   "./manifest.json",

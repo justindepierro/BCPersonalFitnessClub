@@ -1,5 +1,5 @@
 /* ===================================================
-   BC PERSONAL FITNESS CLUB — Athletic Testing Dashboard
+   LIFTING CLUB — Athletic Testing Dashboard
    Modern, mobile-first stylesheet
 
    CSS Architecture (logical layers):
@@ -3928,4 +3928,58 @@ select:focus,
   .metric-grid {
     grid-template-columns: 1fr;
   }
+}
+
+
+/* ---------- Cloudflare auth role controls ---------- */
+.auth-user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface2);
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+.auth-user-pill strong {
+  color: var(--text);
+}
+.auth-logout-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+.auth-logout-link:hover {
+  text-decoration: underline;
+}
+[data-auth-role="loading"] [data-auth-admin-only],
+[data-auth-role="loading"] .data-mgmt-bar,
+[data-auth-role="loading"] #editPanel,
+[data-auth-role="loading"] #editPanelBackdrop,
+[data-auth-role="loading"] [data-click="openEditPanel"],
+[data-auth-role="loading"] [data-click="addAthlete"],
+[data-auth-role="loading"] [data-click="deleteCurrentAthlete"],
+[data-auth-role="loading"] [data-click="undoAthleteEdits"],
+[data-auth-role="loading"] [data-click="saveSnapshot"],
+[data-auth-role="loading"] [data-click="loadSnapshot"],
+[data-auth-role="loading"] [data-click="resetToOriginal"],
+[data-auth-role="loading"] [data-click="importJSON"],
+[data-auth-role="loading"] #importJsonInput,
+[data-auth-role="athlete"] [data-auth-admin-only],
+[data-auth-role="athlete"] .data-mgmt-bar,
+[data-auth-role="athlete"] #editPanel,
+[data-auth-role="athlete"] #editPanelBackdrop,
+[data-auth-role="athlete"] [data-click="openEditPanel"],
+[data-auth-role="athlete"] [data-click="addAthlete"],
+[data-auth-role="athlete"] [data-click="deleteCurrentAthlete"],
+[data-auth-role="athlete"] [data-click="undoAthleteEdits"],
+[data-auth-role="athlete"] [data-click="saveSnapshot"],
+[data-auth-role="athlete"] [data-click="loadSnapshot"],
+[data-auth-role="athlete"] [data-click="resetToOriginal"],
+[data-auth-role="athlete"] [data-click="importJSON"],
+[data-auth-role="athlete"] #importJsonInput {
+  display: none !important;
 }
