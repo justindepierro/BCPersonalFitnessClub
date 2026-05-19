@@ -132,15 +132,16 @@ Startup flow:
 4. If no KV value exists, the endpoint falls back to static `data/athletes.json`.
 5. `js/data.js` processes the raw dataset into `window.CLUB`.
 
-Admin publish flow:
+Admin save flow:
 
 1. Admin edits/imports data in the dashboard.
-2. Admin clicks `Publish Cloud Data`.
-3. `js/auth.js` builds a raw export from `window.CLUB` plus test history.
-4. `POST /api/data` validates the payload and stores it in `LIFTING_CLUB_KV`.
-5. Athlete logins receive the updated data on reload.
+2. `js/state.js` marks shared-data localStorage writes as dirty.
+3. `js/auth.js` flushes any pending edit-panel debounce, queues an automatic Cloudflare save, and exposes `Save to Cloud Now` for immediate manual saves.
+4. `js/auth.js` builds a raw export from `window.CLUB`, test history, test notes, and weight logs.
+5. `POST /api/data` validates the payload, checks the previous `dataVersion` to prevent blind overwrites, and stores it in `LIFTING_CLUB_KV`.
+6. Athlete logins receive the updated data on reload.
 
-Local-only edits in `localStorage` are not shared until the admin publishes cloud data.
+Admin local edits are not considered complete until the cloud status reports saved. If Cloudflare is unavailable, the data management bar shows the save error/pending state.
 
 ## Cloudflare
 

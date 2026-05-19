@@ -7,6 +7,27 @@
 
   const nativeFetch = window.fetch.bind(window);
   let currentUser = null;
+  let suppressChangeTracking = 0;
+  const AUTO_CLOUD_SAVE_DELAY_MS = 4500;
+  const DATA_SYNC_KEYS = new Set([
+    "lc_edits",
+    "lc_added",
+    "lc_deleted",
+    "lc_test_history",
+    "lc_test_notes",
+    "lc_weight_log",
+  ]);
+  const cloudSave = {
+    status: "idle",
+    dirty: false,
+    saving: false,
+    timer: null,
+    changeSerial: 0,
+    lastKnownVersion: null,
+    lastSavedAt: null,
+    lastError: null,
+    pendingReason: null,
+  };
 
   document.documentElement.dataset.authRole = "loading";
 
@@ -50,6 +71,32 @@
     }
   }
 
+  function safeLSRaw(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  function safeLSSetRaw(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch (err) {
+      console.warn("localStorage write failed for " + key + ":", err);
+    }
+  }
+
+  function safeLSRemove(key) {
+    try {
+      localStorage.removeItem(key);
+    } catch (err) {
+      console.warn("localStorage remove failed for " + key + ":", err);
+    }
+  }
+
+  cloudSave.lastKnownVersion = safeLSRaw("lc_dataVersion");
+
   function showToast(message, type) {
     if (window.APP && typeof window.APP.showToast === "function") {
       window.APP.showToast(message, type || "info");
@@ -61,6 +108,122 @@
   function isAdmin() {
     return currentUser && currentUser.role === "admin";
   }
+
+  function canUseCloudApi() {
+    return location.protocol !== "file:" && currentUser && currentUser.username !== "local";
+  }
+
+  function updateStatusUI() {
+    if (window.APP && typeof window.APP.updateDataStatus === "function") {
+      window.APP.updateDataStatus();
+    }
+  }
+
+  function formatSaveTime(date) {
+    if (!date) return "";
+    try {
+      return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    } catch {
+      return "";
+    }
+  }
+
+  function scheduleCloudSave(delay) {
+    if (cloudSave.timer) clearTimeout(cloudSave.timer);
+    if (!isAdmin() || !canUseCloudApi()) return;
+    cloudSave.timer = setTimeout(function () {
+      cloudSave.timer = null;
+      saveCloudData({ manual: false });
+    }, delay);
+  }
+
+  function flushPendingAutoSave() {
+    if (
+      window.APP &&
+      typeof window.APP.flushPendingAutoSave === "function" &&
+      window.APP.flushPendingAutoSave()
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  function markDataChanged(reason, options) {
+    if (suppressChangeTracking) return;
+    if (options && options.key && !DATA_SYNC_KEYS.has(options.key)) return;
+    if (!isAdmin()) return;
+
+    cloudSave.changeSerial += 1;
+    cloudSave.dirty = true;
+    cloudSave.pendingReason = reason || "data changes";
+    cloudSave.lastError = null;
+
+    if (!canUseCloudApi()) {
+      cloudSave.status = "local-only";
+      updateStatusUI();
+      return;
+    }
+
+    cloudSave.status = cloudSave.saving ? "saving" : "pending";
+    updateStatusUI();
+    scheduleCloudSave(options && options.immediate ? 0 : AUTO_CLOUD_SAVE_DELAY_MS);
+  }
+
+  function withoutDataChangeTracking(fn) {
+    suppressChangeTracking += 1;
+    try {
+      return fn();
+    } finally {
+      suppressChangeTracking -= 1;
+    }
+  }
+
+  function getCloudSaveSummary() {
+    if (!isAdmin()) return null;
+    if (!canUseCloudApi()) {
+      return {
+        status: "local-only",
+        text: "Cloud save unavailable in this local view",
+      };
+    }
+    if (cloudSave.status === "saving") {
+      return { status: "saving", text: "Saving to Cloudflare..." };
+    }
+    if (cloudSave.status === "pending" || cloudSave.dirty) {
+      return { status: "pending", text: "Cloud save queued" };
+    }
+    if (cloudSave.status === "error") {
+      return {
+        status: "error",
+        text: "Cloud save failed: " + (cloudSave.lastError || "retry needed"),
+      };
+    }
+    if (cloudSave.lastSavedAt) {
+      return {
+        status: "saved",
+        text: "Cloud saved " + formatSaveTime(cloudSave.lastSavedAt),
+      };
+    }
+    return { status: "idle", text: "Cloud ready" };
+  }
+
+  function resetCloudSaveState(dataVersion) {
+    if (cloudSave.timer) clearTimeout(cloudSave.timer);
+    cloudSave.timer = null;
+    cloudSave.dirty = false;
+    cloudSave.saving = false;
+    cloudSave.status = "saved";
+    cloudSave.lastError = null;
+    cloudSave.pendingReason = null;
+    cloudSave.lastSavedAt = new Date();
+    if (dataVersion) cloudSave.lastKnownVersion = dataVersion;
+    updateStatusUI();
+  }
+
+  window.markDataChanged = markDataChanged;
+  window.getCloudSaveSummary = getCloudSaveSummary;
+  window.suspendDataChangeTracking = withoutDataChangeTracking;
+  window.resetCloudSaveState = resetCloudSaveState;
 
   function installRoleGuard() {
     document.addEventListener(
@@ -209,49 +372,105 @@
       exportData.test_history = testHistory;
     }
 
+    const testNotes = safeLSGet("lc_test_notes", {});
+    if (testNotes && Object.keys(testNotes).length) {
+      exportData.test_notes = testNotes;
+    }
+
+    const weightLog = safeLSGet("lc_weight_log", {});
+    if (weightLog && Object.keys(weightLog).length) {
+      exportData.weight_log = weightLog;
+    }
+
     return exportData;
   }
 
-  function replaceCurrentData(data) {
-    localStorage.removeItem("lc_edits");
-    localStorage.removeItem("lc_added");
-    localStorage.removeItem("lc_deleted");
-    if (data.dataVersion) localStorage.setItem("lc_dataVersion", data.dataVersion);
-    if (data.test_history) {
-      localStorage.setItem("lc_test_history", JSON.stringify(data.test_history));
+  function storeOptionalCollection(key, value) {
+    if (value && typeof value === "object" && Object.keys(value).length) {
+      safeLSSetRaw(key, JSON.stringify(value));
+    } else {
+      safeLSRemove(key);
     }
-    window._rawDataCache = structuredClone(data);
-    if (typeof window._processData === "function") {
-      window.CLUB = window._processData(structuredClone(data));
+  }
+
+  function replaceCurrentData(data, options) {
+    const cleanData = structuredClone(data);
+    delete cleanData.previousDataVersion;
+
+    withoutDataChangeTracking(function () {
+      safeLSRemove("lc_edits");
+      safeLSRemove("lc_added");
+      safeLSRemove("lc_deleted");
+      if (cleanData.dataVersion) safeLSSetRaw("lc_dataVersion", cleanData.dataVersion);
+      storeOptionalCollection("lc_test_history", cleanData.test_history);
+      storeOptionalCollection("lc_test_notes", cleanData.test_notes);
+      storeOptionalCollection("lc_weight_log", cleanData.weight_log);
+    });
+
+    if (cleanData.dataVersion) cloudSave.lastKnownVersion = cleanData.dataVersion;
+    window._rawDataCache = structuredClone(cleanData);
+    if (window.APP && typeof window.APP.rebuildFromStorage === "function") {
+      window.APP.rebuildFromStorage();
+    } else if (typeof window._processData === "function") {
+      window.CLUB = window._processData(structuredClone(cleanData));
     }
     if (window.APP) {
       if (typeof window.APP.invalidateAthleteMap === "function") window.APP.invalidateAthleteMap();
       if (typeof window.APP.refreshAthleteDropdowns === "function") window.APP.refreshAthleteDropdowns();
       if (typeof window.APP.refreshPositionFilter === "function") window.APP.refreshPositionFilter();
       if (typeof window.APP.reRenderAll === "function") window.APP.reRenderAll();
+      if (typeof window.APP.refreshEditPanelAfterDataSync === "function") {
+        window.APP.refreshEditPanelAfterDataSync(options && options.keepInputs);
+      }
       if (typeof window.APP.updateDataStatus === "function") window.APP.updateDataStatus();
     }
   }
 
-  window.publishCloudData = async function () {
+  async function saveCloudData(options) {
+    options = options || {};
     if (!isAdmin()) {
       showToast("Only admin can publish Cloudflare data.", "error");
-      return;
+      return false;
     }
+    if (!canUseCloudApi()) {
+      cloudSave.status = "local-only";
+      updateStatusUI();
+      showToast("Cloud save is available from the Cloudflare site or Cloudflare dev server.", "warn");
+      return false;
+    }
+    if (cloudSave.saving) {
+      if (options.manual) showToast("Cloud save is already running.", "info");
+      return false;
+    }
+
+    flushPendingAutoSave();
+
     let payload;
     try {
       payload = buildCurrentDataExport();
     } catch (err) {
       showToast(err.message, "error");
-      return;
+      return false;
     }
-    if (
-      !confirm(
-        "Publish the current dashboard data to Cloudflare? Athlete logins will see this version after reload.",
-      )
-    ) {
-      return;
+
+    const previousDataVersion =
+      cloudSave.lastKnownVersion ||
+      safeLSRaw("lc_dataVersion") ||
+      (window._rawDataCache && window._rawDataCache.dataVersion) ||
+      null;
+    if (previousDataVersion) payload.previousDataVersion = previousDataVersion;
+
+    if (cloudSave.timer) {
+      clearTimeout(cloudSave.timer);
+      cloudSave.timer = null;
     }
+
+    const startSerial = cloudSave.changeSerial;
+    cloudSave.saving = true;
+    cloudSave.dirty = false;
+    cloudSave.status = "saving";
+    cloudSave.lastError = null;
+    updateStatusUI();
 
     try {
       const response = await nativeFetch("/api/data", {
@@ -265,19 +484,68 @@
       });
       const result = await response.json();
       if (!response.ok || !result.ok) {
-        throw new Error(result.error || "Cloudflare publish failed.");
+        const err = new Error(result.error || "Cloudflare publish failed.");
+        err.status = response.status;
+        err.result = result;
+        throw err;
       }
       payload.dataVersion = result.dataVersion;
       payload.exportDate = result.dataVersion;
-      replaceCurrentData(payload);
-      showToast("Cloud data published for " + result.athleteCount + " athletes.", "success");
+      delete payload.previousDataVersion;
+      cloudSave.lastKnownVersion = result.dataVersion;
+      safeLSSetRaw("lc_dataVersion", result.dataVersion);
+
+      if (cloudSave.changeSerial === startSerial && !cloudSave.dirty) {
+        replaceCurrentData(payload, { keepInputs: true });
+        cloudSave.status = "saved";
+        cloudSave.lastSavedAt = new Date();
+        cloudSave.lastError = null;
+        cloudSave.pendingReason = null;
+        if (options.manual) {
+          showToast("Cloud data saved for " + result.athleteCount + " athletes.", "success");
+        }
+      } else {
+        cloudSave.status = "pending";
+        cloudSave.dirty = true;
+        scheduleCloudSave(AUTO_CLOUD_SAVE_DELAY_MS);
+        if (options.manual) {
+          showToast("Cloud save finished. Newer edits are queued next.", "info");
+        }
+      }
+      return true;
     } catch (err) {
-      showToast(err.message || "Cloudflare publish failed.", "error");
+      cloudSave.status = "error";
+      cloudSave.dirty = true;
+      cloudSave.lastError = err.message || "Cloudflare publish failed.";
+      if (err.status === 409) {
+        showToast(
+          "Cloud data changed somewhere else. Reload Cloud Data before saving again.",
+          "error",
+        );
+      } else {
+        showToast(cloudSave.lastError, "error");
+      }
+      return false;
+    } finally {
+      cloudSave.saving = false;
+      updateStatusUI();
     }
+  }
+
+  window.publishCloudData = function () {
+    return saveCloudData({ manual: true });
   };
 
   window.reloadCloudData = async function () {
     if (!isAdmin() && !confirm("Reload the latest Cloudflare data?")) return;
+    flushPendingAutoSave();
+    if (
+      isAdmin() &&
+      (cloudSave.dirty || cloudSave.status === "pending" || cloudSave.status === "error") &&
+      !confirm("Reload Cloudflare data? Any queued local changes in this browser will be discarded.")
+    ) {
+      return;
+    }
     try {
       const response = await nativeFetch("/api/data", {
         credentials: "same-origin",
@@ -289,11 +557,34 @@
         throw new Error(data.error || "Could not reload Cloudflare data.");
       }
       replaceCurrentData(data);
+      resetCloudSaveState(data.dataVersion || null);
       showToast("Cloud data reloaded.", "success");
     } catch (err) {
       showToast(err.message || "Could not reload Cloudflare data.", "error");
     }
   };
+
+  window.addEventListener("online", function () {
+    if (isAdmin() && cloudSave.dirty && canUseCloudApi()) {
+      cloudSave.status = "pending";
+      scheduleCloudSave(1000);
+      updateStatusUI();
+    }
+  });
+
+  window.addEventListener("beforeunload", function (event) {
+    if (!isAdmin()) return;
+    if (!(cloudSave.dirty || cloudSave.status === "pending" || cloudSave.status === "saving")) return;
+    event.preventDefault();
+    event.returnValue = "";
+  });
+
+  document.addEventListener("club-data-ready", function () {
+    const loadedVersion =
+      (window._rawDataCache && window._rawDataCache.dataVersion) || safeLSRaw("lc_dataVersion");
+    if (loadedVersion) cloudSave.lastKnownVersion = loadedVersion;
+    updateStatusUI();
+  });
 
   document.addEventListener("DOMContentLoaded", async function () {
     currentUser = await loadCurrentUser();
@@ -302,5 +593,6 @@
     window.LC_AUTH_USER = currentUser;
     addUserPill(currentUser);
     installRoleGuard();
+    updateStatusUI();
   });
 })();

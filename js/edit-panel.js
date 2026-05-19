@@ -507,6 +507,7 @@
   }
 
   function doAutoSave() {
+    APP.autoSaveTimer = null;
     if (!APP.editingAthleteId) return;
 
     // Gather only fields that actually changed from when the panel opened
@@ -543,6 +544,10 @@
         edits = edits.filter(function (e) {
           return e.id !== APP.editingAthleteId;
         });
+      } else {
+        const statusEl = document.getElementById("autoSaveStatus");
+        if (statusEl) statusEl.classList.remove("visible");
+        return;
       }
     } else if (existing) {
       existing.changes = changes;
@@ -631,6 +636,43 @@
         el.classList.remove("field-changed");
       }
     }
+  }
+
+  function flushPendingAutoSave() {
+    if (!APP.autoSaveTimer) return false;
+    clearTimeout(APP.autoSaveTimer);
+    doAutoSave();
+    return true;
+  }
+
+  function refreshEditPanelAfterDataSync(keepInputs) {
+    if (!APP.editingAthleteId) return;
+    const a = getAthleteById(APP.editingAthleteId);
+    if (!a) return;
+    if (!keepInputs) {
+      buildEditFields(a);
+    } else {
+      APP._editPanelSnapshot = {};
+      for (let si = 0; si < EDITABLE_FIELDS.length; si++) {
+        const sf = EDITABLE_FIELDS[si];
+        const val = a[sf.key] !== undefined ? a[sf.key] : null;
+        if (sf.type === "number") {
+          APP._editPanelSnapshot[sf.jsonKey] =
+            val !== null && val !== undefined ? parseFloat(val) : null;
+        } else if (sf.key === "grade") {
+          APP._editPanelSnapshot[sf.jsonKey] =
+            val !== null && val !== undefined ? parseInt(val, 10) : null;
+        } else {
+          APP._editPanelSnapshot[sf.jsonKey] = val || null;
+        }
+      }
+      markChangedFields();
+    }
+    const title = document.getElementById("editPanelTitle");
+    if (title) title.textContent = "Edit: " + a.name;
+    populateEditAthleteSelect();
+    const sel = document.getElementById("editAthleteSelect");
+    if (sel) sel.value = APP.editingAthleteId;
   }
 
   /* ---------- Test History Actions ---------- */
@@ -993,6 +1035,9 @@
           sprint_fly10: a.sprintFly10,
           sprint_notes: a.sprintNotes || null,
           pro_agility: a.proAgility,
+          l_drill: a.lDrill,
+          backpedal: a.backpedal,
+          w_drill: a.wDrill,
           forty: a.forty,
           relBench: a.relBench,
           relSquat: a.relSquat,
@@ -1043,6 +1088,14 @@
     const testHist = getTestHistory();
     if (Object.keys(testHist).length > 0) {
       exportData.test_history = testHist;
+    }
+    const testNotes = safeLSGet("lc_test_notes", {});
+    if (Object.keys(testNotes).length > 0) {
+      exportData.test_notes = testNotes;
+    }
+    const weightLog = safeLSGet("lc_weight_log", {});
+    if (Object.keys(weightLog).length > 0) {
+      exportData.weight_log = weightLog;
     }
 
     const json = JSON.stringify(exportData, null, 2);
@@ -1124,6 +1177,9 @@
             sprint_fly10: a.sprint_fly10 !== undefined ? a.sprint_fly10 : null,
             sprint_notes: a.sprint_notes || null,
             pro_agility: a.pro_agility !== undefined ? a.pro_agility : null,
+            l_drill: a.l_drill !== undefined ? a.l_drill : null,
+            backpedal: a.backpedal !== undefined ? a.backpedal : null,
+            w_drill: a.w_drill !== undefined ? a.w_drill : null,
             vert_in: a.vert_in !== undefined ? a.vert_in : null,
             broad_in: a.broad_in !== undefined ? a.broad_in : null,
             bench_1rm: a.bench_1rm !== undefined ? a.bench_1rm : null,
@@ -1174,31 +1230,55 @@
         if (data.testing_week_plan)
           rawData.testing_week_plan = data.testing_week_plan;
         if (data.benchmarks) rawData.benchmarks = data.benchmarks;
+        if (data.test_history && typeof data.test_history === "object")
+          rawData.test_history = data.test_history;
+        if (data.test_notes && typeof data.test_notes === "object")
+          rawData.test_notes = data.test_notes;
+        if (data.weight_log && typeof data.weight_log === "object")
+          rawData.weight_log = data.weight_log;
 
         /* --- Clear all local modifications --- */
-        localStorage.removeItem("lc_edits");
-        localStorage.removeItem("lc_added");
-        localStorage.removeItem("lc_deleted");
-        localStorage.removeItem("lc_snapshots");
-        localStorage.removeItem("lc_test_notes");
-
-        // Store the dataVersion from the imported file so future loads
-        // recognise it and don't re-purge localStorage.
-        if (data.dataVersion) {
-          localStorage.setItem("lc_dataVersion", data.dataVersion);
-        }
-
-        /* --- Restore test history if present in import --- */
-        if (data.test_history && typeof data.test_history === "object") {
-          safeLSSet("lc_test_history", JSON.stringify(data.test_history));
+        const applyImportStorage = function () {
+          localStorage.removeItem("lc_edits");
+          localStorage.removeItem("lc_added");
+          localStorage.removeItem("lc_deleted");
+          localStorage.removeItem("lc_snapshots");
+          if (data.dataVersion) {
+            localStorage.setItem("lc_dataVersion", data.dataVersion);
+          }
+          if (data.test_history && typeof data.test_history === "object") {
+            localStorage.setItem("lc_test_history", JSON.stringify(data.test_history));
+          } else {
+            localStorage.removeItem("lc_test_history");
+          }
+          if (data.test_notes && typeof data.test_notes === "object") {
+            localStorage.setItem("lc_test_notes", JSON.stringify(data.test_notes));
+          } else {
+            localStorage.removeItem("lc_test_notes");
+          }
+          if (data.weight_log && typeof data.weight_log === "object") {
+            localStorage.setItem("lc_weight_log", JSON.stringify(data.weight_log));
+          } else {
+            localStorage.removeItem("lc_weight_log");
+          }
+        };
+        if (typeof window.suspendDataChangeTracking === "function") {
+          window.suspendDataChangeTracking(applyImportStorage);
         } else {
-          localStorage.removeItem("lc_test_history");
+          applyImportStorage();
         }
 
         /* --- Set new raw cache and reprocess --- */
         window._rawDataCache = structuredClone(rawData);
-        window.CLUB = window._processData(rawData);
+        APP._testHistoryCache = null;
+        rebuildFromStorage();
         reRenderAll();
+        if (typeof window.markDataChanged === "function") {
+          window.markDataChanged("JSON import", {
+            key: "lc_edits",
+            immediate: true,
+          });
+        }
         updateDataStatus();
         showToast(
           "Imported " + rawAthletes.length + " athletes from " + file.name,
@@ -1343,5 +1423,10 @@
       });
     }
   });
-  Object.assign(APP, { buildEditFields, populateEditAthleteSelect });
+  Object.assign(APP, {
+    buildEditFields,
+    populateEditAthleteSelect,
+    flushPendingAutoSave,
+    refreshEditPanelAfterDataSync,
+  });
 })();

@@ -179,6 +179,32 @@
       el.textContent = `Original data · ${snapshots.length} snapshot${snapshots.length !== 1 ? "s" : ""} saved`;
       el.className = "data-status";
     }
+
+    const cloudSummary =
+      typeof window.getCloudSaveSummary === "function"
+        ? window.getCloudSaveSummary()
+        : null;
+    if (cloudSummary) {
+      el.textContent += " · " + cloudSummary.text;
+      el.classList.add("cloud-" + cloudSummary.status);
+    }
+  }
+
+  function markCloudDataChanged(reason, immediate) {
+    if (typeof window.markDataChanged === "function") {
+      window.markDataChanged(reason, {
+        key: "lc_edits",
+        immediate: !!immediate,
+      });
+    }
+  }
+
+  function storeLocalCollection(key, value) {
+    if (value && typeof value === "object" && Object.keys(value).length) {
+      localStorage.setItem(key, JSON.stringify(value));
+    } else {
+      localStorage.removeItem(key);
+    }
   }
 
   window.saveSnapshot = function () {
@@ -230,6 +256,15 @@
       const athlete = rawCopy.athletes.find((a) => a.id === edit.id);
       if (athlete) Object.assign(athlete, edit.changes);
     }
+    const testHistory = safeLSGet("lc_test_history", {});
+    const testNotes = safeLSGet("lc_test_notes", {});
+    const weightLog = safeLSGet("lc_weight_log", {});
+    if (Object.keys(testHistory).length) rawCopy.test_history = testHistory;
+    else delete rawCopy.test_history;
+    if (Object.keys(testNotes).length) rawCopy.test_notes = testNotes;
+    else delete rawCopy.test_notes;
+    if (Object.keys(weightLog).length) rawCopy.weight_log = weightLog;
+    else delete rawCopy.weight_log;
     snapshots.push({
       name,
       date: new Date().toLocaleString(),
@@ -258,12 +293,26 @@
       !confirm('Load snapshot "' + name + '"? This will replace current data.')
     )
       return;
-    // Clear all local modifications
-    localStorage.removeItem("lc_edits");
-    localStorage.removeItem("lc_added");
-    localStorage.removeItem("lc_deleted");
-    window.CLUB = window._processData(structuredClone(snap.data));
+    // Clear local diffs and make this snapshot the new baseline.
+    const applySnapshot = function () {
+      localStorage.removeItem("lc_edits");
+      localStorage.removeItem("lc_added");
+      localStorage.removeItem("lc_deleted");
+      storeLocalCollection("lc_test_history", snap.data.test_history);
+      storeLocalCollection("lc_test_notes", snap.data.test_notes);
+      storeLocalCollection("lc_weight_log", snap.data.weight_log);
+      if (snap.data.dataVersion) localStorage.setItem("lc_dataVersion", snap.data.dataVersion);
+    };
+    if (typeof window.suspendDataChangeTracking === "function") {
+      window.suspendDataChangeTracking(applySnapshot);
+    } else {
+      applySnapshot();
+    }
+    window._rawDataCache = structuredClone(snap.data);
+    APP._testHistoryCache = null;
+    APP.rebuildFromStorage();
     APP.reRenderAll();
+    markCloudDataChanged("snapshot loaded", true);
     APP.updateDataStatus();
     showToast('Snapshot "' + name + '" loaded!', "success");
   };

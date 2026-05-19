@@ -2635,6 +2635,21 @@ td .placeholder-text::before {
   font-weight: 600;
 }
 
+.data-status.cloud-pending,
+.data-status.cloud-saving {
+  color: var(--yellow);
+  font-weight: 600;
+}
+
+.data-status.cloud-error {
+  color: var(--red);
+  font-weight: 700;
+}
+
+.data-status.cloud-saved {
+  color: var(--green);
+}
+
 /* ---------- Toggle label ---------- */
 .toggle-label {
   display: inline-flex;

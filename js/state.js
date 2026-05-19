@@ -123,10 +123,16 @@
   }
   function safeLSSet(key, value) {
     try {
-      localStorage.setItem(
-        key,
-        typeof value === "string" ? value : JSON.stringify(value),
-      );
+      const nextValue =
+        typeof value === "string" ? value : JSON.stringify(value);
+      const prevValue = localStorage.getItem(key);
+      localStorage.setItem(key, nextValue);
+      if (
+        prevValue !== nextValue &&
+        typeof window.markDataChanged === "function"
+      ) {
+        window.markDataChanged("local data update", { key: key });
+      }
     } catch (e) {
       if (e.name === "QuotaExceededError" || e.code === 22) {
         showToast("Storage full — consider deleting old snapshots.", "error");

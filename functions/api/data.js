@@ -12,12 +12,48 @@ function byteLength(value) {
   return new TextEncoder().encode(value).length;
 }
 
+function hasObjectShape(value) {
+  return value && typeof value === "object" && !Array.isArray(value);
+}
+
+function cleanText(value) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
 function validateData(data) {
   if (!data || typeof data !== "object" || !Array.isArray(data.athletes)) {
     throw new Error("Invalid data: expected a JSON object with an athletes array.");
   }
   if (data.athletes.length === 0) {
     throw new Error("Invalid data: athletes array is empty.");
+  }
+  const ids = new Set();
+  const errors = [];
+  for (let i = 0; i < data.athletes.length; i++) {
+    const athlete = data.athletes[i];
+    const label = "athlete #" + (i + 1);
+    if (!hasObjectShape(athlete)) {
+      errors.push(label + " is not an object");
+      continue;
+    }
+    const id = cleanText(athlete.id);
+    const name = cleanText(athlete.name);
+    if (!id) errors.push(label + " is missing an id");
+    if (!name) errors.push(label + " is missing a name");
+    if (id && ids.has(id)) errors.push("duplicate athlete id " + id);
+    if (id) ids.add(id);
+  }
+  if (data.test_history !== undefined && !hasObjectShape(data.test_history)) {
+    errors.push("test_history must be an object");
+  }
+  if (data.test_notes !== undefined && !hasObjectShape(data.test_notes)) {
+    errors.push("test_notes must be an object");
+  }
+  if (data.weight_log !== undefined && !hasObjectShape(data.weight_log)) {
+    errors.push("weight_log must be an object");
+  }
+  if (errors.length) {
+    throw new Error("Invalid data: " + errors.slice(0, 6).join("; "));
   }
 }
 
@@ -85,6 +121,32 @@ export async function onRequestPost(context) {
     validateData(data);
   } catch (err) {
     return authJson({ ok: false, error: err.message || "Invalid JSON upload." }, { status: 400 });
+  }
+
+  const previousDataVersion =
+    typeof data.previousDataVersion === "string" ? data.previousDataVersion : null;
+  delete data.previousDataVersion;
+
+  const forcePublish = context.request.headers.get("X-LC-Force-Publish") === "true";
+  const existingJson = await store.get(DATA_KEY);
+  if (existingJson && !forcePublish) {
+    let existingVersion = null;
+    try {
+      const existingData = JSON.parse(existingJson);
+      existingVersion = typeof existingData.dataVersion === "string" ? existingData.dataVersion : null;
+    } catch {
+      existingVersion = null;
+    }
+    if (existingVersion && previousDataVersion !== existingVersion) {
+      return authJson(
+        {
+          ok: false,
+          error: "Cloud data changed since this browser loaded it. Reload Cloud Data before saving again.",
+          currentDataVersion: existingVersion,
+        },
+        { status: 409 },
+      );
+    }
   }
 
   const now = new Date().toISOString();

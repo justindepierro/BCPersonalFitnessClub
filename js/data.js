@@ -1435,6 +1435,7 @@
         localStorage.removeItem("lc_test_history");
         localStorage.removeItem("lc_snapshots");
         localStorage.removeItem("lc_test_notes");
+        localStorage.removeItem("lc_weight_log");
         localStorage.setItem("lc_dataVersion", newVersion);
       }
 
@@ -1481,6 +1482,24 @@
           } catch (e) {
             console.warn("Failed to merge test history:", e);
           }
+        }
+      }
+
+      const jsonTestNotes = raw.test_notes || null;
+      if (jsonTestNotes && !localStorage.getItem("lc_test_notes")) {
+        try {
+          localStorage.setItem("lc_test_notes", JSON.stringify(jsonTestNotes));
+        } catch (e) {
+          console.warn("Failed to seed test notes from JSON:", e);
+        }
+      }
+
+      const jsonWeightLog = raw.weight_log || null;
+      if (jsonWeightLog && !localStorage.getItem("lc_weight_log")) {
+        try {
+          localStorage.setItem("lc_weight_log", JSON.stringify(jsonWeightLog));
+        } catch (e) {
+          console.warn("Failed to seed weight log from JSON:", e);
         }
       }
 
