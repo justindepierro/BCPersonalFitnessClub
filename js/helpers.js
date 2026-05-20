@@ -56,6 +56,81 @@
     return window._gradeHelpers.overallGradeLabel(avg);
   }
 
+  function currentAuthRole() {
+    return (
+      (window.LC_AUTH_USER && window.LC_AUTH_USER.role) ||
+      document.documentElement.dataset.authRole ||
+      ""
+    );
+  }
+
+  function isAthleteView() {
+    return currentAuthRole() === "athlete";
+  }
+
+  function scoreLabel(score) {
+    if (typeof score !== "number" || !isFinite(score)) return "Index";
+    return (Number.isInteger(score) ? score : score.toFixed(1)) + "/5";
+  }
+
+  function gradeDisplayLabel(grade) {
+    if (!grade) return "";
+    return isAthleteView() ? scoreLabel(grade.score) : grade.label || "";
+  }
+
+  function gradeDisplayTitle(grade, context) {
+    if (!grade) return "";
+    if (!isAthleteView()) return grade.label || "";
+    const prefix = context || "Benchmark";
+    return prefix + " score " + scoreLabel(grade.score);
+  }
+
+  function overallIndexHeader() {
+    return isAthleteView() ? "Index" : "Rating";
+  }
+
+  function percentileTierLabel(tier) {
+    const athleteLabels = {
+      elite: "90th+",
+      strong: "75-89th",
+      solid: "50-74th",
+      competitive: "25-49th",
+      developing: "<25th",
+    };
+    const labels = {
+      elite: "Elite",
+      strong: "Strong",
+      solid: "Solid",
+      competitive: "Competitive",
+      developing: "Developing",
+    };
+    return (isAthleteView() ? athleteLabels : labels)[tier] || tier;
+  }
+
+  function applyAudienceLabels() {
+    const gradeFilter = document.getElementById("overviewGradeFilter");
+    if (!gradeFilter) return;
+    const labels = isAthleteView()
+      ? {
+          elite: "Index 5 Only",
+          excellent: "Index 4+",
+          good: "Index 3+",
+          average: "Index 2+",
+          below: "Index 1",
+        }
+      : {
+          elite: "Elite Only",
+          excellent: "Excellent+",
+          good: "Good+",
+          average: "Average+",
+          below: "Below Avg",
+        };
+    Object.keys(labels).forEach(function (value) {
+      const option = gradeFilter.querySelector('option[value="' + value + '"]');
+      if (option) option.textContent = labels[value];
+    });
+  }
+
   /* ========== HELPERS ========== */
   function fmt(v, decimals) {
     if (v === null || v === undefined) return "—";
@@ -93,14 +168,7 @@
 
   function tierBadge(tier) {
     if (!tier) return "";
-    const labels = {
-      elite: "Elite",
-      strong: "Strong",
-      solid: "Solid",
-      competitive: "Competitive",
-      developing: "Developing",
-    };
-    return `<span class="tier-badge tier-${tier}">${labels[tier] || tier}</span>`;
+    return `<span class="tier-badge tier-${tier}">${percentileTierLabel(tier)}</span>`;
   }
 
   function pctBarHTML(pct, colorVar) {
@@ -157,8 +225,8 @@
     }
     const staleCls = stale ? " stale-val" : "";
     const titleText = stale
-      ? `${grade.label} (previous test data)`
-      : grade.label;
+      ? `${gradeDisplayTitle(grade, "Benchmark")} (previous test data)`
+      : gradeDisplayTitle(grade, "Benchmark");
     return `<td class="num${staleCls} grade-text-${grade.tier}" title="${titleText}"${heatBg(grade)}>${v}</td>`;
   }
 
@@ -172,16 +240,21 @@
     return `<td class="num${staleCls} ${cls}"${title}>${v}</td>`;
   }
 
-  function gradeBadge(grade) {
+  function gradeBadge(grade, extraClass) {
     if (!grade) return "";
-    return `<span class="grade-badge grade-bg-${grade.tier}" title="${grade.label}">${grade.label}</span>`;
+    const classes =
+      "grade-badge grade-bg-" + grade.tier + (extraClass ? " " + extraClass : "");
+    return `<span class="${classes}" title="${gradeDisplayTitle(grade, "Benchmark")}">${gradeDisplayLabel(grade)}</span>`;
   }
 
   function overallGradeCell(og) {
     if (!og) return '<td class="na">—</td>';
-    return `<td class="grade-overall" data-sort-value="${og.score}" title="${og.label} — based on ${og.count} metrics, avg ${og.score}/5">
-      <span class="grade-badge grade-bg-${og.tier}">${og.label}</span>
-      <span class="grade-score">${og.score}</span>
+    const title = isAthleteView()
+      ? `Overall index ${scoreLabel(og.score)} based on ${og.count} metrics`
+      : `${og.label} — based on ${og.count} metrics, avg ${og.score}/5`;
+    return `<td class="grade-overall" data-sort-value="${og.score}" title="${title}">
+      <span class="grade-badge grade-bg-${og.tier}">${gradeDisplayLabel(og)}</span>
+      <span class="grade-score">${isAthleteView() ? og.count + " metrics" : og.score}</span>
     </td>`;
   }
   Object.assign(APP, {
@@ -192,6 +265,13 @@
     fmtHeight,
     ordGrade,
     tierLabelFromAvg,
+    isAthleteView,
+    scoreLabel,
+    gradeDisplayLabel,
+    gradeDisplayTitle,
+    overallIndexHeader,
+    percentileTierLabel,
+    applyAudienceLabels,
     fmt,
     fmtZ,
     formatLogDate,

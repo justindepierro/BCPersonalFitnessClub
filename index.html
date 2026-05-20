@@ -1620,6 +1620,7 @@
           <button
             class="btn btn-sm"
             data-click="saveSnapshot"
+            data-auth-admin-only="true"
             title="Save current data as named snapshot"
           >
             Save Snapshot
@@ -1628,12 +1629,14 @@
             id="snapshotSelect"
             aria-label="Select snapshot"
             class="input"
+            data-auth-admin-only="true"
           >
             <option value="">— Load Snapshot —</option>
           </select>
           <button
             class="btn btn-sm"
             data-click="loadSnapshot"
+            data-auth-admin-only="true"
             title="Load selected snapshot"
           >
             Load
@@ -1641,6 +1644,7 @@
           <button
             class="btn btn-sm"
             data-click="deleteSnapshot"
+            data-auth-admin-only="true"
             title="Delete selected snapshot"
           >
             🗑
@@ -1648,6 +1652,7 @@
           <button
             class="btn btn-sm"
             data-click="resetToOriginal"
+            data-auth-admin-only="true"
             title="Discard all edits and reload original data"
           >
             Reset to Original
@@ -1656,6 +1661,7 @@
           <button
             class="btn btn-sm btn-primary"
             data-click="saveAllAsTestDate"
+            data-auth-admin-only="true"
             title="Save all athletes' current data as a dated test (for progress tracking)"
           >
             <i data-lucide="calendar-plus" class="icon"></i> Save All as Test
@@ -1707,11 +1713,13 @@
             aria-label="Import JSON data file"
             data-change="importJSON"
             data-pass-element="true"
+            data-auth-admin-only="true"
           />
           <button
             class="btn btn-sm"
             data-click="triggerElementClick"
             data-arg1="importJsonInput"
+            data-auth-admin-only="true"
             title="Import a previously exported JSON file to restore data"
           >
             <i data-lucide="upload" class="icon"></i> Import JSON

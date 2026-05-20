@@ -4095,7 +4095,6 @@ select:focus,
 [data-auth-role="loading"] [data-click="importJSON"],
 [data-auth-role="loading"] #importJsonInput,
 [data-auth-role="athlete"] [data-auth-admin-only],
-[data-auth-role="athlete"] .data-mgmt-bar,
 [data-auth-role="athlete"] #editPanel,
 [data-auth-role="athlete"] #editPanelBackdrop,
 [data-auth-role="athlete"] [data-click="openEditPanel"],
@@ -4108,4 +4107,16 @@ select:focus,
 [data-auth-role="athlete"] [data-click="importJSON"],
 [data-auth-role="athlete"] #importJsonInput {
   display: none !important;
+}
+
+[data-auth-role="athlete"] .wt-cell {
+  cursor: default;
+}
+
+[data-auth-role="athlete"] .wt-edit-icon {
+  display: none !important;
+}
+
+[data-auth-role="athlete"] .wt-cell:hover {
+  background: inherit !important;
 }
