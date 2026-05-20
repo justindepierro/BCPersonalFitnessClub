@@ -26,6 +26,7 @@
   --bg: #0f1117;
   --surface: #1a1d27;
   --surface2: #242836;
+  --card-bg: var(--surface);
   --border: #2e3345;
   --text: #e4e6ed;
   --text-muted: #9ba0b2;
@@ -1125,15 +1126,13 @@ td .placeholder-text::before {
     display: none;
   }
   .tabs::after {
-    content: "→ swipe";
+    content: "";
     position: sticky;
     right: 0;
-    padding: 0.3rem 0.5rem;
-    font-size: 0.65rem;
-    color: var(--text-muted);
+    width: 1.5rem;
+    flex: 0 0 1.5rem;
     background: linear-gradient(90deg, transparent, var(--surface) 40%);
     pointer-events: none;
-    white-space: nowrap;
   }
   .edit-panel {
     width: 100vw;
@@ -4039,9 +4038,20 @@ select:focus,
 }
 @container main (max-width: 400px) {
   .card-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .summary-card {
+    padding: 0.85rem;
+  }
+  .summary-card .value {
+    font-size: 1.45rem;
   }
   .metric-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@container main (max-width: 340px) {
+  .card-row {
     grid-template-columns: 1fr;
   }
 }

@@ -385,9 +385,10 @@
         return;
       }
       // Close any open modal
-      var modal = document.querySelector(".modal-overlay[style*='flex']");
+      var modals = document.querySelectorAll(".modal-overlay");
+      var modal = modals.length ? modals[modals.length - 1] : null;
       if (modal) {
-        modal.style.display = "none";
+        modal.remove();
         return;
       }
     }

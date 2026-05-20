@@ -31,6 +31,14 @@
 
   document.documentElement.dataset.authRole = "loading";
 
+  function isLocalView() {
+    return (
+      location.protocol === "file:" ||
+      location.hostname === "localhost" ||
+      location.hostname === "127.0.0.1"
+    );
+  }
+
   function isDataRequest(input, init) {
     const method =
       (init && init.method) ||
@@ -49,15 +57,21 @@
 
   window.fetch = function (input, init) {
     if (isDataRequest(input, init)) {
+      const fallbackToStaticData = function () {
+        return nativeFetch(input, init);
+      };
       return nativeFetch("/api/data", {
         credentials: "same-origin",
         cache: "no-store",
         headers: {
           Accept: "application/json",
         },
-      }).catch(function () {
-        return nativeFetch(input, init);
-      });
+      })
+        .then(function (response) {
+          if (response.ok || !isLocalView()) return response;
+          return fallbackToStaticData();
+        })
+        .catch(fallbackToStaticData);
     }
     return nativeFetch(input, init);
   };
@@ -260,18 +274,23 @@
     pill.id = "authUserPill";
     pill.className = "auth-user-pill";
     const label = user && user.label ? user.label : "Local";
-    pill.innerHTML =
-      "<strong>" +
-      label +
-      "</strong><span>access</span><a class=\"auth-logout-link\" href=\"/auth/logout\">Log out</a>";
+    const labelEl = document.createElement("strong");
+    labelEl.textContent = label;
+    const accessEl = document.createElement("span");
+    accessEl.textContent = "access";
+    pill.appendChild(labelEl);
+    pill.appendChild(accessEl);
+    if (!user || user.username !== "local") {
+      const logoutEl = document.createElement("a");
+      logoutEl.className = "auth-logout-link";
+      logoutEl.href = "/auth/logout";
+      logoutEl.textContent = "Log out";
+      pill.appendChild(logoutEl);
+    }
     header.appendChild(pill);
   }
 
   async function loadCurrentUser() {
-    const isLocal =
-      location.protocol === "file:" ||
-      location.hostname === "localhost" ||
-      location.hostname === "127.0.0.1";
     try {
       const response = await nativeFetch("/auth/me", {
         credentials: "same-origin",
@@ -286,7 +305,7 @@
       const data = await response.json();
       return data.user || null;
     } catch {
-      if (!isLocal) {
+      if (!isLocalView()) {
         location.href = "/auth/login";
         return null;
       }
