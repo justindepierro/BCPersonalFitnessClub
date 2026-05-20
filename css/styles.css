@@ -3753,6 +3753,107 @@ td .placeholder-text::before {
 }
 
 /* ---------- Inline Weight Editing ---------- */
+.quick-test-col {
+  width: 52px;
+  text-align: center;
+}
+.quick-test-btn {
+  min-width: 34px;
+  height: 30px;
+  padding: 0.25rem 0.45rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.quick-test-content {
+  width: min(960px, 96vw);
+  max-height: 88vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  position: relative;
+}
+.qt-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.qt-header p {
+  margin: 0.2rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+.qt-meta-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.45fr) minmax(220px, 1fr);
+  gap: 0.75rem;
+}
+.qt-meta-row label,
+.qt-field {
+  display: grid;
+  gap: 0.35rem;
+}
+.qt-meta-row span,
+.qt-field span {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+.qt-field span {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.qt-field small {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+.qt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(138px, 1fr));
+  gap: 0.7rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+.qt-meta-row input,
+.qt-field input {
+  width: 100%;
+  min-height: 36px;
+  padding: 0.45rem 0.55rem;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+}
+.qt-meta-row input:focus,
+.qt-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+.qt-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+}
+@media (max-width: 620px) {
+  .qt-meta-row {
+    grid-template-columns: 1fr;
+  }
+  .quick-test-content {
+    padding: 1rem;
+  }
+}
 .wt-cell {
   cursor: pointer;
   position: relative;

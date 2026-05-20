@@ -26,7 +26,63 @@
     fmtWeekLabel,
     logWeight,
     getWeightHistory,
+    saveTestEntry,
+    TEST_METRIC_KEYS,
   } = APP;
+
+  function isAdmin() {
+    return window.LC_AUTH_USER && window.LC_AUTH_USER.role === "admin";
+  }
+
+  function todayISO() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function metricCurrentValue(athlete, metric) {
+    const value = athlete ? athlete[metric.key] : null;
+    return value !== null && value !== undefined && isFinite(value)
+      ? Number(value)
+      : null;
+  }
+
+  function readQuickMetricValue(jsonKey) {
+    const input = document.getElementById("qtMetric_" + jsonKey);
+    if (!input) return null;
+    const raw = input.value.trim();
+    if (raw === "") return null;
+    const parsed = parseFloat(raw);
+    return isNaN(parsed) || !isFinite(parsed) ? NaN : parsed;
+  }
+
+  function buildMetricSnapshot(athlete, overrides) {
+    const values = {};
+    for (let i = 0; i < TEST_METRIC_KEYS.length; i++) {
+      const metric = TEST_METRIC_KEYS[i];
+      values[metric.jsonKey] = metricCurrentValue(athlete, metric);
+    }
+    return Object.assign(values, overrides || {});
+  }
+
+  function applyCurrentMetricChanges(athleteId, changes) {
+    const keys = Object.keys(changes);
+    if (!keys.length) return false;
+    let edits = safeLSGet("lc_edits", []);
+    const existing = edits.find(function (e) {
+      return e.id === athleteId;
+    });
+    if (existing) {
+      Object.assign(existing.changes, changes);
+      existing.timestamp = new Date().toISOString();
+    } else {
+      edits.push({
+        id: athleteId,
+        changes: changes,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    safeLSSet("lc_edits", JSON.stringify(edits));
+    return true;
+  }
 
   /* ========== OVERVIEW ========== */
   window.debouncedOverview = debounce(function () {
@@ -168,6 +224,7 @@
     const thead = document.querySelector("#rosterTable thead");
     let thRow = "<tr>";
     thRow += '<th data-sort="name">Athlete</th>';
+    thRow += '<th class="quick-test-col" data-auth-admin-only="true" title="Quick edit testing metrics">Test</th>';
     thRow += '<th data-sort="position" title="Playing position">Pos</th>';
     thRow +=
       '<th data-sort="group" title="Position group">' +
@@ -311,6 +368,7 @@
         return `
       <tr class="${rowCls}" tabindex="0" role="button" data-click="selectAthlete" data-arg1="${esc(a.id)}" data-keyclick="true">
         <td><strong>${esc(a.name)}</strong>${!isTested ? ' <span class="untested-badge">Untested</span>' : ""}</td>
+        <td class="quick-test-col" data-auth-admin-only="true"><button class="btn btn-sm quick-test-btn" data-click="openQuickTestEditor" data-arg1="${esc(a.id)}" data-stop-prop="true" data-auth-admin-only="true" title="Quick edit all testing metrics for ${esc(a.name)}"><i data-lucide="pencil" class="icon"></i><span class="sr-only">Quick edit tests</span></button></td>
         <td>${esc(a.position) || "—"}</td>
         <td><span class="group-tag group-${(a.group || "").replace(/\s/g, "")}">${esc(a.group || "—")}</span></td>
         <td class="num">${a.grade ? ordGrade(a.grade) : "—"}</td>
@@ -348,6 +406,149 @@
     showTab("profiles");
     renderProfile();
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  window.openQuickTestEditor = function (athleteId, focusKey) {
+    if (!isAdmin()) {
+      showToast("Log in as admin to edit testing metrics.", "warn");
+      return;
+    }
+    const a = getAthleteById(athleteId);
+    if (!a) {
+      showToast("Athlete not found — data may have changed.", "warn");
+      renderOverview();
+      return;
+    }
+
+    const existing = document.querySelector(".quick-test-modal");
+    if (existing) existing.remove();
+
+    const dateValue = todayISO();
+    const labelValue = "Dashboard Edit " + dateValue;
+    let fields = "";
+    for (let i = 0; i < TEST_METRIC_KEYS.length; i++) {
+      const metric = TEST_METRIC_KEYS[i];
+      const current = metricCurrentValue(a, metric);
+      fields +=
+        '<label class="qt-field">' +
+        '<span><strong>' +
+        esc(metric.label) +
+        "</strong><small>" +
+        esc(metric.unit) +
+        "</small></span>" +
+        '<input type="number" step="any" id="qtMetric_' +
+        esc(metric.jsonKey) +
+        '" data-json-key="' +
+        esc(metric.jsonKey) +
+        '" data-metric-key="' +
+        esc(metric.key) +
+        '" value="' +
+        (current !== null ? current : "") +
+        '" />' +
+        "</label>";
+    }
+
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay quick-test-modal";
+    overlay.innerHTML =
+      '<div class="modal-content quick-test-content">' +
+      '<button class="modal-close" aria-label="Close" data-click="closeClosestOverlay" data-pass-element="true">&times;</button>' +
+      '<div class="qt-header"><h2>Quick Test Edit</h2><p>' +
+      esc(a.name) +
+      "</p></div>" +
+      '<div class="qt-meta-row">' +
+      '<label><span>Date</span><input type="date" id="qtDate" value="' +
+      dateValue +
+      '" /></label>' +
+      '<label><span>Timeline Label</span><input type="text" id="qtLabel" value="' +
+      esc(labelValue) +
+      '" /></label>' +
+      "</div>" +
+      '<div class="qt-grid">' +
+      fields +
+      "</div>" +
+      '<div class="qt-actions">' +
+      '<button class="btn btn-sm" data-click="closeClosestOverlay" data-pass-element="true">Cancel</button>' +
+      '<button class="btn btn-sm btn-primary" data-click="saveQuickTestMetrics" data-arg1="' +
+      esc(athleteId) +
+      '"><i data-lucide="save" class="icon"></i> Save Metrics</button>' +
+      "</div>" +
+      "</div>";
+    overlay.addEventListener("click", function (event) {
+      if (event.target === overlay) overlay.remove();
+    });
+    document.body.appendChild(overlay);
+    APP.refreshIcons();
+    const first =
+      (focusKey && document.getElementById("qtMetric_" + focusKey)) ||
+      document.getElementById("qtMetric_weight_lb");
+    if (first) {
+      first.focus();
+      first.select();
+    }
+  };
+
+  window.saveQuickTestMetrics = function (athleteId) {
+    if (!isAdmin()) {
+      showToast("Log in as admin to edit testing metrics.", "warn");
+      return;
+    }
+    const athlete = getAthleteById(athleteId);
+    if (!athlete) {
+      showToast("Athlete not found — data may have changed.", "warn");
+      return;
+    }
+    const dateEl = document.getElementById("qtDate");
+    const labelEl = document.getElementById("qtLabel");
+    const dateValue = dateEl ? dateEl.value.trim() : "";
+    let labelValue = labelEl ? labelEl.value.trim() : "";
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(dateValue) ||
+      isNaN(new Date(dateValue + "T00:00:00").getTime())
+    ) {
+      showToast("Choose a valid test date.", "warn");
+      return;
+    }
+    if (!labelValue) labelValue = "Dashboard Edit " + dateValue;
+
+    const historyValues = {};
+    const currentChanges = {};
+    for (let i = 0; i < TEST_METRIC_KEYS.length; i++) {
+      const metric = TEST_METRIC_KEYS[i];
+      const nextValue = readQuickMetricValue(metric.jsonKey);
+      if (Number.isNaN(nextValue)) {
+        showToast(metric.label + " must be a valid number.", "warn");
+        const badInput = document.getElementById("qtMetric_" + metric.jsonKey);
+        if (badInput) badInput.focus();
+        return;
+      }
+      historyValues[metric.jsonKey] = nextValue;
+      const current = metricCurrentValue(athlete, metric);
+      if (nextValue !== current) currentChanges[metric.jsonKey] = nextValue;
+    }
+
+    saveTestEntry(athleteId, dateValue, labelValue, historyValues);
+    if (currentChanges.weight_lb !== undefined && currentChanges.weight_lb !== null) {
+      logWeight(athleteId, currentChanges.weight_lb);
+    }
+    applyCurrentMetricChanges(athleteId, currentChanges);
+
+    const overlay = document.querySelector(".quick-test-modal");
+    if (overlay) overlay.remove();
+
+    APP.rebuildFromStorage();
+    APP._skipChartAnimation = true;
+    markTabsDirty();
+    renderOverview();
+    APP.updateDataStatus();
+    const selected = document.getElementById("athleteSelect");
+    if (selected && selected.value === athleteId) renderProfile();
+    APP._skipChartAnimation = false;
+
+    showToast(
+      "Saved " + athlete.name + " metrics to " + labelValue + ".",
+      "success",
+    );
   };
 
   /* ========== INLINE WEIGHT EDITING ========== */
@@ -393,6 +594,13 @@
       if (newWt !== null) {
         logWeight(athleteId, newWt);
       }
+      const testDate = todayISO();
+      saveTestEntry(
+        athleteId,
+        testDate,
+        "Dashboard Edit " + testDate,
+        buildMetricSnapshot(a, { weight_lb: newWt }),
+      );
 
       // Apply to lc_edits (same pattern as the edit panel)
       let edits = safeLSGet("lc_edits", []);
