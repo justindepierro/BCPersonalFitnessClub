@@ -398,6 +398,9 @@
     localStorage.removeItem("lc_deleted");
     const raw = structuredClone(window._rawDataCache);
     window.CLUB = window._processData(raw);
+    if (typeof window.resetCloudSaveState === "function") {
+      window.resetCloudSaveState(window._rawDataCache && window._rawDataCache.dataVersion);
+    }
     // Close edit panel if open
     const panel = document.getElementById("editPanel");
     if (panel && panel.classList.contains("open")) closeEditPanel();

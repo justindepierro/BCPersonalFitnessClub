@@ -3,7 +3,7 @@
    Cache-first strategy for offline support
    =================================================== */
 
-const CACHE_NAME = "lifting-club-v1";
+const CACHE_NAME = "lifting-club-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -35,6 +35,8 @@ function isAppShellRequest(request, url) {
 
 function cacheResponse(request, response) {
   if (!response || !response.ok) return response;
+  const cacheControl = response.headers.get("Cache-Control") || "";
+  if (/\bno-store\b/i.test(cacheControl)) return response;
   const copy = response.clone();
   caches.open(CACHE_NAME).then(function (cache) {
     cache.put(request, copy);
@@ -85,6 +87,11 @@ self.addEventListener("fetch", function (event) {
   if (!shouldHandle(event.request)) return;
   var url = new URL(event.request.url);
   if (!isLocalAsset(url)) return;
+
+  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/auth/")) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
 
   // For JSON data files and app shell assets, prefer fresh network data.
   if (url.pathname.endsWith(".json")) {

@@ -189,14 +189,14 @@
     if (cloudSave.status === "saving") {
       return { status: "saving", text: "Saving to Cloudflare..." };
     }
-    if (cloudSave.status === "pending" || cloudSave.dirty) {
-      return { status: "pending", text: "Cloud save queued" };
-    }
     if (cloudSave.status === "error") {
       return {
         status: "error",
         text: "Cloud save failed: " + (cloudSave.lastError || "retry needed"),
       };
+    }
+    if (cloudSave.status === "pending" || cloudSave.dirty) {
+      return { status: "pending", text: "Cloud save queued" };
     }
     if (cloudSave.lastSavedAt) {
       return {
